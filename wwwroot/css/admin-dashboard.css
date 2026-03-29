@@ -120,7 +120,7 @@ body {
 .pos-nav-link.active {
   background: var(--primary);
   color: white;
-  box-shadow: 0 6px 14px rgba(78, 107, 255, 0.25);
+  box-shadow: 0 6px 14px rgba(231, 3, 3, 0.25);
 }
 
 /* MAIN CONTENT - no scroll */
