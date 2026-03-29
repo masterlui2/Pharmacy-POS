@@ -165,4 +165,62 @@ body {
   .login-right {
     padding: 32px 24px;
   }
+  /* Admin layout */
+  .admin-layout {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    background: #f5f7fb;
+  }
+
+  .admin-sidebar {
+    background: linear-gradient(180deg, #c8102e 0%, #a90d25 100%);
+    box-shadow: 6px 0 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .logo-img {
+    max-width: 120px;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.2));
+  }
+
+  .sidebar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.92);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    margin-bottom: 0.35rem;
+    font-weight: 500;
+    transition: 0.2s ease;
+  }
+
+  .sidebar-nav .nav-link:hover,
+  .sidebar-nav .nav-link.active {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    transform: translateX(2px);
+  }
+
+  .admin-main {
+    overflow: auto;
+  }
+
+  .module-card {
+    border: 1px solid #eceef3;
+    background: #fff;
+  }
+
+  @media (max-width: 991.98px) {
+    .admin-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-sidebar {
+      min-height: auto;
+    }
+
+    .sidebar-nav {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.35rem;
+    }
+  }
 }

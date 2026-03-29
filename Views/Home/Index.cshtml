@@ -1,33 +1,212 @@
 ﻿@{
-    ViewData["Title"] = "Sign in";
+    ViewData["Title"] = "Dashboard";
 }
-
-<div class="login-page">
-    <div class="login-shell">
-        <section class="login-left">
-            <div class="brand-wrap">
-                <img src="~/images/safemed-logo.png" alt="SafeMed Pharmacy Logo" class="safemed-logo" />
-                <h1>Point of<br />Sale</h1>
-                <p>SafeMed Pharmacy POS</p>
-            </div>
-        </section>
-
-        <section class="login-right">
-            <div class="login-card">
-                <span class="eyebrow">POINT OF SALE</span>
-                <h2>Sign in</h2>
-
-                <form method="post" action="#">
-                    <div class="mb-3">
-                        <input type="text" class="form-control login-input" placeholder="Username or Email" />
-                    </div>
-                    <div class="mb-3">
-                        <input type="password" class="form-control login-input" placeholder="Password" />
-                    </div>
-                    <a href="#" class="forgot-link">Forgotten your password?</a>
-                    <button type="submit" class="btn login-btn w-100 mt-4">Log in</button>
-                </form>
-            </div>
-        </section>
+<body>
+<div class="pos-layout">
+  <!-- SIDEBAR (modern POS with safe-med theme) -->
+  <aside class="pos-sidebar">
+    <div class="pos-brand">
+     <div class="pos-brand" style="flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px;">
+    <div class="pos-logo" style="margin: 0 auto;">
+        <img src="~/images/logo.png" alt="SafeMed Logo" style="width: 100%; height: 100%; object-fit: contain;">
     </div>
+    <span style="font-size: 1rem; font-weight: 600; letter-spacing: -0.2px;">Admin·POS</span>
 </div>
+  <nav class="pos-nav">
+    <a class="pos-nav-link active" href="#">
+        <i class="fas fa-chart-line"></i> Dashboard
+    </a>
+    <p class="pos-nav-section">Applications</p>
+    <a class="pos-nav-link" href="#"><i class="fas fa-capsules"></i> Medicine Inventory</a>
+    <a class="pos-nav-link" href="#"><i class="fas fa-cash-register"></i> POS / Sales</a>
+    <a class="pos-nav-link" href="#"><i class="fas fa-credit-card"></i> Payment</a>
+    <a class="pos-nav-link" href="#"><i class="fas fa-receipt"></i> Receipt</a>
+    <a class="pos-nav-link" href="#"><i class="fas fa-chart-simple"></i> Sales History</a>
+    <a class="pos-nav-link" href="#"><i class="fas fa-file-alt"></i> Reports</a>
+    <a class="pos-nav-link" href="#"><i class="fas fa-exclamation-triangle"></i> Stock Alerts</a>
+    <p class="pos-nav-section">Authentication</p>
+    <a class="pos-nav-link" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
+</nav>
+  </aside>
+
+  <!-- MAIN DASHBOARD CONTENT (POS layout with all modern metrics, revenue, yearly breakup etc) -->
+  <main class="pos-main">
+    <div class="pos-topbar">
+      <div class="pos-greeting">
+        <h3>Good Morning, Admin!</h3>
+        <small>📍 POS Dashboard · realtime overview</small>
+      </div>
+      <input class="pos-search" type="text" placeholder="🔍 Search medicines, orders, customers...">
+    </div>
+
+    <!-- STAT CARDS inspired by original layout (Reports, Events, Projects, Clients) but adapted to POS -->
+    <div class="pos-metrics">
+      <div class="metric-card">
+        <h2>59</h2>
+        <p>📄 Reports (this month)</p>
+      </div>
+      <div class="metric-card">
+        <h2>$96k</h2>
+        <p>💰 Revenue <span class="trend-up">↑ +12%</span></p>
+      </div>
+      <div class="metric-card">
+        <h2>696</h2>
+        <p>📅 Events & campaigns</p>
+      </div>
+      <div class="metric-card">
+        <h2>3,650</h2>
+        <p>👥 Active clients</p>
+      </div>
+    </div>
+
+    <!-- REVENUE UPDATES + CHART (exactly matching original description: earnings vs expense, x-axis years) -->
+    <div class="pos-dashboard-grid">
+      <!-- LEFT: Revenue Updates + Chart -->
+      <div class="pos-card">
+        <div class="card-header">
+          <h5>📈 Revenue Updates · Overview of Profit</h5>
+          <span>2024 vs trend</span>
+        </div>
+        <div class="revenue-chart">
+          <div class="chart-bars-container">
+            <!-- Years 2005 to 2014 (simplified showing earnings/expense combo) 
+                 using grouped bars to match: Earnings (orange) & Expense (blue) -->
+            <div class="bar-item"><div class="bar" style="height: 42px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 28px;"></div><div class="bar-label">'05</div></div>
+            <div class="bar-item"><div class="bar" style="height: 48px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 32px;"></div><div class="bar-label">'06</div></div>
+            <div class="bar-item"><div class="bar" style="height: 52px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 38px;"></div><div class="bar-label">'07</div></div>
+            <div class="bar-item"><div class="bar" style="height: 64px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 44px;"></div><div class="bar-label">'08</div></div>
+            <div class="bar-item"><div class="bar" style="height: 58px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 48px;"></div><div class="bar-label">'09</div></div>
+            <div class="bar-item"><div class="bar" style="height: 72px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 52px;"></div><div class="bar-label">'10</div></div>
+            <div class="bar-item"><div class="bar" style="height: 86px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 58px;"></div><div class="bar-label">'11</div></div>
+            <div class="bar-item"><div class="bar" style="height: 94px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 62px;"></div><div class="bar-label">'12</div></div>
+            <div class="bar-item"><div class="bar" style="height: 102px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 68px;"></div><div class="bar-label">'13</div></div>
+            <div class="bar-item"><div class="bar" style="height: 110px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 74px;"></div><div class="bar-label">'14</div></div>
+          </div>
+          <div class="legend">
+            <div><span class="legend-dot" style="background: #f2994a;"></span> Earnings ($ in month)</div>
+            <div><span class="legend-dot" style="background: #4e6bff;"></span> Expense ($ in month)</div>
+          </div>
+          <div class="fd-muted" style="font-size: 0.7rem; margin-top: 6px;">X-axis: 2005–2014 | Y: -10 to 100 scale</div>
+        </div>
+        <!-- YEARLY BREAKUP + MONTHLY EARNINGS (matching original spec) -->
+        <div style="display: flex; gap: 18px; margin-top: 18px; flex-wrap: wrap;">
+          <div class="yearly-breakup" style="flex:1;">
+            <div class="big-number">$36,358</div>
+            <div><span class="trend-badge">▲ +9% last year</span></div>
+            <div style="margin-top: 6px; font-size: 0.75rem; color: var(--muted);">2020 vs 2024 comparison</div>
+            <div style="margin-top: 4px;"><strong>2020</strong> ── <strong>2024</strong> ↑21%</div>
+          </div>
+          <div class="monthly-earnings" style="flex:1;">
+            <div class="big-number">$6,820</div>
+            <div><span class="trend-badge">▲ +9% last year</span></div>
+            <div style="margin-top: 8px; font-size: 0.7rem;">Monthly earnings (avg)</div>
+          </div>
+        </div>
+        <!-- Employee Salary + Customers extra from original layout -->
+        <div class="employees-salary-row">
+          <div><span style="font-weight: 600;">🧑‍⚕️ Employee Salary</span><br><span class="big-number" style="font-size: 1.3rem;">$36,358</span></div>
+          <div><span style="font-weight: 600;">👥 Customers</span><br><span class="big-number" style="font-size: 1.3rem;">78,298</span></div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE: BEST SELLING PRODUCTS (Overview 2024) + extra reports -->
+      <div class="pos-card">
+        <div class="card-header">
+          <h5>🏆 Best Selling Products · Overview 2024</h5>
+          <span>top 5</span>
+        </div>
+        <div class="best-products">
+          <div class="product-row">
+            <div><span class="product-name">Paracetamol 500mg</span><div class="progress-bar" style="margin-top: 4px;"><div class="progress-fill" style="width: 88%;"></div></div></div>
+            <div class="product-sales">$12,420</div>
+          </div>
+          <div class="product-row">
+            <div><span class="product-name">Amoxicillin caps</span><div class="progress-bar" style="margin-top: 4px;"><div class="progress-fill" style="width: 74%;"></div></div></div>
+            <div class="product-sales">$9,830</div>
+          </div>
+          <div class="product-row">
+            <div><span class="product-name">Vitamin C + Zinc</span><div class="progress-bar" style="margin-top: 4px;"><div class="progress-fill" style="width: 65%;"></div></div></div>
+            <div class="product-sales">$7,254</div>
+          </div>
+          <div class="product-row">
+            <div><span class="product-name">Ibuprofen gel</span><div class="progress-bar" style="margin-top: 4px;"><div class="progress-fill" style="width: 52%;"></div></div></div>
+            <div class="product-sales">$5,980</div>
+          </div>
+          <div class="product-row">
+            <div><span class="product-name">Cough Syrup DM</span><div class="progress-bar" style="margin-top: 4px;"><div class="progress-fill" style="width: 47%;"></div></div></div>
+            <div class="product-sales">$4,336</div>
+          </div>
+        </div>
+        <!-- extra reports summary as per original: reports, events, projects etc -->
+        <div style="margin-top: 24px; background: #F8FAFE; border-radius: 20px; padding: 12px;">
+          <div style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+            <div><span style="font-weight: 600;">📋 Reports:</span> 59</div>
+            <div><span style="font-weight: 600;">💵 Report:</span> $96k</div>
+            <div><span style="font-weight: 600;">🎉 Events:</span> 696</div>
+            <div><span style="font-weight: 600;">🚀 Projects:</span> 356</div>
+            <div><span style="font-weight: 600;">👥 Clients:</span> 3,650</div>
+            <div><span style="font-weight: 600;">🧑‍💼 Employees:</span> 96</div>
+          </div>
+        </div>
+        <!-- small extra chart: net profit over years -->
+        <div style="margin-top: 18px;">
+          <div style="font-weight: 600; font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;">💰 NET INCOME TREND (2020-2024)</div>
+          <div style="display: flex; gap: 6px; align-items: flex-end; height: 48px;">
+            <div style="background: var(--primary); width: 18%; height: 24px; border-radius: 8px;"></div>
+            <div style="background: var(--primary); width: 28%; height: 36px; border-radius: 8px;"></div>
+            <div style="background: var(--primary); width: 40%; height: 48px; border-radius: 8px;"></div>
+            <div style="background: var(--primary); width: 58%; height: 70px; border-radius: 8px;"></div>
+            <div style="background: var(--primary); width: 72%; height: 86px; border-radius: 8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECOND ROW: ADDITIONAL MODERN POS INFO like mini revenue & employee metrics -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 8px;">
+      <div class="pos-card">
+        <div class="card-header">
+          <h5>📊 Revenue by channel (POS breakdown)</h5>
+          <span>monthly</span>
+        </div>
+        <ul style="list-style: none; margin-top: 10px;">
+          <li style="display: flex; justify-content: space-between; padding: 8px 0;"><span>💊 Direct Pharmacy Sales</span> <strong>$42,200</strong></li>
+          <li style="display: flex; justify-content: space-between; padding: 8px 0;"><span>🛍️ Online Orders (eCommerce)</span> <strong>$23,580</strong></li>
+          <li style="display: flex; justify-content: space-between; padding: 8px 0;"><span>🏥 Hospital Supply</span> <strong>$18,340</strong></li>
+          <li style="display: flex; justify-content: space-between; padding: 8px 0;"><span>📞 Telemedicine Prescriptions</span> <strong>$11,920</strong></li>
+        </ul>
+        <div class="legend-dot" style="background: var(--primary); width: 100%; height: 4px; margin-top: 8px; border-radius: 4px;"></div>
+        <div style="margin-top: 12px; font-size: 0.75rem; color: var(--muted);">↑ total revenue +9% vs previous period</div>
+      </div>
+      <div class="pos-card">
+        <div class="card-header">
+          <h5>📦 Stock Alerts & Inventory summary</h5>
+          <span>near expiry</span>
+        </div>
+        <div style="display: flex; gap: 12px; flex-direction: column;">
+          <div><span style="font-weight: 600;">⚠️ Low stock items:</span> 12 medicines below reorder level</div>
+          <div><span style="font-weight: 600;">🧪 Expiring in 30 days:</span> 8 batches (Aspirin, Insulin)</div>
+          <div><span style="font-weight: 600;">✅ Reorder points:</span> 5 active purchase orders</div>
+          <div class="progress-bar" style="width: 100%;"><div class="progress-fill" style="width: 68%; background: #f5b042;"></div></div>
+          <div class="fd-muted">Inventory turnover rate: 68% this quarter</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- footer style - additional reports inline with original spec -->
+    <div class="report-footer">
+      <div class="report-stats">
+        <div class="stat-item"><div class="stat-number">$96k</div><div>Total Report Value</div></div>
+        <div class="stat-item"><div class="stat-number">696</div><div>Events this year</div></div>
+        <div class="stat-item"><div class="stat-number">356</div><div>Active Projects</div></div>
+        <div class="stat-item"><div class="stat-number">3,650</div><div>Clients</div></div>
+        <div class="stat-item"><div class="stat-number">96</div><div>Employees</div></div>
+      </div>
+      <div style="font-size: 0.7rem; color: #7a8599;">SafeMed POS · realtime analytics 2025</div>
+    </div>
+  </main>
+</div>
+
+<!-- subtle hover effects, no external scripts needed -->
+</body>
+</html>
