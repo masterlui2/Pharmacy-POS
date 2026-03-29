@@ -1,48 +1,168 @@
-﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
+﻿:root {
+  --primary: #234f76;
+  --accent: #ef454f;
+  --surface: #eef2f8;
+  --text: #1e2b3a;
+  --muted: #6d7a8b;
+}
 
-a.navbar-brand {
-  white-space: normal;
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+.auth-body {
+  min-height: 100vh;
+  background: #f3f4f6;
+  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-shell {
+  width: min(1150px, 100%);
+  min-height: 640px;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: 0 22px 44px rgba(25, 44, 74, 0.16);
+}
+
+.login-left {
+  background: linear-gradient(180deg, #1f4c74 0%, #1a4469 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 36px;
+}
+
+.brand-wrap {
   text-align: center;
-  word-break: break-all;
 }
 
-a {
-  color: #0077cc;
+.safemed-logo {
+  width: 180px;
+  max-width: 100%;
+  object-fit: contain;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.25));
 }
 
-.btn-primary {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+.brand-wrap h1 {
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.05;
+  margin: 0;
 }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
-}
-
-.border-top {
-  border-top: 1px solid #e5e5e5;
-}
-.border-bottom {
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.box-shadow {
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
-}
-
-button.accept-policy {
+.brand-wrap p {
+  margin-top: 14px;
+  opacity: 0.86;
   font-size: 1rem;
-  line-height: inherit;
+  letter-spacing: 0.4px;
 }
 
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  white-space: nowrap;
-  line-height: 60px;
+.login-right {
+  position: relative;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding: 48px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(34, 79, 118, 0.1) 0 180px,
+      transparent 181px
+    ),
+    radial-gradient(
+      circle at 18% 80%,
+      rgba(34, 79, 118, 0.12) 0 140px,
+      transparent 141px
+    ),
+    var(--surface);
+}
+
+.login-card {
+  width: min(430px, 100%);
+  z-index: 2;
+}
+
+.eyebrow {
+  color: #f16c6c;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+}
+
+.login-card h2 {
+  margin: 8px 0 22px;
+  color: var(--primary);
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.login-input {
+  height: 56px;
+  border-radius: 8px;
+  border: 1px solid #ccd4df;
+  background: #fdfdff;
+  padding: 0 16px;
+  font-size: 1rem;
+}
+
+.login-input:focus {
+  border-color: #7fa2c1;
+  box-shadow: 0 0 0 0.2rem rgba(35, 79, 118, 0.16);
+}
+
+.forgot-link {
+  color: #2a8fc4;
+  text-decoration: none;
+  font-size: 0.98rem;
+}
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.login-btn {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  height: 52px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.login-btn:hover {
+  background: #dd3a45;
+  color: #fff;
+}
+
+@media (max-width: 920px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+  .login-left {
+    padding: 30px 24px;
+  }
+  .safemed-logo {
+    width: 140px;
+    margin-bottom: 12px;
+  }
+  .brand-wrap h1 {
+    font-size: 2.2rem;
+  }
+  .login-right {
+    padding: 32px 24px;
+  }
 }

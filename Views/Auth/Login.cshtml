@@ -1,0 +1,204 @@
+@model PharmacyPOS.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background: #f3f3f3;
+    }
+
+    .login-wrapper {
+        min-height: 100vh;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 420px;
+        border: none;
+        border-radius: 22px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        padding: 2.5rem 2rem;
+        background: #fff;
+    }
+
+    .login-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #212529;
+    }
+
+    .logo-box {
+        width: 150px;
+        height: 132px;
+        border-radius: 16px;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    .logo-box img {
+        width: 150%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .form-label {
+        font-size: 0.95rem;
+        color: #8a8a8a;
+        margin-bottom: 0.4rem;
+    }
+
+    .form-control {
+        border: none;
+        border-bottom: 1px solid #ced4da;
+        border-radius: 0;
+        padding-left: 0;
+        padding-right: 0;
+        box-shadow: none !important;
+        background-color: transparent;
+    }
+
+    .form-control:focus {
+        border-color: transparent;
+        border-bottom: 2px solid transparent;
+        border-image: linear-gradient(90deg, #24c6dc, #b721ff);
+        border-image-slice: 1;
+        background-color: transparent;
+    }
+
+    .input-group-text {
+        border: none;
+        border-bottom: 1px solid #ced4da;
+        border-radius: 0;
+        background: transparent;
+        color: #9aa0a6;
+        padding-right: 0;
+    }
+
+    .input-group .form-control:focus + .input-group-text,
+    .input-group .input-group-text:has(+ .form-control:focus) {
+        border-bottom: 2px solid #b721ff;
+    }
+
+    .login-btn {
+        border: none;
+        border-radius: 30px;
+        padding: 0.85rem 1rem;
+        font-weight: 600;
+        color: white;
+        background: linear-gradient(90deg, #ce0a0a);
+        box-shadow: 0 6px 16px rgba(123, 104, 238, 0.25);
+        transition: 0.2s ease-in-out;
+    }
+
+    .login-btn:hover {
+        color: white;
+        transform: translateY(-1px);
+        opacity: 0.96;
+    }
+
+    .bottom-text {
+        font-size: 0.95rem;
+        color: #6c757d;
+    }
+
+    .bottom-text a {
+        text-decoration: none;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .password-toggle-btn {
+        border: none;
+        border-bottom: 1px solid #ced4da;
+        background: transparent;
+        color: #9aa0a6;
+        padding: 0 0.75rem;
+    }
+
+    .password-toggle-btn:focus {
+        outline: none;
+        box-shadow: none;
+    }
+</style>
+
+<div class="container">
+    <div class="row justify-content-center align-items-center login-wrapper">
+        <div class="col-12 d-flex justify-content-center">
+            <div class="login-card">
+
+                <div class="text-center mb-4">
+                    <h1 class="login-title mb-4">Welcome</h1>
+
+                  <div class="logo-box mb-3">
+    <img src="~/images/logo.png" alt="Pharmacy Logo" />
+</div>
+                </div>
+
+                @if (ViewBag.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger rounded-3" role="alert">
+                        @ViewBag.ErrorMessage
+                    </div>
+                }
+
+                <form asp-action="Login" asp-controller="Auth" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-4">
+                        <label asp-for="Username" class="form-label">Email</label>
+                        <input asp-for="Username" class="form-control" placeholder="johndoe@example.com" autocomplete="username" />
+                        <span asp-validation-for="Username" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <input asp-for="Password" class="form-control" id="passwordInput" placeholder="Enter password" autocomplete="current-password" />
+                            <button class="password-toggle-btn" type="button" onclick="togglePassword()" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="login-btn">
+                            LOGIN
+                        </button>
+                    </div>
+                </form>
+
+           
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById("passwordInput");
+            const icon = document.querySelector(".password-toggle-btn i");
+
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                icon.classList.remove("bi-eye");
+                icon.classList.add("bi-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                icon.classList.remove("bi-eye-slash");
+                icon.classList.add("bi-eye");
+            }
+        }
+    </script>
+}

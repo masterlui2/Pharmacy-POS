@@ -1,48 +1,168 @@
-/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
+:root[b-e8d2x6mixz] {
+  --primary: #234f76;
+  --accent: #ef454f;
+  --surface: #eef2f8;
+  --text: #1e2b3a;
+  --muted: #6d7a8b;
+}
 
-a.navbar-brand[b-e8d2x6mixz] {
-  white-space: normal;
+html[b-e8d2x6mixz],
+body[b-e8d2x6mixz] {
+  height: 100%;
+  margin: 0;
+}
+
+.auth-body[b-e8d2x6mixz] {
+  min-height: 100vh;
+  background: #f3f4f6;
+  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-page[b-e8d2x6mixz] {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-shell[b-e8d2x6mixz] {
+  width: min(1150px, 100%);
+  min-height: 640px;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: 0 22px 44px rgba(25, 44, 74, 0.16);
+}
+
+.login-left[b-e8d2x6mixz] {
+  background: linear-gradient(180deg, #1f4c74 0%, #1a4469 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 36px;
+}
+
+.brand-wrap[b-e8d2x6mixz] {
   text-align: center;
-  word-break: break-all;
 }
 
-a[b-e8d2x6mixz] {
-  color: #0077cc;
+.safemed-logo[b-e8d2x6mixz] {
+  width: 180px;
+  max-width: 100%;
+  object-fit: contain;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.25));
 }
 
-.btn-primary[b-e8d2x6mixz] {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+.brand-wrap h1[b-e8d2x6mixz] {
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.05;
+  margin: 0;
 }
 
-.nav-pills .nav-link.active[b-e8d2x6mixz], .nav-pills .show > .nav-link[b-e8d2x6mixz] {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
-}
-
-.border-top[b-e8d2x6mixz] {
-  border-top: 1px solid #e5e5e5;
-}
-.border-bottom[b-e8d2x6mixz] {
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.box-shadow[b-e8d2x6mixz] {
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
-}
-
-button.accept-policy[b-e8d2x6mixz] {
+.brand-wrap p[b-e8d2x6mixz] {
+  margin-top: 14px;
+  opacity: 0.86;
   font-size: 1rem;
-  line-height: inherit;
+  letter-spacing: 0.4px;
 }
 
-.footer[b-e8d2x6mixz] {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  white-space: nowrap;
-  line-height: 60px;
+.login-right[b-e8d2x6mixz] {
+  position: relative;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding: 48px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(34, 79, 118, 0.1) 0 180px,
+      transparent 181px
+    ),
+    radial-gradient(
+      circle at 18% 80%,
+      rgba(34, 79, 118, 0.12) 0 140px,
+      transparent 141px
+    ),
+    var(--surface);
+}
+
+.login-card[b-e8d2x6mixz] {
+  width: min(430px, 100%);
+  z-index: 2;
+}
+
+.eyebrow[b-e8d2x6mixz] {
+  color: #f16c6c;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+}
+
+.login-card h2[b-e8d2x6mixz] {
+  margin: 8px 0 22px;
+  color: var(--primary);
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.login-input[b-e8d2x6mixz] {
+  height: 56px;
+  border-radius: 8px;
+  border: 1px solid #ccd4df;
+  background: #fdfdff;
+  padding: 0 16px;
+  font-size: 1rem;
+}
+
+.login-input:focus[b-e8d2x6mixz] {
+  border-color: #7fa2c1;
+  box-shadow: 0 0 0 0.2rem rgba(35, 79, 118, 0.16);
+}
+
+.forgot-link[b-e8d2x6mixz] {
+  color: #2a8fc4;
+  text-decoration: none;
+  font-size: 0.98rem;
+}
+.forgot-link:hover[b-e8d2x6mixz] {
+  text-decoration: underline;
+}
+
+.login-btn[b-e8d2x6mixz] {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  height: 52px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.login-btn:hover[b-e8d2x6mixz] {
+  background: #dd3a45;
+  color: #fff;
+}
+
+@media (max-width: 920px) {
+  .login-shell[b-e8d2x6mixz] {
+    grid-template-columns: 1fr;
+  }
+  .login-left[b-e8d2x6mixz] {
+    padding: 30px 24px;
+  }
+  .safemed-logo[b-e8d2x6mixz] {
+    width: 140px;
+    margin-bottom: 12px;
+  }
+  .brand-wrap h1[b-e8d2x6mixz] {
+    font-size: 2.2rem;
+  }
+  .login-right[b-e8d2x6mixz] {
+    padding: 32px 24px;
+  }
 }

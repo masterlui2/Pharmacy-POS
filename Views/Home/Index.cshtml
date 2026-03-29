@@ -1,8 +1,33 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Sign in";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="login-page">
+    <div class="login-shell">
+        <section class="login-left">
+            <div class="brand-wrap">
+                <img src="~/images/safemed-logo.png" alt="SafeMed Pharmacy Logo" class="safemed-logo" />
+                <h1>Point of<br />Sale</h1>
+                <p>SafeMed Pharmacy POS</p>
+            </div>
+        </section>
+
+        <section class="login-right">
+            <div class="login-card">
+                <span class="eyebrow">POINT OF SALE</span>
+                <h2>Sign in</h2>
+
+                <form method="post" action="#">
+                    <div class="mb-3">
+                        <input type="text" class="form-control login-input" placeholder="Username or Email" />
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" class="form-control login-input" placeholder="Password" />
+                    </div>
+                    <a href="#" class="forgot-link">Forgotten your password?</a>
+                    <button type="submit" class="btn login-btn w-100 mt-4">Log in</button>
+                </form>
+            </div>
+        </section>
+    </div>
 </div>
