@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PharmacyPOS.Models;
 
@@ -9,12 +8,12 @@ public class AuthController : Controller
     [HttpGet]
     public IActionResult Login()
     {
-        if (!string.IsNullOrWhiteSpace(HttpContext.Session.GetString("Username")))
+        if (IsAuthenticated())
         {
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Dashboard");
         }
 
-        return View();
+        return View(new LoginViewModel());
     }
 
     [HttpPost]
@@ -26,15 +25,14 @@ public class AuthController : Controller
             return View(model);
         }
 
-        if (model.Username == "admin" && model.Password == "admin123")
+        if (model.Username.Equals("admin", StringComparison.OrdinalIgnoreCase) && model.Password == "admin123")
         {
-            HttpContext.Session.SetString("Username", model.Username);
+            HttpContext.Session.SetString("Username", "Admin");
             HttpContext.Session.SetString("Role", "Admin");
-
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Dashboard");
         }
 
-        ViewBag.ErrorMessage = "Invalid username or password.";
+        ModelState.AddModelError(string.Empty, "Invalid username or password.");
         return View(model);
     }
 
@@ -45,4 +43,6 @@ public class AuthController : Controller
         HttpContext.Session.Clear();
         return RedirectToAction("Login", "Auth");
     }
+
+    private bool IsAuthenticated() => !string.IsNullOrWhiteSpace(HttpContext.Session.GetString("Username"));
 }

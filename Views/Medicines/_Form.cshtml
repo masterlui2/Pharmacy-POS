@@ -1,0 +1,39 @@
+@model PharmacyPOS.Models.Medicine
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label asp-for="Code" class="form-label"></label>
+        <input asp-for="Code" class="form-control" />
+        <span asp-validation-for="Code" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="BrandName" class="form-label"></label>
+        <input asp-for="BrandName" class="form-control" />
+        <span asp-validation-for="BrandName" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="GenericName" class="form-label"></label>
+        <input asp-for="GenericName" class="form-control" />
+        <span asp-validation-for="GenericName" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Category" class="form-label"></label>
+        <input asp-for="Category" class="form-control" />
+        <span asp-validation-for="Category" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Price" class="form-label"></label>
+        <input asp-for="Price" class="form-control" />
+        <span asp-validation-for="Price" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Stock" class="form-label"></label>
+        <input asp-for="Stock" class="form-control" />
+        <span asp-validation-for="Stock" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="ExpiryDate" class="form-label"></label>
+        <input asp-for="ExpiryDate" class="form-control" type="date" />
+        <span asp-validation-for="ExpiryDate" class="text-danger small"></span>
+    </div>
+</div>

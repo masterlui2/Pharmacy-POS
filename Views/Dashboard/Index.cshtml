@@ -1,0 +1,14 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-card p-4">
+    <h3 class="mb-1">Good day, @Context.Session.GetString("Username")!</h3>
+    <p class="text-muted">Welcome to your Pharmacy POS admin dashboard.</p>
+
+    <div class="row g-3 mt-1">
+        <div class="col-md-4"><div class="p-3 border rounded bg-white"><h4>236</h4><small class="text-muted">New Orders</small></div></div>
+        <div class="col-md-4"><div class="p-3 border rounded bg-white"><h4>$18,306</h4><small class="text-muted">Earnings This Month</small></div></div>
+        <div class="col-md-4"><div class="p-3 border rounded bg-white"><h4>1,538</h4><small class="text-muted">Active Customers</small></div></div>
+    </div>
+</div>

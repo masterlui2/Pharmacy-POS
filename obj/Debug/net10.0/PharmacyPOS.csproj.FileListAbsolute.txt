@@ -223,4 +223,5 @@ C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\PharmacyPOS.sourcelink.json
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\Pharmacy.1DF21F81.Up2Date
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\33qcwxso05-{0}-mlvdznflkj-mlvdznflkj.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\48lim5axdk-{0}-mlvdznflkj-mlvdznflkj.gz
-C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\38uf70dw7l-{0}-6hzp8jmr7p-6hzp8jmr7p.gz
+C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\38uf70dw7l-{0}-smvdy0jnz4-smvdy0jnz4.gz
+C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\yw2ibkbxn5-{0}-h888wik71o-h888wik71o.gz

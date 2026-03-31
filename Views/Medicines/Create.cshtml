@@ -1,0 +1,21 @@
+@model PharmacyPOS.Models.Medicine
+@{
+    ViewData["Title"] = "Add Medicine";
+}
+
+<div class="page-card p-4">
+    <h3>Add Medicine</h3>
+    <form asp-action="Create" method="post" class="mt-3">
+        @Html.AntiForgeryToken()
+        <partial name="_Form" model="Model" />
+
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-danger" type="submit">Save</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
