@@ -1,14 +1,159 @@
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Medicine Browser";
+
+    var products = new[]
+    {
+        new { Brand = "Zoloft", Generic = "sertraline hydrochloride 50mg tablet", Category = "Prescription (Rx)", TherapeuticClass = "Antidepressants", DosageForm = "Tablet", Price = "&#8369;145.75", Stocks = 18, RxOnly = true, Rating = 5, PackClass = "product-pack--capsule", PackLabel = "Pfizer", PackTitle = "Zoloft", PackMeta = "50 mg tablet" },
+        new { Brand = "Zolodin", Generic = "sertraline hydrochloride 50mg tablet", Category = "Prescription (Rx)", TherapeuticClass = "Antidepressants", DosageForm = "Tablet", Price = "&#8369;44.00", Stocks = 44, RxOnly = true, Rating = 5, PackClass = "product-pack--box", PackLabel = "Sandoz", PackTitle = "Zolodin", PackMeta = "1 tablet" },
+        new { Brand = "Tidomet", Generic = "carbidopa + levodopa 25mg / 100mg tablet", Category = "Maintenance", TherapeuticClass = "Antiparkinson", DosageForm = "Tablet", Price = "&#8369;33.50", Stocks = 23, RxOnly = true, Rating = 4, PackClass = "product-pack--box product-pack--slim", PackLabel = "MSD", PackTitle = "Tidomet", PackMeta = "25 / 100mg" },
+        new { Brand = "Warik", Generic = "warfarin sodium 5mg tablet", Category = "Prescription (Rx)", TherapeuticClass = "Anticoagulants", DosageForm = "Tablet", Price = "&#8369;27.00", Stocks = 9, RxOnly = true, Rating = 3, PackClass = "product-pack--strip", PackLabel = "RiteMed", PackTitle = "Warik", PackMeta = "5 mg tablet" },
+        new { Brand = "Amlor", Generic = "amlodipine besylate 5mg tablet", Category = "Maintenance", TherapeuticClass = "Antihypertensives", DosageForm = "Tablet", Price = "&#8369;19.25", Stocks = 57, RxOnly = true, Rating = 5, PackClass = "product-pack--box", PackLabel = "Amlor", PackTitle = "Amlodipine", PackMeta = "5 mg" },
+        new { Brand = "Losatan", Generic = "losartan potassium 50mg tablet", Category = "Maintenance", TherapeuticClass = "Antihypertensives", DosageForm = "Tablet", Price = "&#8369;17.50", Stocks = 65, RxOnly = true, Rating = 4, PackClass = "product-pack--capsule", PackLabel = "Losatan", PackTitle = "Losartan", PackMeta = "50 mg" },
+        new { Brand = "Metglu", Generic = "metformin hydrochloride 500mg tablet", Category = "Maintenance", TherapeuticClass = "Antidiabetics", DosageForm = "Tablet", Price = "&#8369;12.90", Stocks = 92, RxOnly = true, Rating = 5, PackClass = "product-pack--strip", PackLabel = "Metglu", PackTitle = "Metformin", PackMeta = "500 mg" },
+        new { Brand = "Cetiriz", Generic = "cetirizine dihydrochloride 10mg tablet", Category = "Over-the-Counter (OTC)", TherapeuticClass = "Antihistamines", DosageForm = "Tablet", Price = "&#8369;8.75", Stocks = 71, RxOnly = false, Rating = 5, PackClass = "product-pack--box product-pack--slim", PackLabel = "Cetiriz", PackTitle = "Cetirizine", PackMeta = "10 mg" },
+        new { Brand = "Bioflu", Generic = "paracetamol + phenylephrine + chlorphenamine", Category = "Over-the-Counter (OTC)", TherapeuticClass = "Antipyretics", DosageForm = "Tablet", Price = "&#8369;9.50", Stocks = 36, RxOnly = false, Rating = 4, PackClass = "product-pack--box", PackLabel = "Bioflu", PackTitle = "Cold Relief", PackMeta = "10 caplets" },
+        new { Brand = "Ascorbic Plus", Generic = "ascorbic acid 500mg capsule", Category = "Supplements", TherapeuticClass = "Vitamins", DosageForm = "Capsule", Price = "&#8369;6.25", Stocks = 112, RxOnly = false, Rating = 4, PackClass = "product-pack--capsule", PackLabel = "SafeMed", PackTitle = "Vitamin C", PackMeta = "500 mg" },
+        new { Brand = "Oralyte", Generic = "oral rehydration salts powder", Category = "First Aid", TherapeuticClass = "Electrolytes", DosageForm = "Syrup", Price = "&#8369;18.60", Stocks = 26, RxOnly = false, Rating = 4, PackClass = "product-pack--strip", PackLabel = "Oralyte", PackTitle = "ORS", PackMeta = "5 sachets" },
+        new { Brand = "Mediset Gauze", Generic = "sterile gauze pads 4x4", Category = "Medical Supplies", TherapeuticClass = "Dressings", DosageForm = "Pack", Price = "&#8369;34.90", Stocks = 14, RxOnly = false, Rating = 5, PackClass = "product-pack--box product-pack--slim", PackLabel = "Mediset", PackTitle = "Sterile Gauze", PackMeta = "25 pads" }
+    };
+
+    var tabs = new[] { "Prescription (Rx)", "Over-the-Counter (OTC)", "Maintenance", "Supplements", "Medical Supplies", "First Aid" };
+    var therapeuticClasses = new[] { "Antipyretics", "Antibiotics", "Antivirals", "Antihypertensives", "Antidiabetics", "Antihistamines" };
+    var dosageForms = new[] { "Tablet", "Capsule", "Syrup", "Injectable", "Pack" };
 }
 
-<div class="page-card p-4">
-    <h3 class="mb-1">Good day, @Context.Session.GetString("Username")!</h3>
-    <p class="text-muted">Welcome to your Pharmacy POS admin dashboard.</p>
-
-    <div class="row g-3 mt-1">
-        <div class="col-md-4"><div class="p-3 border rounded bg-white"><h4>236</h4><small class="text-muted">New Orders</small></div></div>
-        <div class="col-md-4"><div class="p-3 border rounded bg-white"><h4>$18,306</h4><small class="text-muted">Earnings This Month</small></div></div>
-        <div class="col-md-4"><div class="p-3 border rounded bg-white"><h4>1,538</h4><small class="text-muted">Active Customers</small></div></div>
+<section class="medicine-browser-shell">
+    <div class="medicine-browser-header">
+     
+        <div class="medicine-browser-meta">
+            <span class="browser-meta-pill"><i class="bi bi-capsule"></i> 30 items</span>
+            <span class="browser-meta-pill"><i class="bi bi-hospital"></i> SafeMed Pharmacy</span>
+        </div>
     </div>
-</div>
+
+    <div class="medicine-tabs" role="tablist" aria-label="Pharmacy categories">
+        @for (var i = 0; i < tabs.Length; i++)
+        {
+            <button class="medicine-tab @(i == 0 ? "active" : string.Empty)" type="button">@tabs[i]</button>
+        }
+    </div>
+
+    <div class="pharmacy-listing">
+        <aside class="filter-panel">
+            <section class="filter-section">
+                <div class="filter-heading">Filters</div>
+                <div class="filter-subheading">Therapeutic Class</div>
+                @foreach (var item in therapeuticClasses)
+                {
+                    <label class="filter-checkbox">
+                        <input type="checkbox" />
+                        <span>@item</span>
+                    </label>
+                }
+            </section>
+
+            <section class="filter-section">
+                <div class="filter-subheading">Dosage Form</div>
+                @foreach (var item in dosageForms)
+                {
+                    <label class="filter-checkbox">
+                        <input type="checkbox" />
+                        <span>@item</span>
+                    </label>
+                }
+            </section>
+
+            <section class="filter-section">
+                <div class="filter-subheading">Availability</div>
+                <label class="filter-checkbox">
+                    <input type="checkbox" checked />
+                    <span>In Stock</span>
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" />
+                    <span>Out of Stock</span>
+                </label>
+            </section>
+        </aside>
+
+        <section class="product-grid-shell">
+            <div class="listing-topbar">
+                <div class="listing-summary">30 medicine records</div>
+                <div class="listing-controls">
+                    <label class="listing-select-wrap">
+                        <span>Sort By</span>
+                        <select class="listing-select">
+                            <option>Commonly Dispensed</option>
+                            <option>Alphabetical</option>
+                            <option>Price: Low to High</option>
+                            <option>Stock Count</option>
+                        </select>
+                    </label>
+                    <label class="listing-select-wrap">
+                        <span>Density</span>
+                        <select class="listing-select">
+                            <option>4 cards per row</option>
+                            <option>5 cards per row</option>
+                            <option>3 cards per row</option>
+                        </select>
+                    </label>
+                    <div class="listing-pagination">Page 1</div>
+                </div>
+            </div>
+
+            <div class="active-filter-row">
+                <span class="active-filter-chip">Prescription (Rx)</span>
+                <span class="active-filter-chip">In Stock</span>
+                <span class="active-filter-chip">Tablet</span>
+            </div>
+
+            <div class="products-grid">
+                @foreach (var product in products)
+                {
+                    <article class="product-card">
+                        <div class="product-rx">Rx</div>
+
+                        <div class="product-visual">
+                            <div class="product-pack @product.PackClass">
+                                <div class="product-pack-brand">@product.PackLabel</div>
+                                <div class="product-pack-name">@product.PackTitle</div>
+                                <div class="product-pack-dose">@product.PackMeta</div>
+                            </div>
+                        </div>
+
+                        <div class="product-therapeutic">@product.TherapeuticClass</div>
+                        <div class="product-title">@product.Brand</div>
+                        <div class="product-generic">@product.Generic</div>
+
+                        @if (product.RxOnly)
+                        {
+                            <div class="product-note">Prescription Required</div>
+                        }
+
+                        <div class="product-meta-row">
+                            <span>@product.Category</span>
+                            <span>@product.DosageForm</span>
+                        </div>
+
+                        <div class="product-rating-row" aria-label="Rating">
+                            @for (var star = 0; star < 5; star++)
+                            {
+                                <i class="bi @(star < product.Rating ? "bi-star-fill" : "bi-star")"></i>
+                            }
+                        </div>
+
+                        <div class="product-footer">
+                            <div>
+                                <div class="product-price">@Html.Raw(product.Price)</div>
+                                <div class="product-stock">Stocks Left: @product.Stocks</div>
+                            </div>
+                            <button class="product-cart-btn" type="button" aria-label="Add to cart">
+                                <i class="bi bi-bag-plus"></i>
+                            </button>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    </div>
+</section>

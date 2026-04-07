@@ -6,51 +6,103 @@
 }
 
 <style>
-    body {
-        background: #f3f3f3;
+    .storefront-page {
+        padding-top: 1.5rem;
     }
 
     .login-wrapper {
-        min-height: 100vh;
+        min-height: calc(100vh - 220px);
     }
 
     .login-card {
         width: 100%;
-        max-width: 420px;
+        max-width: 500px;
         border: none;
-        border-radius: 22px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        padding: 2.5rem 2rem;
+        border-radius: 24px;
+        box-shadow: 0 18px 40px rgba(17, 24, 39, 0.08);
+        padding: 2.5rem 2.25rem;
         background: #fff;
     }
 
+    .login-brand-mark {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .login-brand-mark img {
+        width: 240px;
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto 0.75rem;
+    }
+
     .login-title {
-        font-size: 2rem;
+        font-size: 1.9rem;
         font-weight: 700;
         color: #212529;
+        margin-bottom: 0.35rem;
     }
 
-    .logo-box {
-        width: 150px;
-        height: 132px;
-        border-radius: 16px;
-        background: #f8f9fa;
+    .login-subtitle {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin-bottom: 0;
+    }
+
+    .login-home-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #a30d17;
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+
+    .login-account-panel {
         display: flex;
         align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-        overflow: hidden;
+        justify-content: space-between;
+        gap: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        background: #f8fafc;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1.6rem;
     }
 
-    .logo-box img {
-        width: 150%;
-        height: 100%;
-        object-fit: contain;
+    .login-account-copy strong {
+        display: block;
+        color: #1f2937;
+        font-size: 0.98rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .login-account-copy span {
+        color: #64748b;
+        font-size: 0.88rem;
+    }
+
+    .login-account-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 148px;
+        height: 42px;
+        padding: 0 1rem;
+        border-radius: 999px;
+        background: #991b1b;
+        color: #fff;
+        text-decoration: none;
+        font-size: 0.86rem;
+        font-weight: 700;
+        white-space: nowrap;
     }
 
     .form-label {
         font-size: 0.95rem;
-        color: #8a8a8a;
+        color: #6b7280;
         margin-bottom: 0.4rem;
     }
 
@@ -65,10 +117,7 @@
     }
 
     .form-control:focus {
-        border-color: transparent;
-        border-bottom: 2px solid transparent;
-        border-image: linear-gradient(90deg, #24c6dc, #b721ff);
-        border-image-slice: 1;
+        border-bottom: 2px solid #c8102e;
         background-color: transparent;
     }
 
@@ -83,7 +132,7 @@
 
     .input-group .form-control:focus + .input-group-text,
     .input-group .input-group-text:has(+ .form-control:focus) {
-        border-bottom: 2px solid #b721ff;
+        border-bottom: 2px solid #c8102e;
     }
 
     .login-btn {
@@ -92,8 +141,8 @@
         padding: 0.85rem 1rem;
         font-weight: 600;
         color: white;
-        background: linear-gradient(90deg, #ce0a0a);
-        box-shadow: 0 6px 16px rgba(123, 104, 238, 0.25);
+        background: linear-gradient(90deg, #c8102e, #9f0f20);
+        box-shadow: 0 10px 22px rgba(200, 16, 46, 0.24);
         transition: 0.2s ease-in-out;
     }
 
@@ -101,17 +150,6 @@
         color: white;
         transform: translateY(-1px);
         opacity: 0.96;
-    }
-
-    .bottom-text {
-        font-size: 0.95rem;
-        color: #6c757d;
-    }
-
-    .bottom-text a {
-        text-decoration: none;
-        font-weight: 600;
-        color: #212529;
     }
 
     .password-toggle-btn {
@@ -132,13 +170,23 @@
     <div class="row justify-content-center align-items-center login-wrapper">
         <div class="col-12 d-flex justify-content-center">
             <div class="login-card">
+                <a class="login-home-link" asp-controller="Dashboard" asp-action="Index">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Back to homepage</span>
+                </a>
 
-                <div class="text-center mb-4">
-                    <h1 class="login-title mb-4">Welcome</h1>
+                <div class="login-brand-mark">
+                    <img src="~/images/logo.png" alt="SafeMed Pharmacy" />
+                    <h1 class="login-title">Welcome back</h1>
+                    <p class="login-subtitle">Sign in to manage medicines, sales, and pharmacy operations.</p>
+                </div>
 
-                  <div class="logo-box mb-3">
-    <img src="~/images/logo.png" alt="Pharmacy Logo" />
-</div>
+                <div class="login-account-panel">
+                    <div class="login-account-copy">
+                        <strong>Create an account first</strong>
+                        <span>Static placeholder for new customer registration and profile setup.</span>
+                    </div>
+                    <a class="login-account-link" href="#">Create Account</a>
                 </div>
 
                 @if (ViewBag.ErrorMessage != null)

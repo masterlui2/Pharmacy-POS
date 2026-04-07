@@ -41,7 +41,7 @@ public class AuthController : Controller
     public IActionResult Logout()
     {
         HttpContext.Session.Clear();
-        return RedirectToAction("Login", "Auth");
+        return RedirectToAction("Index", "Dashboard");
     }
 
     private bool IsAuthenticated() => !string.IsNullOrWhiteSpace(HttpContext.Session.GetString("Username"));
