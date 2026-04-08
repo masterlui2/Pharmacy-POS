@@ -230,4 +230,4 @@ C:\Users\Admin\PharmacyPOS\bin\Debug\net10.0\OR\tsconfig.app.json
 C:\Users\Admin\PharmacyPOS\bin\Debug\net10.0\OR\tsconfig.json
 C:\Users\Admin\PharmacyPOS\bin\Debug\net10.0\OR\tsconfig.node.json
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\yw2ibkbxn5-{0}-nvricalw75-nvricalw75.gz
-C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\k01w10ors3-{0}-5ccwxyla6l-5ccwxyla6l.gz
+C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\k01w10ors3-{0}-9m23tffth4-9m23tffth4.gz

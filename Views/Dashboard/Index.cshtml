@@ -1,159 +1,171 @@
 @{
-    ViewData["Title"] = "Medicine Browser";
-
-    var products = new[]
-    {
-        new { Brand = "Zoloft", Generic = "sertraline hydrochloride 50mg tablet", Category = "Prescription (Rx)", TherapeuticClass = "Antidepressants", DosageForm = "Tablet", Price = "&#8369;145.75", Stocks = 18, RxOnly = true, Rating = 5, PackClass = "product-pack--capsule", PackLabel = "Pfizer", PackTitle = "Zoloft", PackMeta = "50 mg tablet" },
-        new { Brand = "Zolodin", Generic = "sertraline hydrochloride 50mg tablet", Category = "Prescription (Rx)", TherapeuticClass = "Antidepressants", DosageForm = "Tablet", Price = "&#8369;44.00", Stocks = 44, RxOnly = true, Rating = 5, PackClass = "product-pack--box", PackLabel = "Sandoz", PackTitle = "Zolodin", PackMeta = "1 tablet" },
-        new { Brand = "Tidomet", Generic = "carbidopa + levodopa 25mg / 100mg tablet", Category = "Maintenance", TherapeuticClass = "Antiparkinson", DosageForm = "Tablet", Price = "&#8369;33.50", Stocks = 23, RxOnly = true, Rating = 4, PackClass = "product-pack--box product-pack--slim", PackLabel = "MSD", PackTitle = "Tidomet", PackMeta = "25 / 100mg" },
-        new { Brand = "Warik", Generic = "warfarin sodium 5mg tablet", Category = "Prescription (Rx)", TherapeuticClass = "Anticoagulants", DosageForm = "Tablet", Price = "&#8369;27.00", Stocks = 9, RxOnly = true, Rating = 3, PackClass = "product-pack--strip", PackLabel = "RiteMed", PackTitle = "Warik", PackMeta = "5 mg tablet" },
-        new { Brand = "Amlor", Generic = "amlodipine besylate 5mg tablet", Category = "Maintenance", TherapeuticClass = "Antihypertensives", DosageForm = "Tablet", Price = "&#8369;19.25", Stocks = 57, RxOnly = true, Rating = 5, PackClass = "product-pack--box", PackLabel = "Amlor", PackTitle = "Amlodipine", PackMeta = "5 mg" },
-        new { Brand = "Losatan", Generic = "losartan potassium 50mg tablet", Category = "Maintenance", TherapeuticClass = "Antihypertensives", DosageForm = "Tablet", Price = "&#8369;17.50", Stocks = 65, RxOnly = true, Rating = 4, PackClass = "product-pack--capsule", PackLabel = "Losatan", PackTitle = "Losartan", PackMeta = "50 mg" },
-        new { Brand = "Metglu", Generic = "metformin hydrochloride 500mg tablet", Category = "Maintenance", TherapeuticClass = "Antidiabetics", DosageForm = "Tablet", Price = "&#8369;12.90", Stocks = 92, RxOnly = true, Rating = 5, PackClass = "product-pack--strip", PackLabel = "Metglu", PackTitle = "Metformin", PackMeta = "500 mg" },
-        new { Brand = "Cetiriz", Generic = "cetirizine dihydrochloride 10mg tablet", Category = "Over-the-Counter (OTC)", TherapeuticClass = "Antihistamines", DosageForm = "Tablet", Price = "&#8369;8.75", Stocks = 71, RxOnly = false, Rating = 5, PackClass = "product-pack--box product-pack--slim", PackLabel = "Cetiriz", PackTitle = "Cetirizine", PackMeta = "10 mg" },
-        new { Brand = "Bioflu", Generic = "paracetamol + phenylephrine + chlorphenamine", Category = "Over-the-Counter (OTC)", TherapeuticClass = "Antipyretics", DosageForm = "Tablet", Price = "&#8369;9.50", Stocks = 36, RxOnly = false, Rating = 4, PackClass = "product-pack--box", PackLabel = "Bioflu", PackTitle = "Cold Relief", PackMeta = "10 caplets" },
-        new { Brand = "Ascorbic Plus", Generic = "ascorbic acid 500mg capsule", Category = "Supplements", TherapeuticClass = "Vitamins", DosageForm = "Capsule", Price = "&#8369;6.25", Stocks = 112, RxOnly = false, Rating = 4, PackClass = "product-pack--capsule", PackLabel = "SafeMed", PackTitle = "Vitamin C", PackMeta = "500 mg" },
-        new { Brand = "Oralyte", Generic = "oral rehydration salts powder", Category = "First Aid", TherapeuticClass = "Electrolytes", DosageForm = "Syrup", Price = "&#8369;18.60", Stocks = 26, RxOnly = false, Rating = 4, PackClass = "product-pack--strip", PackLabel = "Oralyte", PackTitle = "ORS", PackMeta = "5 sachets" },
-        new { Brand = "Mediset Gauze", Generic = "sterile gauze pads 4x4", Category = "Medical Supplies", TherapeuticClass = "Dressings", DosageForm = "Pack", Price = "&#8369;34.90", Stocks = 14, RxOnly = false, Rating = 5, PackClass = "product-pack--box product-pack--slim", PackLabel = "Mediset", PackTitle = "Sterile Gauze", PackMeta = "25 pads" }
-    };
-
-    var tabs = new[] { "Prescription (Rx)", "Over-the-Counter (OTC)", "Maintenance", "Supplements", "Medical Supplies", "First Aid" };
-    var therapeuticClasses = new[] { "Antipyretics", "Antibiotics", "Antivirals", "Antihypertensives", "Antidiabetics", "Antihistamines" };
-    var dosageForms = new[] { "Tablet", "Capsule", "Syrup", "Injectable", "Pack" };
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<section class="medicine-browser-shell">
-    <div class="medicine-browser-header">
-     
-        <div class="medicine-browser-meta">
-            <span class="browser-meta-pill"><i class="bi bi-capsule"></i> 30 items</span>
-            <span class="browser-meta-pill"><i class="bi bi-hospital"></i> SafeMed Pharmacy</span>
+<div class="pos-topbar">
+    <div class="pos-greeting">
+        <h3>Good Morning, Admin!</h3>
+        <small>POS dashboard and pharmacy operations overview</small>
+    </div>
+    <input class="pos-search" type="text" placeholder="Search medicines, orders, customers..." />
+</div>
+
+<div class="pos-metrics">
+    <div class="metric-card">
+        <h2>59</h2>
+        <p>Reports this month</p>
+    </div>
+    <div class="metric-card">
+        <h2>$96k</h2>
+        <p>Revenue <span class="trend-up">+12%</span></p>
+    </div>
+    <div class="metric-card">
+        <h2>696</h2>
+        <p>Events and campaigns</p>
+    </div>
+    <div class="metric-card">
+        <h2>3,650</h2>
+        <p>Active clients</p>
+    </div>
+</div>
+
+<div class="pos-dashboard-grid">
+    <div class="pos-card">
+        <div class="card-header">
+            <h5>Revenue Updates</h5>
+            <span>2024 trend</span>
+        </div>
+        <div class="revenue-chart">
+            <div class="chart-bars-container">
+                <div class="bar-item"><div class="bar" style="height: 42px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 28px;"></div><div class="bar-label">'05</div></div>
+                <div class="bar-item"><div class="bar" style="height: 48px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 32px;"></div><div class="bar-label">'06</div></div>
+                <div class="bar-item"><div class="bar" style="height: 52px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 38px;"></div><div class="bar-label">'07</div></div>
+                <div class="bar-item"><div class="bar" style="height: 64px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 44px;"></div><div class="bar-label">'08</div></div>
+                <div class="bar-item"><div class="bar" style="height: 58px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 48px;"></div><div class="bar-label">'09</div></div>
+                <div class="bar-item"><div class="bar" style="height: 72px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 52px;"></div><div class="bar-label">'10</div></div>
+                <div class="bar-item"><div class="bar" style="height: 86px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 58px;"></div><div class="bar-label">'11</div></div>
+                <div class="bar-item"><div class="bar" style="height: 94px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 62px;"></div><div class="bar-label">'12</div></div>
+                <div class="bar-item"><div class="bar" style="height: 102px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 68px;"></div><div class="bar-label">'13</div></div>
+                <div class="bar-item"><div class="bar" style="height: 110px; background: #f2994a;"></div><div class="bar expense-bar" style="height: 74px;"></div><div class="bar-label">'14</div></div>
+            </div>
+            <div class="legend">
+                <div><span class="legend-dot" style="background: #f2994a;"></span>Earnings</div>
+                <div><span class="legend-dot" style="background: #4e6bff;"></span>Expense</div>
+            </div>
+            <div class="fd-muted" style="font-size: 0.7rem; margin-top: 6px;">X-axis: 2005-2014 | Y: -10 to 100 scale</div>
+        </div>
+
+        <div style="display: flex; gap: 18px; margin-top: 18px; flex-wrap: wrap;">
+            <div class="yearly-breakup" style="flex: 1;">
+                <div class="big-number">$36,358</div>
+                <div><span class="trend-badge">+9% last year</span></div>
+                <div style="margin-top: 6px; font-size: 0.75rem; color: var(--muted);">2020 vs 2024 comparison</div>
+                <div style="margin-top: 4px;"><strong>2020</strong> to <strong>2024</strong> up 21%</div>
+            </div>
+            <div class="monthly-earnings" style="flex: 1;">
+                <div class="big-number">$6,820</div>
+                <div><span class="trend-badge">+9% last year</span></div>
+                <div style="margin-top: 8px; font-size: 0.7rem;">Monthly earnings average</div>
+            </div>
+        </div>
+
+        <div class="employees-salary-row">
+            <div><span style="font-weight: 600;">Employee Salary</span><br /><span class="big-number" style="font-size: 1.3rem;">$36,358</span></div>
+            <div><span style="font-weight: 600;">Customers</span><br /><span class="big-number" style="font-size: 1.3rem;">78,298</span></div>
         </div>
     </div>
 
-    <div class="medicine-tabs" role="tablist" aria-label="Pharmacy categories">
-        @for (var i = 0; i < tabs.Length; i++)
-        {
-            <button class="medicine-tab @(i == 0 ? "active" : string.Empty)" type="button">@tabs[i]</button>
-        }
+    <div class="pos-card">
+        <div class="card-header">
+            <h5>Best Selling Products</h5>
+            <span>Top 5</span>
+        </div>
+        <div class="best-products">
+            <div class="product-row">
+                <div><span class="product-name">Paracetamol 500mg</span><div class="progress-bar" style="margin-top: 4px;"><div class="progress-fill" style="width: 88%;"></div></div></div>
+                <div class="product-sales">$12,420</div>
+            </div>
+            <div class="product-row">
+                <div><span class="product-name">Amoxicillin caps</span><div class="progress-bar" style="margin-top: 4px;"><div class="progress-fill" style="width: 74%;"></div></div></div>
+                <div class="product-sales">$9,830</div>
+            </div>
+            <div class="product-row">
+                <div><span class="product-name">Vitamin C + Zinc</span><div class="progress-bar" style="margin-top: 4px;"><div class="progress-fill" style="width: 65%;"></div></div></div>
+                <div class="product-sales">$7,254</div>
+            </div>
+            <div class="product-row">
+                <div><span class="product-name">Ibuprofen gel</span><div class="progress-bar" style="margin-top: 4px;"><div class="progress-fill" style="width: 52%;"></div></div></div>
+                <div class="product-sales">$5,980</div>
+            </div>
+            <div class="product-row">
+                <div><span class="product-name">Cough Syrup DM</span><div class="progress-bar" style="margin-top: 4px;"><div class="progress-fill" style="width: 47%;"></div></div></div>
+                <div class="product-sales">$4,336</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 24px; background: #f8fafe; border-radius: 20px; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                <div><span style="font-weight: 600;">Reports:</span> 59</div>
+                <div><span style="font-weight: 600;">Report:</span> $96k</div>
+                <div><span style="font-weight: 600;">Events:</span> 696</div>
+                <div><span style="font-weight: 600;">Projects:</span> 356</div>
+                <div><span style="font-weight: 600;">Clients:</span> 3,650</div>
+                <div><span style="font-weight: 600;">Employees:</span> 96</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 18px;">
+            <div style="font-weight: 600; font-size: 0.75rem; color: var(--muted); margin-bottom: 8px;">Net income trend (2020-2024)</div>
+            <div style="display: flex; gap: 6px; align-items: flex-end; height: 48px;">
+                <div style="background: var(--primary); width: 18%; height: 24px; border-radius: 8px;"></div>
+                <div style="background: var(--primary); width: 28%; height: 36px; border-radius: 8px;"></div>
+                <div style="background: var(--primary); width: 40%; height: 48px; border-radius: 8px;"></div>
+                <div style="background: var(--primary); width: 58%; height: 70px; border-radius: 8px;"></div>
+                <div style="background: var(--primary); width: 72%; height: 86px; border-radius: 8px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="secondary-grid">
+    <div class="pos-card">
+        <div class="card-header">
+            <h5>Revenue by Channel</h5>
+            <span>Monthly</span>
+        </div>
+        <ul style="list-style: none; margin-top: 10px; padding-left: 0;">
+            <li style="display: flex; justify-content: space-between; padding: 8px 0;"><span>Direct Pharmacy Sales</span> <strong>$42,200</strong></li>
+            <li style="display: flex; justify-content: space-between; padding: 8px 0;"><span>Online Orders</span> <strong>$23,580</strong></li>
+            <li style="display: flex; justify-content: space-between; padding: 8px 0;"><span>Hospital Supply</span> <strong>$18,340</strong></li>
+            <li style="display: flex; justify-content: space-between; padding: 8px 0;"><span>Telemedicine Prescriptions</span> <strong>$11,920</strong></li>
+        </ul>
+        <div class="legend-dot" style="background: var(--primary); width: 100%; height: 4px; margin-top: 8px; border-radius: 4px;"></div>
+        <div style="margin-top: 12px; font-size: 0.75rem; color: var(--muted);">Total revenue is up 9% versus the previous period</div>
     </div>
 
-    <div class="pharmacy-listing">
-        <aside class="filter-panel">
-            <section class="filter-section">
-                <div class="filter-heading">Filters</div>
-                <div class="filter-subheading">Therapeutic Class</div>
-                @foreach (var item in therapeuticClasses)
-                {
-                    <label class="filter-checkbox">
-                        <input type="checkbox" />
-                        <span>@item</span>
-                    </label>
-                }
-            </section>
-
-            <section class="filter-section">
-                <div class="filter-subheading">Dosage Form</div>
-                @foreach (var item in dosageForms)
-                {
-                    <label class="filter-checkbox">
-                        <input type="checkbox" />
-                        <span>@item</span>
-                    </label>
-                }
-            </section>
-
-            <section class="filter-section">
-                <div class="filter-subheading">Availability</div>
-                <label class="filter-checkbox">
-                    <input type="checkbox" checked />
-                    <span>In Stock</span>
-                </label>
-                <label class="filter-checkbox">
-                    <input type="checkbox" />
-                    <span>Out of Stock</span>
-                </label>
-            </section>
-        </aside>
-
-        <section class="product-grid-shell">
-            <div class="listing-topbar">
-                <div class="listing-summary">30 medicine records</div>
-                <div class="listing-controls">
-                    <label class="listing-select-wrap">
-                        <span>Sort By</span>
-                        <select class="listing-select">
-                            <option>Commonly Dispensed</option>
-                            <option>Alphabetical</option>
-                            <option>Price: Low to High</option>
-                            <option>Stock Count</option>
-                        </select>
-                    </label>
-                    <label class="listing-select-wrap">
-                        <span>Density</span>
-                        <select class="listing-select">
-                            <option>4 cards per row</option>
-                            <option>5 cards per row</option>
-                            <option>3 cards per row</option>
-                        </select>
-                    </label>
-                    <div class="listing-pagination">Page 1</div>
-                </div>
-            </div>
-
-            <div class="active-filter-row">
-                <span class="active-filter-chip">Prescription (Rx)</span>
-                <span class="active-filter-chip">In Stock</span>
-                <span class="active-filter-chip">Tablet</span>
-            </div>
-
-            <div class="products-grid">
-                @foreach (var product in products)
-                {
-                    <article class="product-card">
-                        <div class="product-rx">Rx</div>
-
-                        <div class="product-visual">
-                            <div class="product-pack @product.PackClass">
-                                <div class="product-pack-brand">@product.PackLabel</div>
-                                <div class="product-pack-name">@product.PackTitle</div>
-                                <div class="product-pack-dose">@product.PackMeta</div>
-                            </div>
-                        </div>
-
-                        <div class="product-therapeutic">@product.TherapeuticClass</div>
-                        <div class="product-title">@product.Brand</div>
-                        <div class="product-generic">@product.Generic</div>
-
-                        @if (product.RxOnly)
-                        {
-                            <div class="product-note">Prescription Required</div>
-                        }
-
-                        <div class="product-meta-row">
-                            <span>@product.Category</span>
-                            <span>@product.DosageForm</span>
-                        </div>
-
-                        <div class="product-rating-row" aria-label="Rating">
-                            @for (var star = 0; star < 5; star++)
-                            {
-                                <i class="bi @(star < product.Rating ? "bi-star-fill" : "bi-star")"></i>
-                            }
-                        </div>
-
-                        <div class="product-footer">
-                            <div>
-                                <div class="product-price">@Html.Raw(product.Price)</div>
-                                <div class="product-stock">Stocks Left: @product.Stocks</div>
-                            </div>
-                            <button class="product-cart-btn" type="button" aria-label="Add to cart">
-                                <i class="bi bi-bag-plus"></i>
-                            </button>
-                        </div>
-                    </article>
-                }
-            </div>
-        </section>
+    <div class="pos-card">
+        <div class="card-header">
+            <h5>Stock Alerts and Inventory Summary</h5>
+            <span>Near expiry</span>
+        </div>
+        <div style="display: flex; gap: 12px; flex-direction: column;">
+            <div><span style="font-weight: 600;">Low stock items:</span> 12 medicines below reorder level</div>
+            <div><span style="font-weight: 600;">Expiring in 30 days:</span> 8 batches (Aspirin, Insulin)</div>
+            <div><span style="font-weight: 600;">Reorder points:</span> 5 active purchase orders</div>
+            <div class="progress-bar" style="width: 100%;"><div class="progress-fill" style="width: 68%; background: #f5b042;"></div></div>
+            <div class="fd-muted">Inventory turnover rate: 68% this quarter</div>
+        </div>
     </div>
-</section>
+</div>
+
+<div class="report-footer">
+    <div class="report-stats">
+        <div class="stat-item"><div class="stat-number">$96k</div><div>Total Report Value</div></div>
+        <div class="stat-item"><div class="stat-number">696</div><div>Events this year</div></div>
+        <div class="stat-item"><div class="stat-number">356</div><div>Active Projects</div></div>
+        <div class="stat-item"><div class="stat-number">3,650</div><div>Clients</div></div>
+        <div class="stat-item"><div class="stat-number">96</div><div>Employees</div></div>
+    </div>
+    <div style="font-size: 0.7rem; color: #7a8599;">SafeMed POS realtime analytics 2025</div>
+</div>

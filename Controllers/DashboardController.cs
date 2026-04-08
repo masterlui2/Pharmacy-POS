@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace PharmacyPOS.Controllers;
 
-public class DashboardController : Controller
+public class DashboardController : BaseController
 {
     public IActionResult Index()
     {

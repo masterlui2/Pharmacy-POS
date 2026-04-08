@@ -4,9 +4,14 @@ using PharmacyPOS.Models;
 
 namespace PharmacyPOS.Controllers;
 
-public class HomeController : BaseController
+public class HomeController : Controller
 {
     public IActionResult Index()
+    {
+        return View();
+    }
+
+    public IActionResult Cart()
     {
         return View();
     }

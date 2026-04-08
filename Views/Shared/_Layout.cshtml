@@ -1,7 +1,7 @@
 ﻿@{
     var currentController = (ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty).ToLowerInvariant();
     var isLoggedIn = !string.IsNullOrWhiteSpace(Context.Session.GetString("Username"));
-    var showCategoryNav = currentController != "dashboard";
+    var showCategoryNav = currentController != "auth";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -42,7 +42,7 @@
                     </div>
                 </div>
 
-                <a class="storefront-logo" asp-controller="Dashboard" asp-action="Index" aria-label="SafeMed home">
+                <a class="storefront-logo" asp-controller="Home" asp-action="Index" aria-label="SafeMed home">
                     <img src="~/images/logo.png" alt="SafeMed Pharmacy" />
                 </a>
 
@@ -87,9 +87,9 @@
                             </div>
                         </div>
                     }
-                    <a class="storefront-action-link storefront-bag-link" href="#">
+                    <a class="storefront-action-link storefront-bag-link" asp-controller="Home" asp-action="Cart">
                             <i class="bi bi-bag"></i>
-                            <span>My Bag</span>
+                            <span>My CART</span>
                             <strong>0</strong>
                     </a>
                 </div>
@@ -100,10 +100,11 @@
         {
             <nav class="storefront-category-nav">
                 <div class="storefront-container storefront-category-links">
-                    <a asp-controller="Dashboard" asp-action="Index">Online Pharmacy</a>
+                    <a asp-controller="Home" asp-action="Index">Online Pharmacy</a>
                     <a href="#">Vitamins</a>
                     @if (isLoggedIn)
                     {
+                        <a asp-controller="Dashboard" asp-action="Index">Admin Panel</a>
                         <a asp-controller="Medicines" asp-action="Index">Inventory</a>
                     }
                     <a href="#">All Brands</a>
