@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="~/css/app-shell.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/storefront.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/PharmacyPOS.styles.css" asp-append-version="true" />
-    
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <div class="storefront-shell">
@@ -100,14 +100,21 @@
         {
             <nav class="storefront-category-nav">
                 <div class="storefront-container storefront-category-links">
-                    <a asp-controller="Home" asp-action="Index">Online Pharmacy</a>
-                    <a href="#">Vitamins</a>
-                    @if (isLoggedIn)
-                    {
-                        <a asp-controller="Dashboard" asp-action="Index">Admin Panel</a>
-                        <a asp-controller="Medicines" asp-action="Index">Inventory</a>
-                    }
-                    <a href="#">All Brands</a>
+                    <a class="storefront-category-link" asp-controller="Home" asp-action="Index">
+                        <span>Our Products</span>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </a>
+                    <a class="storefront-category-link" href="#">
+                        <span>Medical Conditions</span>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </a>
+                    <a class="storefront-category-link" href="#">
+                        <span>Latest Promos</span>
+                    </a>
+                    <a class="storefront-category-link" href="#">
+                        <span>About Us</span>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </a>
                 </div>
             </nav>
         }

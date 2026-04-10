@@ -1,0 +1,25 @@
+:root {
+  --storefront-red: #991b1b;
+  --storefront-red-soft: #fee2e2;
+  --storefront-red-border: #f5c2c7;
+  --storefront-ink: #1f2937;
+  --storefront-slate: #64748b;
+  --storefront-border: #dbe3ea;
+  --storefront-surface: #ffffff;
+  --storefront-bg: #f5f7f8;
+  --storefront-muted: #64748b;
+  --storefront-price: #111827;
+  --storefront-yellow: #ffd400;
+}
+
+body {
+  margin-bottom: 0;
+  font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--storefront-bg);
+  color: var(--storefront-ink);
+}
+
+.storefront-container {
+  width: min(1360px, calc(100vw - 32px));
+  margin: 0 auto;
+}

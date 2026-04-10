@@ -1,0 +1,17 @@
+@model PharmacyPOS.Models.HomeHeroViewModel
+
+<section class="homepage-hero">
+    <div class="homepage-hero__content">
+        <span class="homepage-hero__eyebrow">@Model.Eyebrow</span>
+        <h1 class="homepage-hero__title">@Model.Title</h1>
+        <p class="homepage-hero__description">@Model.Description</p>
+        <div class="homepage-hero__actions">
+            <a class="homepage-hero__action homepage-hero__action--primary" href="#">@Model.PrimaryActionLabel</a>
+            <a class="homepage-hero__action homepage-hero__action--secondary" href="#">@Model.SecondaryActionLabel</a>
+        </div>
+    </div>
+
+    <div class="homepage-hero__visual">
+        <img src="@Url.Content(Model.ImagePath)" alt="Featured SafeMed promotion" />
+    </div>
+</section>

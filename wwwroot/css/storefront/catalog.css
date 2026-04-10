@@ -1,0 +1,432 @@
+.pharmacy-listing {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.2fr) minmax(0, 1fr);
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.medicine-browser-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.medicine-browser-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0 0.2rem;
+}
+
+.medicine-browser-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  color: var(--storefront-ink);
+}
+
+.medicine-browser-subtitle {
+  margin: 0;
+  color: var(--storefront-slate);
+  font-size: 0.95rem;
+}
+
+.medicine-browser-meta {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.browser-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 36px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--storefront-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--storefront-ink);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.medicine-tabs {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--storefront-border);
+}
+
+.medicine-tab {
+  border: 0;
+  background: transparent;
+  padding: 0.9rem 0 0.8rem;
+  color: var(--storefront-slate);
+  font-size: 0.92rem;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+}
+
+.medicine-tab.active {
+  color: var(--storefront-red);
+  border-color: var(--storefront-red);
+}
+
+.filter-panel,
+.product-grid-shell {
+  background: var(--storefront-surface);
+  border: 1px solid var(--storefront-border);
+}
+
+.filter-panel {
+  position: sticky;
+  top: 0.75rem;
+}
+
+.filter-section {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid #e8edf1;
+}
+
+.filter-section:last-child {
+  border-bottom: 0;
+}
+
+.filter-heading,
+.filter-subheading {
+  font-weight: 700;
+  color: #1b232b;
+}
+
+.filter-heading {
+  font-size: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.filter-subheading {
+  font-size: 0.84rem;
+  margin-bottom: 0.75rem;
+}
+
+.filter-checkbox,
+.filter-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--storefront-muted);
+  font-size: 0.82rem;
+  margin-bottom: 0.6rem;
+}
+
+.filter-checkbox input,
+.filter-brand-row input {
+  width: 15px;
+  height: 15px;
+}
+
+.filter-search,
+.price-field {
+  width: 100%;
+  height: 34px;
+  border: 1px solid #e0e5ea;
+  padding: 0 0.75rem;
+  outline: 0;
+  font-size: 0.82rem;
+}
+
+.brand-list {
+  max-height: 205px;
+  overflow: auto;
+  margin-top: 0.7rem;
+}
+
+.price-range-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.45rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.price-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.filter-btn {
+  min-width: 58px;
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid var(--storefront-red);
+  background: #fff;
+  color: var(--storefront-red);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.filter-btn--primary {
+  background: var(--storefront-red);
+  color: #fff;
+}
+
+.product-grid-shell {
+  padding: 0.85rem 1rem 1rem;
+}
+
+.listing-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid #edf1f4;
+  margin-bottom: 1rem;
+}
+
+.listing-summary {
+  color: var(--storefront-slate);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.listing-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.listing-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  color: #4b5563;
+}
+
+.listing-select {
+  min-width: 144px;
+  height: 34px;
+  border: 1px solid #dde3e8;
+  background: #fff;
+  padding: 0 0.75rem;
+  font-size: 0.82rem;
+}
+
+.listing-pagination {
+  min-width: 60px;
+  height: 34px;
+  border: 1px solid #dde3e8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #69737d;
+  font-size: 0.82rem;
+}
+
+.active-filter-row {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #d3dfe6;
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+  color: #374151;
+  background: #fff;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.product-card {
+  position: relative;
+  background: var(--storefront-surface);
+  border: 1px solid #dde4e9;
+  border-radius: 14px;
+  padding: 0.95rem;
+  min-height: 100%;
+}
+
+.product-rx {
+  position: absolute;
+  top: 0.95rem;
+  left: 0.95rem;
+  color: var(--storefront-red);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.product-visual {
+  height: 164px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.45rem 0 0.75rem;
+}
+
+.product-pack {
+  width: 150px;
+  min-height: 110px;
+  border: 2px solid #cbd5e1;
+  background: linear-gradient(180deg, #ffffff, #f3fdfd);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.product-pack--box {
+  border-radius: 12px;
+}
+
+.product-pack--slim {
+  width: 132px;
+  min-height: 132px;
+}
+
+.product-pack--capsule {
+  width: 158px;
+  min-height: 96px;
+  border-color: #cbd5e1;
+  background: linear-gradient(180deg, #fffefe, #f8fafc);
+}
+
+.product-pack--strip {
+  width: 156px;
+  min-height: 84px;
+  border: 0;
+  background: linear-gradient(90deg, #ffffff, #efefef);
+  box-shadow: none;
+}
+
+.product-pack-brand {
+  color: var(--storefront-slate);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.product-pack-name {
+  color: var(--storefront-red);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.product-pack-dose {
+  color: #3c4752;
+  font-size: 0.8rem;
+}
+
+.product-therapeutic {
+  color: var(--storefront-red);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.3rem;
+}
+
+.product-title {
+  font-size: 0.97rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+  color: var(--storefront-ink);
+}
+
+.product-generic {
+  font-size: 0.79rem;
+  color: var(--storefront-slate);
+  font-style: italic;
+  min-height: 2.35rem;
+  margin-bottom: 0.45rem;
+}
+
+.product-note {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 0.55rem;
+  background: var(--storefront-red-soft);
+  border: 1px solid var(--storefront-red-border);
+  border-radius: 999px;
+  color: var(--storefront-red);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 0.45rem;
+}
+
+.product-meta-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  color: var(--storefront-slate);
+  font-size: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.product-meta-row span {
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.product-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.74rem;
+  color: #f59e0b;
+  margin-bottom: 0.5rem;
+}
+
+.product-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.15rem;
+}
+
+.product-price {
+  color: var(--storefront-price);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.product-stock {
+  color: var(--storefront-slate);
+  font-size: 0.78rem;
+}
+
+.product-cart-btn {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--storefront-red);
+  color: #fff;
+  flex-shrink: 0;
+}

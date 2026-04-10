@@ -1,0 +1,321 @@
+.storefront-utility-bar {
+  background: #000;
+  color: #fff;
+  font-size: 0.78rem;
+}
+
+.storefront-utility-inner {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.storefront-utility-links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.storefront-utility-links a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.storefront-header {
+  background: var(--storefront-surface);
+  border-bottom: 1px solid var(--storefront-border);
+}
+
+.storefront-header-inner {
+  min-height: 92px;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) auto minmax(220px, 1fr);
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.storefront-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.storefront-search-trigger {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--storefront-ink);
+  font-size: 1rem;
+}
+
+.storefront-search-box {
+  max-width: 430px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  border-bottom: 1px solid #d9dee5;
+  padding-bottom: 0.4rem;
+}
+
+.storefront-search-box input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 0.95rem;
+}
+
+.storefront-search-mascot {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    #7cf3ff,
+    #00b2b0 58%,
+    #6d3ff2 100%
+  );
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.storefront-search-mascot span {
+  position: absolute;
+  top: 10px;
+  width: 5px;
+  height: 5px;
+  background: #fff;
+  border-radius: 50%;
+}
+
+.storefront-search-mascot span:first-child {
+  left: 10px;
+}
+
+.storefront-search-mascot span:last-child {
+  right: 10px;
+}
+
+.storefront-search-mascot i {
+  position: absolute;
+  bottom: 5px;
+  font-style: normal;
+}
+
+.storefront-logo {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  padding: 0.25rem 0.5rem;
+  text-decoration: none;
+}
+
+.storefront-logo img {
+  width: 220px;
+  max-width: 70%;
+  height: auto;
+  display: block;
+}
+
+.storefront-actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.storefront-login-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.storefront-action-link {
+  position: relative;
+  min-width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--storefront-ink);
+  text-decoration: none;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+.storefront-action-link i {
+  font-size: 1.3rem;
+}
+
+.storefront-login-menu:hover .storefront-action-link,
+.storefront-login-menu:focus-within .storefront-action-link {
+  background: #f8fafc;
+}
+
+.storefront-login-dropdown {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  padding: 1.1rem;
+  border: 1px solid var(--storefront-border);
+  background: #fff;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
+  display: none;
+  z-index: 20;
+}
+
+.storefront-login-dropdown::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-top: 1px solid var(--storefront-border);
+  border-left: 1px solid var(--storefront-border);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.storefront-login-menu:hover .storefront-login-dropdown,
+.storefront-login-menu:focus-within .storefront-login-dropdown {
+  display: block;
+}
+
+.storefront-login-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border: 1px solid #cbd5e1;
+  color: var(--storefront-ink);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+.storefront-login-cta:first-of-type {
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+.storefront-login-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.55rem 0 0.8rem;
+}
+
+.storefront-login-links a {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 42px;
+  color: var(--storefront-ink);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.storefront-login-links a i {
+  font-size: 1.05rem;
+  color: #475569;
+}
+
+.storefront-login-chat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 50px;
+  background: #2b2b2b;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.storefront-inline-form {
+  margin: 0;
+}
+
+.storefront-action-button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.storefront-bag-link strong {
+  position: absolute;
+  top: 2px;
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--storefront-yellow);
+  color: #000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+}
+
+.storefront-category-nav {
+  background: var(--storefront-surface);
+  border-bottom: 1px solid var(--storefront-border);
+}
+
+.storefront-category-links {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.storefront-category-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #31445f;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1.15rem 0 1.05rem;
+  border-bottom: 2px solid transparent;
+  letter-spacing: -0.01em;
+}
+
+.storefront-category-link i {
+  font-size: 0.68rem;
+}
+
+.storefront-category-link.active,
+.storefront-category-link:hover {
+  color: var(--storefront-red);
+  border-color: var(--storefront-red);
+}
+
+.storefront-page {
+  padding: 0.65rem 0 2rem;
+}
+
+.storefront-content-area {
+  padding: 0;
+}

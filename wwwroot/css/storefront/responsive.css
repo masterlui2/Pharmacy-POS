@@ -1,0 +1,109 @@
+@media (max-width: 1200px) {
+  .products-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .storefront-header-inner {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 1rem 0;
+  }
+
+  .storefront-search-wrap,
+  .storefront-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .storefront-login-dropdown {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+
+  .storefront-login-dropdown::before {
+    left: auto;
+    right: 28px;
+    transform: rotate(45deg);
+  }
+
+  .pharmacy-listing {
+    grid-template-columns: 1fr;
+  }
+
+  .medicine-browser-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-panel {
+    position: static;
+  }
+
+  .products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cart-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .storefront-container {
+    width: min(100vw - 20px, 100%);
+  }
+
+  .storefront-utility-inner,
+  .listing-topbar,
+  .medicine-browser-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .storefront-utility-links,
+  .listing-controls {
+    justify-content: flex-start;
+  }
+
+  .storefront-search-wrap {
+    flex-wrap: wrap;
+  }
+
+  .storefront-login-dropdown {
+    width: min(320px, calc(100vw - 24px));
+    right: -36px;
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-page__hero,
+  .cart-item-card,
+  .cart-item-card__head,
+  .cart-item-card__footer,
+  .cart-note-card {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .cart-page__title {
+    font-size: 1.8rem;
+  }
+
+  .cart-item-card {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-item-card__visual {
+    min-height: 140px;
+  }
+
+  .cart-pricing {
+    align-items: start;
+  }
+}

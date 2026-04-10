@@ -1,0 +1,28 @@
+@model IReadOnlyList<PharmacyPOS.Models.HomeCategoryCardViewModel>
+
+<section class="homepage-categories" aria-labelledby="homepage-categories-title">
+    <div class="homepage-categories__heading">
+        <span class="homepage-categories__accent" aria-hidden="true"></span>
+        <div class="homepage-categories__heading-copy">
+            <p class="homepage-categories__eyebrow">Shop By</p>
+            <h2 class="homepage-categories__title" id="homepage-categories-title">Category</h2>
+        </div>
+    </div>
+
+    <div class="homepage-categories__grid">
+        @foreach (var category in Model)
+        {
+            <article class="homepage-category-card">
+                <a class="homepage-category-card__link" href="#">
+                    <div class="homepage-category-card__image-wrap">
+                        <img src="@Url.Content(category.ImagePath)" alt="@($"{category.Title} {category.Subtitle}")" />
+                    </div>
+                    <h3 class="homepage-category-card__label">
+                        <span>@category.Title</span>
+                        <span>@category.Subtitle</span>
+                    </h3>
+                </a>
+            </article>
+        }
+    </div>
+</section>

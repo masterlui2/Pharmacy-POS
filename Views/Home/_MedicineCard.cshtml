@@ -1,0 +1,31 @@
+@model PharmacyPOS.Models.FeaturedMedicineCardViewModel
+
+<article class="medicine-spotlight-card">
+    <div class="medicine-spotlight-card__image-wrap">
+        <img class="medicine-spotlight-card__image" src="@Url.Content(Model.ImagePath)" alt="@Model.BrandName" />
+    </div>
+
+    <div class="medicine-spotlight-card__meta-bar">
+        <span class="medicine-spotlight-card__category">@Model.CategoryLabel</span>
+        <span class="medicine-spotlight-card__quantity">
+            <strong>@Model.QuantityLabel</strong>
+            <i class="bi bi-capsule-pill" aria-hidden="true"></i>
+        </span>
+    </div>
+
+    <div class="medicine-spotlight-card__body">
+        <h2 class="medicine-spotlight-card__brand">@Model.BrandName</h2>
+        <p class="medicine-spotlight-card__name">@Model.ProductName</p>
+    </div>
+
+    <div class="medicine-spotlight-card__purchase">
+        <div class="medicine-spotlight-card__quantity-picker" aria-label="Quantity selector">
+            <button type="button" aria-label="Decrease quantity">-</button>
+            <span>1</span>
+            <button type="button" aria-label="Increase quantity">+</button>
+        </div>
+        <div class="medicine-spotlight-card__price">@Model.PriceLabel</div>
+    </div>
+
+    <button class="medicine-spotlight-card__cta" type="button">Add to Cart</button>
+</article>
