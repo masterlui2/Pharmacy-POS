@@ -18,7 +18,8 @@
     <link rel="stylesheet" href="~/PharmacyPOS.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
+<body data-authenticated="@isLoggedIn.ToString().ToLowerInvariant()"
+      data-login-url="@Url.Action("Login", "Auth")">
     <div class="storefront-shell">
         <div class="storefront-utility-bar">
             <div class="storefront-container storefront-utility-inner">
@@ -69,7 +70,7 @@
                                 <span>Login</span>
                             </a>
                             <div class="storefront-login-dropdown">
-                                <a class="storefront-login-cta" href="#">
+                                <a class="storefront-login-cta" asp-controller="Auth" asp-action="Register">
                                     <span>Create Account</span>
                                 </a>
                                 <a class="storefront-login-cta" asp-controller="Auth" asp-action="Login">
@@ -87,10 +88,10 @@
                             </div>
                         </div>
                     }
-                    <a class="storefront-action-link storefront-bag-link" asp-controller="Home" asp-action="Cart">
+                    <a class="storefront-action-link storefront-bag-link" asp-controller="Home" asp-action="Cart" data-cart-link>
                             <i class="bi bi-bag"></i>
                             <span>My CART</span>
-                            <strong>0</strong>
+                            <strong data-cart-count>0</strong>
                     </a>
                 </div>
             </div>
@@ -126,9 +127,55 @@
         </div>
     </div>
 
+    <div class="cart-modal" data-cart-modal hidden>
+        <div class="cart-modal__backdrop" data-cart-modal-close></div>
+        <div class="cart-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="cart-modal-title">
+            <div class="cart-modal__header">
+                <h2 id="cart-modal-title">Product successfully added to your shopping cart</h2>
+                <button type="button" class="cart-modal__close" aria-label="Close" data-cart-modal-close>
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="cart-modal__body">
+                <div class="cart-modal__rx" data-cart-modal-rx hidden>
+                    Reminder: This is an Rx product. You will be required to submit/upload your prescription upon checkout.
+                </div>
+
+                <div class="cart-modal__item">
+                    <div class="cart-modal__image-wrap">
+                        <img src="" alt="" data-cart-modal-image />
+                        <p>Included taxes: <strong data-cart-modal-tax></strong></p>
+                    </div>
+
+                    <div class="cart-modal__details">
+                        <div class="cart-modal__item-head">
+                            <div>
+                                <h3 data-cart-modal-name></h3>
+                                <strong data-cart-modal-price></strong>
+                            </div>
+                            <span data-cart-modal-quantity></span>
+                        </div>
+
+                        <div class="cart-modal__actions">
+                            <button type="button" class="cart-modal__action cart-modal__action--secondary" data-cart-modal-close>
+                                Continue Shopping
+                            </button>
+                            <a class="cart-modal__action cart-modal__action--primary" asp-controller="Home" asp-action="Cart">
+                                <i class="bi bi-check-circle"></i>
+                                <span>Proceed to Checkout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/cart.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

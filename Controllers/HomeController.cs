@@ -13,15 +13,27 @@ public class HomeController(IMedicineService medicineService) : Controller
 
         var vm = new HomeIndexViewModel
         {
-            Hero = new HomeHeroViewModel
-            {
-                Eyebrow = "Main Advertisement",
-                Title = "Daily medicine deals and trusted pharmacy essentials.",
-                Description = "The homepage hero now uses the provided artwork to anchor promotions while keeping the storefront layout consistent with the rest of the site.",
-                ImagePath = "~/images/hero.png",
-                PrimaryActionLabel = "Shop Now",
-                SecondaryActionLabel = "View Offers"
-            },
+            HeroSlides =
+            [
+                new()
+                {
+                    Eyebrow = "Main Advertisement",
+                    Title = "Daily medicine deals and trusted pharmacy essentials.",
+                    Description = "Shop trusted pharmacy picks, fast-moving wellness staples, and curated promotions in one streamlined storefront experience.",
+                    ImagePath = "~/images/mainhero.png",
+                    PrimaryActionLabel = "Shop Now",
+                    SecondaryActionLabel = "View Offers"
+                },
+                new()
+                {
+                    Eyebrow = "Featured Promotion",
+                    Title = "Seasonal care bundles and everyday essentials in one place.",
+                    Description = "Browse fresh homepage offers built around the new hero artwork, with a cleaner layout that highlights promotions without crowding the product sections.",
+                    ImagePath = "~/images/hero2.png",
+                    PrimaryActionLabel = "Browse Deals",
+                    SecondaryActionLabel = "Learn More"
+                }
+            ],
             Categories =
             [
                 new()
@@ -49,31 +61,66 @@ public class HomeController(IMedicineService medicineService) : Controller
                     Subtitle = "Devices"
                 }
             ],
+            PromoPanels =
+            [
+                new()
+                {
+                    Label = "Prescription",
+                    TitlePrimary = "Prescription",
+                    TitleAccent = "Medicines",
+                    ImagePath = "~/images/prescript.png",
+                    ActionLabel = "View more"
+                },
+                new()
+                {
+                    Label = "OTC",
+                    TitlePrimary = "Over the Counter",
+                    TitleAccent = "Medicines",
+                    ImagePath = "~/images/otc.png",
+                    ActionLabel = "View more"
+                }
+            ],
             FeaturedMedicines =
             [
                 CreateFeaturedCard(
+                    id: "coldzep",
                     imagePath: "~/images/m1.png",
                     categoryLabel: "Cold, sipon & trangkaso",
                     quantityLabel: "100",
                     brandName: "COLDZEP",
                     productName: "Paracetamol + Phenylephrine HCl + Chlorphenamine",
                     fallbackPrice: 498.75m,
+                    requiresPrescription: true,
                     inventory),
                 CreateFeaturedCard(
+                    id: "coq10",
                     imagePath: "~/images/m2.png",
                     categoryLabel: "Food supplement",
                     quantityLabel: "10",
                     brandName: "COQ10",
                     productName: "Coenzyme Q10 (Ubiquinone) 30mg Softgel Capsule 10s",
                     fallbackPrice: 110.25m,
+                    requiresPrescription: false,
                     inventory),
                 CreateFeaturedCard(
+                    id: "biogesic",
                     imagePath: "~/images/m3.png",
                     categoryLabel: "Sakit ng ulo, lagnat",
                     quantityLabel: "100",
                     brandName: "BIOGESIC",
                     productName: "Paracetamol 500mg Tablet 100s",
                     fallbackPrice: 183.75m,
+                    requiresPrescription: false,
+                    inventory),
+                CreateFeaturedCard(
+                    id: "diatabs",
+                    imagePath: "~/images/m4.png",
+                    categoryLabel: "Tiyan at digestive care",
+                    quantityLabel: "24",
+                    brandName: "DIATABS",
+                    productName: "Loperamide capsule support for diarrhea relief",
+                    fallbackPrice: 12.00m,
+                    requiresPrescription: false,
                     inventory)
             ]
         };
@@ -98,26 +145,33 @@ public class HomeController(IMedicineService medicineService) : Controller
     }
 
     private static FeaturedMedicineCardViewModel CreateFeaturedCard(
+        string id,
         string imagePath,
         string categoryLabel,
         string quantityLabel,
         string brandName,
         string productName,
         decimal fallbackPrice,
+        bool requiresPrescription,
         IReadOnlyDictionary<string, Medicine> inventory)
     {
         var price = inventory.TryGetValue(brandName, out var medicine)
             ? medicine.Price
             : fallbackPrice;
+        var includedTax = Math.Round(price * 0.12m, 2);
 
         return new FeaturedMedicineCardViewModel
         {
+            Id = id,
             ImagePath = imagePath,
             CategoryLabel = categoryLabel,
             QuantityLabel = quantityLabel,
             BrandName = brandName,
             ProductName = productName,
-            PriceLabel = $"\u20B1{price:N2}"
+            PriceLabel = $"\u20B1{price:N2}",
+            UnitPrice = price,
+            IncludedTax = includedTax,
+            RequiresPrescription = requiresPrescription
         };
     }
 }

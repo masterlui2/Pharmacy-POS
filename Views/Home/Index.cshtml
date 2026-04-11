@@ -5,18 +5,21 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/homepage.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/homepage-hero.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/homepage-categories.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/homepage-promos.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/homepage.css" asp-append-version="true" />
 }
 
-@await Html.PartialAsync("_HeroBanner", Model.Hero)
+@await Html.PartialAsync("_HeroBanner", Model.HeroSlides)
 @await Html.PartialAsync("_CategoryStrip", Model.Categories)
+@await Html.PartialAsync("_PromoPanels", Model.PromoPanels)
 
 <section class="homepage-medicines">
     <div class="homepage-medicines__header">
         <div>
             <span class="homepage-medicines__eyebrow">Featured Medicines</span>
-            <h2 class="homepage-medicines__title">Pharmacy essentials on the homepage</h2>
+            <h2 class="homepage-medicines__title">Medicine care essentials for everyday needs</h2>
         </div>
     </div>
 

@@ -12,6 +12,7 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddSingleton<IMedicineService, InMemoryMedicineService>();
+builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
 
 var app = builder.Build();
 

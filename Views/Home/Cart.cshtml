@@ -1,122 +1,13 @@
 @{
     ViewData["Title"] = "My Cart";
-
-    var cartItems = new[]
-    {
-        new { Name = "Paracetamol 500mg", Subtitle = "Box of 20 tablets", Price = 145.75m, Quantity = 2, Tag = "Fast Relief", AccentClass = "cart-pack--crimson" },
-        new { Name = "Vitamin C 500mg", Subtitle = "Bottle of 100 capsules", Price = 329.50m, Quantity = 1, Tag = "Daily Wellness", AccentClass = "cart-pack--gold" },
-        new { Name = "Cetirizine 10mg", Subtitle = "Strip of 10 tablets", Price = 89.25m, Quantity = 1, Tag = "Allergy Care", AccentClass = "cart-pack--slate" }
-    };
-
-    var subtotal = cartItems.Sum(item => item.Price * item.Quantity);
-    var serviceFee = 49.00m;
-    var deliveryFee = 60.00m;
-    var total = subtotal + serviceFee + deliveryFee;
 }
 
-<section class="cart-page">
-    <div class="cart-page__hero">
-        <div>
-            <div class="cart-page__eyebrow">SafeMed Cart</div>
-            <h1 class="cart-page__title">My Cart</h1>
-            <p class="cart-page__subtitle">A clean review of selected medicines before checkout. Static for now, ready for real data later.</p>
+<section class="cart-page" data-cart-page>
+    <div class="cart-page__shell" data-cart-root>
+        <div class="cart-page__empty-state">
+            <h2>Your cart is empty</h2>
+            <p>Add medicines from the homepage and they will appear here.</p>
+            <a class="cart-page__continue-link" asp-controller="Home" asp-action="Index">Continue Shopping</a>
         </div>
-        <div class="cart-page__badge">
-            <span>@cartItems.Length items</span>
-            <strong>@total.ToString("C")</strong>
-        </div>
-    </div>
-
-    <div class="cart-layout">
-        <div class="cart-items-panel">
-            @foreach (var item in cartItems)
-            {
-                var lineTotal = item.Price * item.Quantity;
-
-                <article class="cart-item-card">
-                    <div class="cart-item-card__visual">
-                        <div class="cart-pack @item.AccentClass">
-                            <span class="cart-pack__tag">@item.Tag</span>
-                            <strong>@item.Name</strong>
-                            <small>@item.Subtitle</small>
-                        </div>
-                    </div>
-
-                    <div class="cart-item-card__content">
-                        <div class="cart-item-card__head">
-                            <div>
-                                <h2>@item.Name</h2>
-                                <p>@item.Subtitle</p>
-                            </div>
-                            <button type="button" class="cart-link-btn">Remove</button>
-                        </div>
-
-                        <div class="cart-item-card__meta">
-                            <span class="cart-meta-pill">Prescription review ready</span>
-                            <span class="cart-meta-pill">In stock</span>
-                        </div>
-
-                        <div class="cart-item-card__footer">
-                            <div class="cart-qty">
-                                <button type="button" aria-label="Decrease quantity">-</button>
-                                <span>@item.Quantity</span>
-                                <button type="button" aria-label="Increase quantity">+</button>
-                            </div>
-                            <div class="cart-pricing">
-                                <span>@item.Price.ToString("C") each</span>
-                                <strong>@lineTotal.ToString("C")</strong>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-            }
-
-            <div class="cart-note-card">
-                <div>
-                    <h3>Delivery Note</h3>
-                    <p>Orders with regulated medicines may require prescription validation before dispatch.</p>
-                </div>
-                <button type="button" class="cart-secondary-btn">Add note</button>
-            </div>
-        </div>
-
-        <aside class="cart-summary-panel">
-            <div class="cart-summary-card">
-                <div class="cart-summary-card__header">
-                    <h2>Order Summary</h2>
-                    <span>Static preview</span>
-                </div>
-
-                <div class="cart-summary-row">
-                    <span>Subtotal</span>
-                    <strong>@subtotal.ToString("C")</strong>
-                </div>
-                <div class="cart-summary-row">
-                    <span>Service fee</span>
-                    <strong>@serviceFee.ToString("C")</strong>
-                </div>
-                <div class="cart-summary-row">
-                    <span>Delivery</span>
-                    <strong>@deliveryFee.ToString("C")</strong>
-                </div>
-                <div class="cart-summary-row cart-summary-row--total">
-                    <span>Total</span>
-                    <strong>@total.ToString("C")</strong>
-                </div>
-
-                <button type="button" class="cart-primary-btn">Proceed to Checkout</button>
-                <a class="cart-secondary-link" asp-controller="Home" asp-action="Index">Continue shopping</a>
-            </div>
-
-            <div class="cart-summary-card cart-summary-card--soft">
-                <h3>Included in this mockup</h3>
-                <ul class="cart-feature-list">
-                    <li>Clean medicine line items</li>
-                    <li>Quantity controls for future wiring</li>
-                    <li>Order total block</li>
-                    <li>Delivery and prescription note area</li>
-                </ul>
-            </div>
-        </aside>
     </div>
 </section>

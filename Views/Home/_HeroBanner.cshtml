@@ -1,17 +1,24 @@
-@model PharmacyPOS.Models.HomeHeroViewModel
+@model IReadOnlyList<PharmacyPOS.Models.HomeHeroSlideViewModel>
 
-<section class="homepage-hero">
-    <div class="homepage-hero__content">
-        <span class="homepage-hero__eyebrow">@Model.Eyebrow</span>
-        <h1 class="homepage-hero__title">@Model.Title</h1>
-        <p class="homepage-hero__description">@Model.Description</p>
-        <div class="homepage-hero__actions">
-            <a class="homepage-hero__action homepage-hero__action--primary" href="#">@Model.PrimaryActionLabel</a>
-            <a class="homepage-hero__action homepage-hero__action--secondary" href="#">@Model.SecondaryActionLabel</a>
+@if (Model.Count > 0)
+{
+    var primarySlide = Model[0];
+    var secondarySlide = Model.Count > 1 ? Model[1] : Model[0];
+    var tertiaryImagePath = Url.Content("~/images/hero.png");
+
+    <section class="homepage-hero-showcase" aria-label="Homepage promotions">
+        <a class="homepage-hero-showcase__primary" href="#">
+            <img src="@Url.Content(primarySlide.ImagePath)" alt="@primarySlide.Title" />
+        </a>
+
+        <div class="homepage-hero-showcase__aside">
+            <a class="homepage-hero-showcase__secondary" href="#">
+                <img src="@Url.Content(secondarySlide.ImagePath)" alt="@secondarySlide.Title" />
+            </a>
+
+            <a class="homepage-hero-showcase__tertiary" href="#">
+                <img src="@tertiaryImagePath" alt="Featured SafeMed promotion" />
+            </a>
         </div>
-    </div>
-
-    <div class="homepage-hero__visual">
-        <img src="@Url.Content(Model.ImagePath)" alt="Featured SafeMed promotion" />
-    </div>
-</section>
+    </section>
+}
