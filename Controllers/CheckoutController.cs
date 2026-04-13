@@ -21,7 +21,14 @@ public class CheckoutController(ICheckoutService checkoutService) : Controller
             });
         }
 
-        var result = await checkoutService.PlaceOrderAsync(request, customerEmail, cancellationToken);
+        var successReturnUrl = Url.Action("Index", "Orders", values: null, protocol: Request.Scheme);
+        var cancelReturnUrl = Url.Action("Cart", "Home", values: null, protocol: Request.Scheme);
+        var result = await checkoutService.PlaceOrderAsync(
+            request,
+            customerEmail,
+            successReturnUrl,
+            cancelReturnUrl,
+            cancellationToken);
 
         if (!result.Success)
         {

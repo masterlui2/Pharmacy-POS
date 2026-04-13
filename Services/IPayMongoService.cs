@@ -8,6 +8,8 @@ public interface IPayMongoService
         PharmacyOrder order,
         IReadOnlyList<PharmacyOrderItem> items,
         string paymentMethod,
+        string? successReturnUrl,
+        string? cancelReturnUrl,
         CancellationToken cancellationToken = default);
 
     bool IsConfigured();

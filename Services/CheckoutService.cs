@@ -19,6 +19,8 @@ public class CheckoutService(
     public async Task<PlaceOrderResult> PlaceOrderAsync(
         PlaceOrderRequest request,
         string customerEmail,
+        string? successReturnUrl,
+        string? cancelReturnUrl,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(customerEmail))
@@ -152,6 +154,8 @@ public class CheckoutService(
                 order,
                 order.Items,
                 paymentMethod,
+                successReturnUrl,
+                cancelReturnUrl,
                 cancellationToken);
 
             if (!checkoutSession.Success)

@@ -17,12 +17,26 @@
 
   let draft = stateStore.readDraft();
 
+  const normalizeDraftForCurrentCart = () => {
+    const cart = core.readCart();
+    if (cart.length > 0 && draft.ui.orderNumber) {
+      draft = stateStore.resetDraftForNewOrder();
+    }
+  };
+
   const syncQueryFeedback = () => {
     const params = new URLSearchParams(window.location.search);
     const paymentState = params.get("payment");
     const orderNumber = params.get("order");
     if (!paymentState) {
       return;
+    }
+
+    if (paymentState === "success") {
+      draft.ui.message = orderNumber
+        ? `Payment completed for order ${orderNumber}.`
+        : "Payment completed successfully.";
+      draft.ui.tone = "success";
     }
 
     if (paymentState === "pending") {
@@ -41,12 +55,21 @@
     window.history.replaceState({}, document.title, window.location.pathname);
   };
 
+  const clearCheckoutState = () => {
+    core.writeCart([]);
+    core.writePromo(null);
+    core.writeRxUploads({ files: [], submitted: false });
+    core.syncBagCount([]);
+    stateStore.clearDraft();
+  };
+
   const persistDraft = () => {
     stateStore.writeDraft(draft);
   };
 
   const renderPage = () => {
     draft = stateStore.readDraft();
+    normalizeDraftForCurrentCart();
     renderer.render(root, {
       core,
       cart: core.readCart(),
@@ -267,12 +290,9 @@
         return;
       }
 
-      core.writeCart([]);
-      core.writePromo(null);
-      core.writeRxUploads({ files: [], submitted: false });
-      core.syncBagCount([]);
-      renderPage();
-      stateStore.clearDraft();
+      clearCheckoutState();
+      const separator = core.myOrdersUrl.includes("?") ? "&" : "?";
+      window.location.href = `${core.myOrdersUrl}${separator}order=${encodeURIComponent(result.orderNumber || "")}&payment=placed`;
     } catch {
       draft.ui.busy = false;
       draft.ui.message = "Unable to connect to checkout right now.";
@@ -429,6 +449,7 @@
   window.addEventListener("storage", renderPage);
   document.addEventListener("DOMContentLoaded", () => {
     syncQueryFeedback();
+    normalizeDraftForCurrentCart();
     renderPage();
   });
 })();

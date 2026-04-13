@@ -1,0 +1,91 @@
+@model PharmacyPOS.Models.Orders.OrdersIndexViewModel
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/orders.css" asp-append-version="true" />
+}
+
+<section class="orders-page" data-orders-page data-clear-cart-on-load="@Model.ShowSuccessBanner.ToString().ToLowerInvariant()">
+    <div class="orders-page__header">
+        <div>
+            <p class="orders-page__eyebrow">Purchase history</p>
+            <h1>My Orders</h1>
+            <p>Track completed checkouts and place a fresh medicine order anytime.</p>
+        </div>
+        <a class="orders-page__shop-link" asp-controller="Home" asp-action="Index">Buy More Medicines</a>
+    </div>
+
+    @if (Model.ShowSuccessBanner)
+    {
+        <div class="orders-banner orders-banner--success">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>
+                <strong>Order @Model.HighlightOrderNumber completed.</strong>
+                <span>Your cart was cleared. You can now start a new medicine order.</span>
+            </div>
+        </div>
+    }
+
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="orders-empty">
+            <h2>No orders yet</h2>
+            <p>Your completed purchases will appear here after checkout.</p>
+            <a asp-controller="Home" asp-action="Index">Browse medicines</a>
+        </div>
+    }
+    else
+    {
+        <div class="orders-list">
+            @foreach (var order in Model.Orders)
+            {
+                <article class="orders-card">
+                    <div class="orders-card__head">
+                        <div>
+                            <p class="orders-card__number">@order.OrderNumber</p>
+                            <h2>@order.CreatedAtUtc.ToLocalTime().ToString("MMMM dd, yyyy hh:mm tt")</h2>
+                        </div>
+                        <div class="orders-card__status-group">
+                            <span class="orders-badge orders-badge--primary">@order.OrderStatus</span>
+                            <span class="orders-badge orders-badge--neutral">@order.PaymentStatus</span>
+                        </div>
+                    </div>
+
+                    <div class="orders-card__meta">
+                        <span><strong>Payment:</strong> @order.PaymentMethod</span>
+                        <span><strong>Delivery:</strong> @order.DeliveryOption</span>
+                        <span><strong>Branch:</strong> @order.FulfillmentBranch</span>
+                        <span><strong>Total:</strong> ₱@order.TotalAmount.ToString("N2")</span>
+                    </div>
+
+                    <div class="orders-items">
+                        @foreach (var item in order.Items)
+                        {
+                            <div class="orders-item">
+                                <img src="@item.ImageUrl" alt="@item.ProductName" />
+                                <div class="orders-item__details">
+                                    <strong>@item.ProductName</strong>
+                                    <span>@item.BrandName</span>
+                                </div>
+                                <div class="orders-item__meta">
+                                    @if (item.RequiresPrescription)
+                                    {
+                                        <span class="orders-badge orders-badge--danger">Prescription</span>
+                                    }
+                                    <span>Qty @item.Quantity</span>
+                                    <strong>₱@item.UnitPrice.ToString("N2")</strong>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <script src="~/js/orders.js" asp-append-version="true"></script>
+}

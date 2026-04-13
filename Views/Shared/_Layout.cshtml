@@ -27,6 +27,7 @@
 </head>
 <body data-authenticated="@isLoggedIn.ToString().ToLowerInvariant()"
       data-login-url="@Url.Action("Login", "Auth")"
+      data-my-orders-url="@Url.Action("Index", "Orders")"
       data-wishlist-url="@Url.Action("Wishlist", "Home")"
       data-wishlist-items-url="@Url.Action("Items", "Wishlist")"
       data-wishlist-toggle-url="@Url.Action("Toggle", "Wishlist")"
@@ -81,7 +82,7 @@
                                         <span>Wish List</span>
                                         <strong data-wishlist-count>0</strong>
                                     </a>
-                                    <a href="#"><i class="bi bi-box-seam"></i><span>My Orders</span></a>
+                                    <a asp-controller="Orders" asp-action="Index"><i class="bi bi-box-seam"></i><span>My Orders</span></a>
                                 </div>
                                 <form asp-controller="Auth" asp-action="Logout" method="post" class="storefront-login-form">
                                     @Html.AntiForgeryToken()
@@ -112,7 +113,7 @@
                                 <div class="storefront-login-links">
                                     <a href="#"><i class="bi bi-person"></i><span>My Account</span></a>
                                     <a asp-controller="Auth" asp-action="Login"><i class="bi bi-heart"></i><span>Wish List</span></a>
-                                    <a href="#"><i class="bi bi-box-seam"></i><span>My Orders</span></a>
+                                    <a asp-controller="Auth" asp-action="Login"><i class="bi bi-box-seam"></i><span>My Orders</span></a>
                                 </div>
                                 <a class="storefront-login-chat" href="#">
                                     <i class="bi bi-chat-dots"></i>

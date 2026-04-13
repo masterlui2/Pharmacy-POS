@@ -7,5 +7,7 @@ public interface ICheckoutService
     Task<PlaceOrderResult> PlaceOrderAsync(
         PlaceOrderRequest request,
         string customerEmail,
+        string? successReturnUrl,
+        string? cancelReturnUrl,
         CancellationToken cancellationToken = default);
 }

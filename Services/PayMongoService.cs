@@ -15,14 +15,14 @@ public class PayMongoService(
 
     public bool IsConfigured() =>
         (_options.Enabled || !string.IsNullOrWhiteSpace(_options.SecretKey)) &&
-        !string.IsNullOrWhiteSpace(_options.SecretKey) &&
-        !string.IsNullOrWhiteSpace(_options.SuccessUrl) &&
-        !string.IsNullOrWhiteSpace(_options.CancelUrl);
+        !string.IsNullOrWhiteSpace(_options.SecretKey);
 
     public async Task<PayMongoCheckoutSessionResult> CreateCheckoutSessionAsync(
         PharmacyOrder order,
         IReadOnlyList<PharmacyOrderItem> items,
         string paymentMethod,
+        string? successReturnUrl,
+        string? cancelReturnUrl,
         CancellationToken cancellationToken = default)
     {
         if (!IsConfigured())
@@ -30,7 +30,7 @@ public class PayMongoService(
             return new PayMongoCheckoutSessionResult
             {
                 Success = false,
-                Message = "PayMongo is not configured yet. Add your secret key and return URLs in appsettings first."
+                Message = "PayMongo is not configured yet. Add your secret key in appsettings first."
             };
         }
 
@@ -76,8 +76,8 @@ public class PayMongoService(
                         email = order.CustomerEmail,
                         phone = order.CustomerPhoneNumber
                     },
-                    cancel_url = BuildReturnUrl(_options.CancelUrl, order.OrderNumber, "cancelled"),
-                    success_url = BuildReturnUrl(_options.SuccessUrl, order.OrderNumber, "pending"),
+                    cancel_url = BuildReturnUrl(cancelReturnUrl, _options.CancelUrl, order.OrderNumber, "cancelled"),
+                    success_url = BuildReturnUrl(successReturnUrl, _options.SuccessUrl, order.OrderNumber, "success"),
                     description = $"SafeMed order {order.OrderNumber}",
                     send_email_receipt = false,
                     show_description = true,
@@ -130,8 +130,12 @@ public class PayMongoService(
             ? ["gcash"]
             : ["card"];
 
-    private static string BuildReturnUrl(string baseUrl, string orderNumber, string status)
+    private static string BuildReturnUrl(string? runtimeUrl, string configuredUrl, string orderNumber, string status)
     {
+        var baseUrl = !string.IsNullOrWhiteSpace(runtimeUrl)
+            ? runtimeUrl
+            : configuredUrl;
+
         var separator = baseUrl.Contains("?") ? "&" : "?";
         return $"{baseUrl}{separator}order={Uri.EscapeDataString(orderNumber)}&payment={Uri.EscapeDataString(status)}";
     }

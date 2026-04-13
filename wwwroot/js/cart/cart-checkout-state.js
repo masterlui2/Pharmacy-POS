@@ -1,5 +1,9 @@
 (() => {
   const DRAFT_KEY = "safemed-checkout-draft";
+  const getStorageKey = () => {
+    const scope = window.SafeMedCartCore?.accountScope || "guest";
+    return `${DRAFT_KEY}:${scope}`;
+  };
 
   const getDefaultDraft = () => ({
     step: 1,
@@ -27,7 +31,7 @@
 
   const readDraft = () => {
     try {
-      const raw = window.localStorage.getItem(DRAFT_KEY);
+      const raw = window.localStorage.getItem(getStorageKey());
       const parsed = raw ? JSON.parse(raw) : null;
       const normalizedPaymentMethod =
         parsed?.payment?.method === "EWallet" ? "GCash" : parsed?.payment?.method;
@@ -48,11 +52,25 @@
   };
 
   const writeDraft = (draft) => {
-    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    window.localStorage.setItem(getStorageKey(), JSON.stringify(draft));
   };
 
   const clearDraft = () => {
-    window.localStorage.removeItem(DRAFT_KEY);
+    window.localStorage.removeItem(getStorageKey());
+  };
+
+  const resetDraftForNewOrder = () => {
+    const current = readDraft();
+    const nextDraft = {
+      ...getDefaultDraft(),
+      address: { ...getDefaultDraft().address, ...current.address },
+      shipping: { ...getDefaultDraft().shipping, ...current.shipping },
+      payment: { ...getDefaultDraft().payment, ...current.payment },
+      ui: { ...getDefaultDraft().ui },
+    };
+
+    writeDraft(nextDraft);
+    return nextDraft;
   };
 
   window.SafeMedCheckoutState = {
@@ -60,5 +78,6 @@
     readDraft,
     writeDraft,
     clearDraft,
+    resetDraftForNewOrder,
   };
 })();

@@ -2,6 +2,7 @@
   const CART_KEY = "safemed-cart";
   const PROMO_KEY = "safemed-cart-promo";
   const RX_UPLOADS_KEY = "safemed-cart-rx-uploads";
+  const LEGACY_KEYS = [CART_KEY, PROMO_KEY, RX_UPLOADS_KEY, "safemed-checkout-draft"];
   const currency = new Intl.NumberFormat("en-PH", {
     style: "currency",
     currency: "PHP",
@@ -15,11 +16,27 @@
   const homeUrl =
     document.querySelector(".storefront-logo")?.getAttribute("href") || "/";
   const loginUrl = body.dataset.loginUrl || "/Auth/Login";
+  const myOrdersUrl = body.dataset.myOrdersUrl || "/Orders";
   const isAuthenticated = body.dataset.authenticated === "true";
+  const accountScope = (() => {
+    const email = (body.dataset.userEmail || "").trim().toLowerCase();
+    if (isAuthenticated && email) {
+      return `account:${email}`;
+    }
+
+    return "guest";
+  })();
 
   const promoCatalog = {
     SAFEMED10: 0.1,
     RXLESS5: 0.05,
+  };
+
+  const getScopedKey = (baseKey) => `${baseKey}:${accountScope}`;
+  const getCheckoutDraftKey = () => `safemed-checkout-draft:${accountScope}`;
+
+  const purgeLegacyKeys = () => {
+    LEGACY_KEYS.forEach((key) => window.localStorage.removeItem(key));
   };
 
   const escapeHtml = (value) =>
@@ -40,17 +57,17 @@
   };
 
   const readCart = () => {
-    const parsed = readJson(CART_KEY, []);
+    const parsed = readJson(getScopedKey(CART_KEY), []);
     return Array.isArray(parsed) ? parsed : [];
   };
 
   const writeCart = (cart) => {
-    window.localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    window.localStorage.setItem(getScopedKey(CART_KEY), JSON.stringify(cart));
     syncBagCount(cart);
   };
 
   const readPromo = () => {
-    const parsed = readJson(PROMO_KEY, null);
+    const parsed = readJson(getScopedKey(PROMO_KEY), null);
     return parsed &&
       typeof parsed.code === "string" &&
       typeof parsed.rate === "number"
@@ -60,15 +77,15 @@
 
   const writePromo = (promo) => {
     if (!promo) {
-      window.localStorage.removeItem(PROMO_KEY);
+      window.localStorage.removeItem(getScopedKey(PROMO_KEY));
       return;
     }
 
-    window.localStorage.setItem(PROMO_KEY, JSON.stringify(promo));
+    window.localStorage.setItem(getScopedKey(PROMO_KEY), JSON.stringify(promo));
   };
 
   const readRxUploads = () => {
-    const parsed = readJson(RX_UPLOADS_KEY, { files: [], submitted: false });
+    const parsed = readJson(getScopedKey(RX_UPLOADS_KEY), { files: [], submitted: false });
     return {
       files: Array.isArray(parsed?.files)
         ? parsed.files.filter((name) => typeof name === "string")
@@ -78,7 +95,7 @@
   };
 
   const writeRxUploads = (payload) => {
-    window.localStorage.setItem(RX_UPLOADS_KEY, JSON.stringify(payload));
+    window.localStorage.setItem(getScopedKey(RX_UPLOADS_KEY), JSON.stringify(payload));
   };
 
   const getPromoRate = (code) => promoCatalog[code] || 0;
@@ -169,6 +186,25 @@
       cart.push({ ...product, quantity });
     }
 
+    try {
+      const rawDraft = window.localStorage.getItem(getCheckoutDraftKey());
+      if (rawDraft) {
+        const parsedDraft = JSON.parse(rawDraft);
+        if (parsedDraft?.ui?.orderNumber) {
+          parsedDraft.step = 1;
+          parsedDraft.ui = {
+            message: "",
+            tone: "",
+            busy: false,
+            orderNumber: "",
+          };
+          window.localStorage.setItem(getCheckoutDraftKey(), JSON.stringify(parsedDraft));
+        }
+      }
+    } catch {
+      window.localStorage.removeItem(getCheckoutDraftKey());
+    }
+
     writeCart(cart);
     showModal(product, quantity);
   };
@@ -231,7 +267,9 @@
     currency,
     homeUrl,
     loginUrl,
+    myOrdersUrl,
     isAuthenticated,
+    accountScope,
     antiForgeryToken,
     escapeHtml,
     parseProduct,
@@ -247,6 +285,7 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
+    purgeLegacyKeys();
     syncBagCount();
     initializeMedicineCards();
     initializeModal();
