@@ -1,10 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using PharmacyPOS.Models;
 using PharmacyPOS.Services;
+using Microsoft.Extensions.Options;
 
 namespace PharmacyPOS.Controllers;
 
-public class AuthController(IAccountService accountService) : Controller
+public class AuthController(
+    IAccountService accountService,
+    IRecaptchaService recaptchaService,
+    IOptions<RecaptchaOptions> recaptchaOptions) : Controller
 {
     [HttpGet]
     public IActionResult Login()
@@ -30,6 +34,8 @@ public class AuthController(IAccountService accountService) : Controller
         {
             HttpContext.Session.SetString("Username", account.DisplayName);
             HttpContext.Session.SetString("Role", account.Role);
+            HttpContext.Session.SetString("Email", account.Email);
+            HttpContext.Session.SetString("PhoneNumber", account.PhoneNumber);
 
             if (string.Equals(account.Role, "Admin", StringComparison.OrdinalIgnoreCase))
             {
@@ -51,16 +57,29 @@ public class AuthController(IAccountService accountService) : Controller
             return RedirectToAction("Index", "Home");
         }
 
+        ViewBag.RecaptchaSiteKey = recaptchaOptions.Value.SiteKey;
         return View(new RegisterViewModel());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Register(RegisterViewModel model)
+    public async Task<IActionResult> Register(RegisterViewModel model, CancellationToken cancellationToken)
     {
+        ViewBag.RecaptchaSiteKey = recaptchaOptions.Value.SiteKey;
+
         if (accountService.EmailExists(model.Email))
         {
             ModelState.AddModelError(nameof(model.Email), "An account with this email already exists.");
+        }
+
+        var recaptchaResult = await recaptchaService.VerifyAsync(
+            model.RecaptchaToken,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            cancellationToken);
+
+        if (!recaptchaResult.Success)
+        {
+            ModelState.AddModelError(nameof(model.RecaptchaToken), recaptchaResult.ErrorMessage);
         }
 
         if (!ModelState.IsValid)
@@ -68,7 +87,7 @@ public class AuthController(IAccountService accountService) : Controller
             return View(model);
         }
 
-        accountService.Register(model.FirstName, model.LastName, model.Email, model.Password);
+        accountService.Register(model.FirstName, model.LastName, model.Email, model.PhoneNumber, model.Password);
         TempData["AuthSuccessMessage"] = "Account created successfully. You can now log in.";
 
         return RedirectToAction(nameof(Login));

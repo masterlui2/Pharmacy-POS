@@ -294,7 +294,7 @@ C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\scopedcss\bundle\PharmacyPOS.styles
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\scopedcss\projectbundle\PharmacyPOS.bundle.scp.css
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\38uf70dw7l-{0}-smvdy0jnz4-smvdy0jnz4.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\yw2ibkbxn5-{0}-nvricalw75-nvricalw75.gz
-C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\p69sw22v1s-{0}-80p3853x5l-80p3853x5l.gz
+C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\p69sw22v1s-{0}-h8zaalo3ku-h8zaalo3ku.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\bffmwoqa5q-{0}-13dyi28geb-13dyi28geb.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\9gubgzgjso-{0}-jhyra449sp-jhyra449sp.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\cber0mswuw-{0}-p4hzuph9se-p4hzuph9se.gz
@@ -302,13 +302,16 @@ C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\origfmljhv-{0}-6u6673urs
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\ew19fw4t9a-{0}-b9sayid5wm-b9sayid5wm.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\k01w10ors3-{0}-uzbxm4qbav-uzbxm4qbav.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\06ztw8iq16-{0}-rw1a2gtlpe-rw1a2gtlpe.gz
-C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\sca8xa8c4p-{0}-tvmi8tk4e8-tvmi8tk4e8.gz
+C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\sca8xa8c4p-{0}-hxawmmy26o-hxawmmy26o.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\jaq5m54s01-{0}-9isj1wuuz7-9isj1wuuz7.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\qtdhya33xl-{0}-vfgmjexteu-vfgmjexteu.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\9leaah2ry1-{0}-5gnlvhr5ad-5gnlvhr5ad.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\k1fy489kma-{0}-61n19gt1b8-61n19gt1b8.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\dbxe3u7vxt-{0}-d9e7bqz44x-d9e7bqz44x.gz
-C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\5uvyl581lw-{0}-5pohkhw3rh-5pohkhw3rh.gz
+C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\5uvyl581lw-{0}-ffbnvqa8wn-ffbnvqa8wn.gz
+C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\wbqgmu3xlq-{0}-06kb73bu2e-06kb73bu2e.gz
+C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\uei4p99adn-{0}-p0ckkzfkei-p0ckkzfkei.gz
+C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\1ffai1few7-{0}-8b21ds2yob-8b21ds2yob.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\3n8dtwzvyk-{0}-eh5zpbdz72-eh5zpbdz72.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\zxltrnmn8y-{0}-bqjiyaj88i-bqjiyaj88i.gz
 C:\Users\Admin\PharmacyPOS\obj\Debug\net10.0\compressed\chq1qwfeut-{0}-c2jlpeoesf-c2jlpeoesf.gz

@@ -1,8 +1,10 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @{
     ViewData["Title"] = "My Cart";
 }
 
-<section class="cart-page" data-cart-page>
+<section class="cart-page" data-cart-page data-place-order-url="@Url.Action("PlaceOrder", "Checkout")">
+    <input type="hidden" value="@Antiforgery.GetAndStoreTokens(Context).RequestToken" data-cart-antiforgery />
     <div class="cart-page__shell" data-cart-root>
         <div class="cart-page__empty-state">
             <h2>Your cart is empty</h2>
@@ -11,3 +13,9 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script src="~/js/cart/cart-checkout-state.js" asp-append-version="true"></script>
+    <script src="~/js/cart/cart-checkout-renderer.js" asp-append-version="true"></script>
+    <script src="~/js/cart/cart-checkout-page.js" asp-append-version="true"></script>
+}

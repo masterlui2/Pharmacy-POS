@@ -19,7 +19,10 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body data-authenticated="@isLoggedIn.ToString().ToLowerInvariant()"
-      data-login-url="@Url.Action("Login", "Auth")">
+      data-login-url="@Url.Action("Login", "Auth")"
+      data-user-name="@(Context.Session.GetString("Username") ?? string.Empty)"
+      data-user-email="@(Context.Session.GetString("Email") ?? string.Empty)"
+      data-user-phone="@(Context.Session.GetString("PhoneNumber") ?? string.Empty)">
     <div class="storefront-shell">
         <div class="storefront-utility-bar">
             <div class="storefront-container storefront-utility-inner">

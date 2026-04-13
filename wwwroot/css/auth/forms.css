@@ -293,6 +293,13 @@
   margin: -0.35rem 0 0 2rem;
 }
 
+.auth-recaptcha {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.35rem;
+}
+
 .auth-consent {
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr);

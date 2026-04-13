@@ -1,8 +1,17 @@
+using Microsoft.EntityFrameworkCore;
+using PharmacyPOS.Data;
+using PharmacyPOS.Models;
 using PharmacyPOS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<RecaptchaOptions>(
+    builder.Configuration.GetSection(RecaptchaOptions.SectionName));
+builder.Services.AddDbContext<PharmacyPosDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHttpClient<IRecaptchaService, GoogleRecaptchaService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -12,9 +21,16 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddSingleton<IMedicineService, InMemoryMedicineService>();
-builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
+builder.Services.AddScoped<IAccountService, DatabaseAccountService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<PharmacyPosDbContext>();
+    dbContext.Database.Migrate();
+    await DbInitializer.SeedAsync(scope.ServiceProvider);
+}
 
 if (!app.Environment.IsDevelopment())
 {

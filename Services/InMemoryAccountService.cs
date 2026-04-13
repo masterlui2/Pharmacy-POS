@@ -9,6 +9,7 @@ public class InMemoryAccountService : IAccountService
             FirstName = "Admin",
             LastName = "User",
             Email = "admin@safemed.local",
+            PhoneNumber = "0000000000",
             Password = "admin123",
             Role = "Admin",
             LoginAliases = ["admin", "admin@safemed.local"]
@@ -35,6 +36,7 @@ public class InMemoryAccountService : IAccountService
             {
                 DisplayName = $"{match.FirstName} {match.LastName}".Trim(),
                 Email = match.Email,
+                PhoneNumber = match.PhoneNumber,
                 Role = match.Role
             };
 
@@ -50,7 +52,7 @@ public class InMemoryAccountService : IAccountService
         }
     }
 
-    public AuthenticatedAccount Register(string firstName, string lastName, string email, string password)
+    public AuthenticatedAccount Register(string firstName, string lastName, string email, string phoneNumber, string password)
     {
         var normalizedEmail = email.Trim();
 
@@ -61,6 +63,7 @@ public class InMemoryAccountService : IAccountService
                 FirstName = firstName.Trim(),
                 LastName = lastName.Trim(),
                 Email = normalizedEmail,
+                PhoneNumber = phoneNumber.Trim(),
                 Password = password,
                 Role = "Customer",
                 LoginAliases = [normalizedEmail]
@@ -72,6 +75,7 @@ public class InMemoryAccountService : IAccountService
             {
                 DisplayName = $"{record.FirstName} {record.LastName}".Trim(),
                 Email = record.Email,
+                PhoneNumber = record.PhoneNumber,
                 Role = record.Role
             };
         }
@@ -82,6 +86,7 @@ public class InMemoryAccountService : IAccountService
         public required string FirstName { get; init; }
         public required string LastName { get; init; }
         public required string Email { get; init; }
+        public required string PhoneNumber { get; init; }
         public required string Password { get; init; }
         public required string Role { get; init; }
         public required List<string> LoginAliases { get; init; }

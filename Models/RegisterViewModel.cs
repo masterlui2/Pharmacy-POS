@@ -19,6 +19,12 @@ public class RegisterViewModel : IValidatableObject
     public string Email { get; set; } = string.Empty;
 
     [Required]
+    [Phone]
+    [StringLength(32)]
+    [Display(Name = "Phone number")]
+    public string PhoneNumber { get; set; } = string.Empty;
+
+    [Required]
     [DataType(DataType.Password)]
     public string Password { get; set; } = string.Empty;
 
@@ -31,6 +37,8 @@ public class RegisterViewModel : IValidatableObject
     public bool AcceptTerms { get; set; }
 
     public bool AcceptPrivacyPolicy { get; set; }
+
+    public string RecaptchaToken { get; set; } = string.Empty;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

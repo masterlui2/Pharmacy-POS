@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Create Account";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var recaptchaSiteKey = ViewBag.RecaptchaSiteKey as string;
 }
 
 @section Styles {
@@ -51,6 +52,14 @@
             </div>
 
             <div class="auth-form__row">
+                <label asp-for="PhoneNumber"></label>
+                <div class="auth-form__control">
+                    <input asp-for="PhoneNumber" placeholder="Phone number" autocomplete="tel" inputmode="tel" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="auth-form__row">
                 <label asp-for="Password"></label>
                 <div class="auth-form__control">
                     <div class="auth-password-wrap auth-password-wrap--guided">
@@ -87,6 +96,12 @@
             </div>
 
             <div class="auth-consent-list">
+                <div class="auth-recaptcha">
+                    <div class="g-recaptcha" data-sitekey="@recaptchaSiteKey"></div>
+                    <input asp-for="RecaptchaToken" type="hidden" />
+                    <span asp-validation-for="RecaptchaToken" class="text-danger small"></span>
+                </div>
+
                 <label class="auth-consent">
                     <input asp-for="AcceptTerms" data-consent-checkbox />
                     <span>I agree to the <strong>Terms and Conditions.</strong></span>
@@ -109,5 +124,24 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var form = document.querySelector(".auth-form--register");
+            var tokenInput = document.getElementById("RecaptchaToken");
+
+            if (!form || !tokenInput) {
+                return;
+            }
+
+            form.addEventListener("submit", function () {
+                var response = window.grecaptcha && typeof window.grecaptcha.getResponse === "function"
+                    ? window.grecaptcha.getResponse()
+                    : "";
+
+                tokenInput.value = response;
+            });
+        });
+    </script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script src="~/js/auth.js" asp-append-version="true"></script>
 }
