@@ -18,13 +18,12 @@
 
   const paymentLabels = {
     CashOnDelivery: "Cash on Delivery",
-    EWallet: "E-wallet",
+    GCash: "GCash",
     Card: "Credit / Debit Card",
   };
 
   const getPrescriptionStatus = (cart, uploads) => {
     const hasRx = cart.some((item) => item.requiresPrescription);
-
     if (!hasRx) {
       return { code: "NotRequired", label: "Not required", tone: "success" };
     }
@@ -54,8 +53,66 @@
     </button>`;
   };
 
+  const renderPrescriptionUpload = (core, uploads, prescription) => {
+    if (prescription.code === "NotRequired") {
+      return `<div class="cart-banner cart-banner--success cart-banner--compact">
+        <i class="bi bi-check-circle-fill"></i>
+        <div>
+          <strong>No prescription required</strong>
+          <span>This cart can continue directly to the next step.</span>
+        </div>
+      </div>`;
+    }
+
+    const filesMarkup =
+      uploads.files.length > 0
+        ? uploads.files
+            .map(
+              (file, index) => `
+                <div class="cart-rx-upload-card__file">
+                  <div class="cart-rx-upload-card__file-meta">
+                    <i class="bi bi-image"></i>
+                    <span>${core.escapeHtml(file)}</span>
+                  </div>
+                  <button type="button" data-rx-remove="${index}" aria-label="Remove uploaded file">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>`,
+            )
+            .join("")
+        : `<div class="cart-rx-upload-card__file cart-rx-upload-card__file--empty">
+             <div class="cart-rx-upload-card__file-meta">
+               <i class="bi bi-image"></i>
+               <span>No file selected</span>
+             </div>
+           </div>`;
+
+    return `
+      <section class="cart-rx-upload-card">
+        <div class="cart-rx-upload-card__head">
+          <h2>Upload Prescription</h2>
+          <span class="cart-status-badge cart-status-badge--${prescription.tone}">${prescription.label}</span>
+        </div>
+        <p class="cart-rx-upload-card__copy">
+          Upload a clear photo or PDF. Accepted formats: pdf, png, jpg, jpeg, gif. Maximum file size: 10MB.
+        </p>
+        <input type="file" accept=".pdf,.png,.jpg,.jpeg,.gif" multiple hidden data-rx-input />
+        <button type="button" class="cart-rx-upload-card__add" data-rx-trigger>Add More Prescriptions</button>
+        <div class="cart-rx-upload-card__files">
+          <h3>Uploaded files</h3>
+          ${filesMarkup}
+        </div>
+        <div class="cart-rx-upload-card__footer">
+          <p>Submit the uploaded prescription to unlock checkout.</p>
+          <button type="button" class="cart-rx-upload-card__submit" data-rx-validate ${uploads.files.length === 0 ? "disabled" : ""}>
+            Submit All Prescriptions
+          </button>
+        </div>
+      </section>`;
+  };
+
   const renderSummaryStep = (ctx) => {
-    const { core, cart, uploads, prescription, deliveryProfile, promo } = ctx;
+    const { core, cart, uploads, prescription, deliveryProfile } = ctx;
 
     const itemsMarkup = cart
       .map(
@@ -87,37 +144,16 @@
       )
       .join("");
 
-    const uploadsMarkup =
-      uploads.files.length > 0
-        ? uploads.files
-            .map(
-              (file, index) => `
-                <div class="cart-upload-file">
-                  <span>${core.escapeHtml(file)}</span>
-                  <button type="button" data-rx-remove="${index}"><i class="bi bi-x-lg"></i></button>
-                </div>`,
-            )
-            .join("")
-        : `<div class="cart-upload-file cart-upload-file--empty">No prescription uploaded yet.</div>`;
-
-    const warningMarkup =
-      prescription.code === "Missing"
-        ? `<div class="cart-banner cart-banner--danger">
-             <i class="bi bi-exclamation-triangle-fill"></i>
-             <div>
-               <strong>Prescription missing</strong>
-               <span>Upload and validate the prescription before placing an order with Rx items.</span>
-             </div>
-           </div>`
-        : prescription.code === "Uploaded"
-          ? `<div class="cart-banner cart-banner--warning">
-               <i class="bi bi-file-earmark-medical-fill"></i>
-               <div>
-                 <strong>Prescription uploaded</strong>
-                 <span>Mark the upload as valid when the prescription details are ready.</span>
-               </div>
-             </div>`
-          : "";
+    let accessNotice = "";
+    if (!core.isAuthenticated) {
+      accessNotice = `<div class="cart-banner cart-banner--danger">
+        <i class="bi bi-person-lock"></i>
+        <div>
+          <strong>Sign in required</strong>
+          <span>You must be signed in to proceed with address, shipping, payment, and order placement.</span>
+        </div>
+      </div>`;
+    }
 
     return `
       <section class="cart-panel">
@@ -131,36 +167,19 @@
             <strong>${deliveryProfile.etaLabel}</strong>
           </div>
         </div>
-        ${warningMarkup}
+        ${accessNotice}
         <div class="cart-line-list">${itemsMarkup}</div>
-        <div class="cart-summary-grid">
-          <div class="cart-panel cart-panel--nested">
-            <div class="cart-panel__subhead">
-              <h2>Prescription Status</h2>
-              <span class="cart-status-badge cart-status-badge--${prescription.tone}">${prescription.label}</span>
-            </div>
-            <p class="cart-copy">Missing, Uploaded, and Valid states stay visible through checkout so medical compliance is obvious.</p>
-            <div class="cart-upload-list">${uploadsMarkup}</div>
-            <div class="cart-upload-actions">
-              <input type="file" accept=".pdf,.png,.jpg,.jpeg,.gif" multiple hidden data-rx-input />
-              <button type="button" class="cart-secondary-btn" data-rx-trigger>Upload Prescription</button>
-              <button type="button" class="cart-primary-btn" data-rx-validate ${uploads.files.length === 0 ? "disabled" : ""}>Mark as Valid</button>
-            </div>
+        <div class="cart-panel cart-panel--nested cart-panel--rx-only">
+          <div class="cart-panel__subhead">
+            <h2>Prescription</h2>
+            ${
+              prescription.code === "NotRequired"
+                ? ""
+                : `<span class="cart-status-badge cart-status-badge--${prescription.tone}">${prescription.label}</span>`
+            }
           </div>
-          <div class="cart-panel cart-panel--nested">
-            <div class="cart-panel__subhead">
-              <h2>Delivery Preview</h2>
-              <span class="cart-status-badge cart-status-badge--neutral">${deliveryProfile.label}</span>
-            </div>
-            <div class="cart-kv"><span>ETA</span><strong>${deliveryProfile.etaLabel}</strong></div>
-            <div class="cart-kv"><span>Delivery fee</span><strong>${core.currency.format(deliveryProfile.fee)}</strong></div>
-            <div class="cart-kv"><span>Fulfillment branch</span><strong>${deliveryProfile.branch}</strong></div>
-            <form class="cart-promo" data-cart-promo-form>
-              <input type="text" name="promoCode" value="${core.escapeHtml(promo?.code || "")}" placeholder="Promo code" />
-              <button type="submit">Apply</button>
-            </form>
-            <p class="cart-field-hint" data-cart-promo-message>${promo ? `Promo ${core.escapeHtml(promo.code)} applied.` : ""}</p>
-          </div>
+          <p class="cart-copy">Upload is only needed for prescription items.</p>
+          ${renderPrescriptionUpload(core, uploads, prescription)}
         </div>
         <a class="cart-page__back-link" href="${core.escapeHtml(core.homeUrl)}">
           <i class="bi bi-arrow-left"></i>
@@ -273,18 +292,38 @@
             .map(
               ([key, label]) => `
                 <button type="button" class="payment-card ${draft.payment.method === key ? "payment-card--active" : ""}" data-payment-method="${key}">
-                  <strong>${label}</strong>
+                  <div class="payment-card__top">
+                    <div class="payment-card__logos">
+                      ${
+                        key === "CashOnDelivery"
+                          ? '<span class="payment-logo payment-logo--cash"><i class="bi bi-cash-coin"></i></span>'
+                          : key === "GCash"
+                            ? '<span class="payment-logo payment-logo--image"><img src="/images/Payments/gcash.png" alt="GCash" /></span>'
+                            : '<span class="payment-logo payment-logo--image payment-logo--card-image"><img src="/images/Payments/card.png" alt="Card payment" /></span>'
+                      }
+                    </div>
+                    <strong>${label}</strong>
+                  </div>
                   <span>${
                     key === "CashOnDelivery"
                       ? "Pay upon arrival"
-                      : key === "EWallet"
-                        ? "GCash and similar wallets"
-                        : "Visa and Mastercard"
+                      : key === "GCash"
+                        ? "Secure wallet checkout with PayMongo"
+                        : "Visa and Mastercard via PayMongo"
                   }</span>
                 </button>`,
             )
             .join("")}
         </div>
+        ${draft.payment.method === "CashOnDelivery"
+          ? ""
+          : `<div class="cart-banner cart-banner--info">
+               <i class="bi bi-shield-lock-fill"></i>
+               <div>
+                 <strong>Secure PayMongo checkout</strong>
+                 <span>You will be redirected to PayMongo to complete payment safely.</span>
+               </div>
+             </div>`}
         <div class="cart-summary-repeat">
           <div class="cart-panel__subhead">
             <h2>Order Summary</h2>
@@ -318,7 +357,9 @@
     const finalTotal =
       totals.subtotal + totals.taxes + deliveryProfile.fee - totals.discount;
     const blocked =
-      prescription.code === "Missing" || prescription.code === "Uploaded";
+      !core.isAuthenticated ||
+      prescription.code === "Missing" ||
+      prescription.code === "Uploaded";
 
     return `
       <aside class="checkout-sidebar">
@@ -339,29 +380,12 @@
         </div>
         <div class="cart-panel cart-panel--sidebar">
           <div class="cart-panel__subhead">
-            <h2>Compliance</h2>
-            <span class="cart-status-badge cart-status-badge--${prescription.tone}">${prescription.label}</span>
-          </div>
-          <p class="cart-copy">Warnings stay red until the prescription requirement is cleared.</p>
-          ${
-            blocked
-              ? `<div class="cart-banner cart-banner--danger cart-banner--compact">
-                   <i class="bi bi-shield-exclamation"></i>
-                   <div>
-                     <strong>Checkout blocked</strong>
-                     <span>Prescription medicines cannot be placed yet.</span>
-                   </div>
-                 </div>`
-              : ""
-          }
-        </div>
-        <div class="cart-panel cart-panel--sidebar">
-          <div class="cart-panel__subhead">
             <h2>Delivery</h2>
             <span>${deliveryProfile.label}</span>
           </div>
           <div class="cart-kv"><span>ETA</span><strong>${deliveryProfile.etaLabel}</strong></div>
           <div class="cart-kv"><span>Branch</span><strong>${deliveryProfile.branch}</strong></div>
+          <div class="cart-kv"><span>Prescription</span><strong>${prescription.label}</strong></div>
         </div>
         ${
           draft.ui.message
@@ -378,11 +402,13 @@
               : ""
           }
           ${
-            draft.step < 4
-              ? '<button type="button" class="cart-primary-btn" data-step-next>Next Step</button>'
-              : `<button type="button" class="cart-primary-btn" data-place-order ${draft.ui.busy || blocked ? "disabled" : ""}>
-                   ${draft.ui.busy ? "Placing Order..." : "Place Order"}
-                 </button>`
+            !core.isAuthenticated
+              ? `<a class="cart-primary-btn cart-primary-btn--link" href="${core.escapeHtml(core.loginUrl)}">Log in to Continue</a>`
+              : draft.step < 4
+                ? `<button type="button" class="cart-primary-btn" data-step-next ${blocked ? "disabled" : ""}>Next Step</button>`
+                : `<button type="button" class="cart-primary-btn" data-place-order ${draft.ui.busy || blocked ? "disabled" : ""}>
+                     ${draft.ui.busy ? "Placing Order..." : "Place Order"}
+                   </button>`
           }
         </div>
       </aside>`;

@@ -8,10 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.Configure<RecaptchaOptions>(
     builder.Configuration.GetSection(RecaptchaOptions.SectionName));
+builder.Services.Configure<PayMongoOptions>(
+    builder.Configuration.GetSection(PayMongoOptions.SectionName));
 builder.Services.AddDbContext<PharmacyPosDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHttpClient<IRecaptchaService, GoogleRecaptchaService>();
+builder.Services.AddHttpClient<IPayMongoService, PayMongoService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

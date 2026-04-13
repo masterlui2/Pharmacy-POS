@@ -8,7 +8,7 @@ using PharmacyPOS.Data;
 
 namespace PharmacyPOS.Migrations
 {
-    [DbContext(typeof(PharmacyPosDbContext))]
+    [DbContextAttribute(typeof(PharmacyPosDbContext))]
     partial class PharmacyPosDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
@@ -104,11 +104,55 @@ namespace PharmacyPOS.Migrations
                     b.ToTable("OrderItems");
                 });
 
+            modelBuilder.Entity("PharmacyPOS.Models.PaymentRecord", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<decimal>("Amount").HasColumnType("decimal(18,2)");
+                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("datetime2");
+                    b.Property<int>("PharmacyOrderId").HasColumnType("int");
+                    b.Property<string>("PaymentMethod").IsRequired().HasMaxLength(32).HasColumnType("nvarchar(32)");
+                    b.Property<string>("CheckoutUrl").IsRequired().HasMaxLength(1000).HasColumnType("nvarchar(1000)");
+                    b.Property<string>("Provider").IsRequired().HasMaxLength(32).HasColumnType("nvarchar(32)");
+                    b.Property<string>("ProviderCheckoutId").IsRequired().HasMaxLength(128).HasColumnType("nvarchar(128)");
+                    b.Property<string>("ReferenceNumber").IsRequired().HasMaxLength(64).HasColumnType("nvarchar(64)");
+                    b.Property<string>("Status").IsRequired().HasMaxLength(32).HasColumnType("nvarchar(32)");
+                    b.HasKey("Id");
+                    b.HasIndex("PharmacyOrderId").IsUnique();
+                    b.ToTable("Payments");
+                });
+
+            modelBuilder.Entity("PharmacyPOS.Models.WishlistItem", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<int>("AccountId").HasColumnType("int");
+                    b.Property<string>("BrandName").IsRequired().HasMaxLength(100).HasColumnType("nvarchar(100)");
+                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("datetime2");
+                    b.Property<string>("ImageUrl").IsRequired().HasMaxLength(500).HasColumnType("nvarchar(500)");
+                    b.Property<string>("ProductId").IsRequired().HasMaxLength(64).HasColumnType("nvarchar(64)");
+                    b.Property<string>("ProductName").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
+                    b.Property<bool>("RequiresPrescription").HasColumnType("bit");
+                    b.Property<decimal>("UnitPrice").HasColumnType("decimal(18,2)");
+                    b.HasKey("Id");
+                    b.HasIndex("AccountId", "ProductId").IsUnique();
+                    b.ToTable("WishlistItems");
+                });
+
             modelBuilder.Entity("PharmacyPOS.Models.CustomerAddress", b =>
                 {
                     b.HasOne("PharmacyPOS.Models.Account", "Account")
                         .WithMany("CustomerAddresses")
                         .HasForeignKey("AccountId");
+                });
+
+            modelBuilder.Entity("PharmacyPOS.Models.WishlistItem", b =>
+                {
+                    b.HasOne("PharmacyPOS.Models.Account", "Account")
+                        .WithMany("WishlistItems")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("PharmacyPOS.Models.PharmacyOrder", b =>
@@ -123,6 +167,15 @@ namespace PharmacyPOS.Migrations
                     b.HasOne("PharmacyPOS.Models.PharmacyOrder", "PharmacyOrder")
                         .WithMany("Items")
                         .HasForeignKey("PharmacyOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PharmacyPOS.Models.PaymentRecord", b =>
+                {
+                    b.HasOne("PharmacyPOS.Models.PharmacyOrder", "PharmacyOrder")
+                        .WithOne("Payment")
+                        .HasForeignKey("PharmacyPOS.Models.PaymentRecord", "PharmacyOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

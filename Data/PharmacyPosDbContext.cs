@@ -9,6 +9,8 @@ public class PharmacyPosDbContext(DbContextOptions<PharmacyPosDbContext> options
     public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
     public DbSet<PharmacyOrder> Orders => Set<PharmacyOrder>();
     public DbSet<PharmacyOrderItem> OrderItems => Set<PharmacyOrderItem>();
+    public DbSet<PaymentRecord> Payments => Set<PaymentRecord>();
+    public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -57,6 +59,31 @@ public class PharmacyPosDbContext(DbContextOptions<PharmacyPosDbContext> options
             entity.Property(item => item.ProductName).HasMaxLength(200);
             entity.Property(item => item.BrandName).HasMaxLength(100);
             entity.Property(item => item.ImageUrl).HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<PaymentRecord>(entity =>
+        {
+            entity.Property(payment => payment.PaymentMethod).HasMaxLength(32);
+            entity.Property(payment => payment.Status).HasMaxLength(32);
+            entity.Property(payment => payment.ReferenceNumber).HasMaxLength(64);
+            entity.Property(payment => payment.Provider).HasMaxLength(32);
+            entity.Property(payment => payment.ProviderCheckoutId).HasMaxLength(128);
+            entity.Property(payment => payment.CheckoutUrl).HasMaxLength(1000);
+            entity.HasOne(payment => payment.PharmacyOrder)
+                .WithOne(order => order.Payment)
+                .HasForeignKey<PaymentRecord>(payment => payment.PharmacyOrderId);
+        });
+
+        modelBuilder.Entity<WishlistItem>(entity =>
+        {
+            entity.Property(item => item.ProductId).HasMaxLength(64);
+            entity.Property(item => item.ProductName).HasMaxLength(200);
+            entity.Property(item => item.BrandName).HasMaxLength(100);
+            entity.Property(item => item.ImageUrl).HasMaxLength(500);
+            entity.HasOne(item => item.Account)
+                .WithMany(account => account.WishlistItems)
+                .HasForeignKey(item => item.AccountId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

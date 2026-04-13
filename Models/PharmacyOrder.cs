@@ -67,4 +67,6 @@ public class PharmacyOrder
     public Account? Account { get; set; }
 
     public List<PharmacyOrderItem> Items { get; set; } = [];
+
+    public PaymentRecord? Payment { get; set; }
 }

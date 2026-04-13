@@ -15,4 +15,8 @@ public class PlaceOrderResult
     public int EstimatedDeliveryMaxMinutes { get; init; }
 
     public decimal TotalAmount { get; init; }
+
+    public string CheckoutUrl { get; init; } = string.Empty;
+
+    public string PaymentStatus { get; init; } = string.Empty;
 }

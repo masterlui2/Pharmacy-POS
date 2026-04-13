@@ -32,4 +32,6 @@ public class Account
     public List<CustomerAddress> CustomerAddresses { get; set; } = [];
 
     public List<PharmacyOrder> Orders { get; set; } = [];
+
+    public List<WishlistItem> WishlistItems { get; set; } = [];
 }

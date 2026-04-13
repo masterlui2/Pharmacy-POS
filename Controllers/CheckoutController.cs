@@ -12,6 +12,15 @@ public class CheckoutController(ICheckoutService checkoutService) : Controller
     public async Task<IActionResult> PlaceOrder([FromBody] PlaceOrderRequest request, CancellationToken cancellationToken)
     {
         var customerEmail = HttpContext.Session.GetString("Email") ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(customerEmail))
+        {
+            return Unauthorized(new PlaceOrderResult
+            {
+                Success = false,
+                Message = "Sign in to continue with checkout."
+            });
+        }
+
         var result = await checkoutService.PlaceOrderAsync(request, customerEmail, cancellationToken);
 
         if (!result.Success)

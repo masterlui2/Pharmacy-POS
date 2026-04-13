@@ -6,7 +6,9 @@ using PharmacyPOS.Models.Checkout;
 
 namespace PharmacyPOS.Services;
 
-public class CheckoutService(PharmacyPosDbContext dbContext) : ICheckoutService
+public class CheckoutService(
+    PharmacyPosDbContext dbContext,
+    IPayMongoService payMongoService) : ICheckoutService
 {
     private static readonly Dictionary<string, decimal> PromoRates = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -19,6 +21,15 @@ public class CheckoutService(PharmacyPosDbContext dbContext) : ICheckoutService
         string customerEmail,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(customerEmail))
+        {
+            return new PlaceOrderResult
+            {
+                Success = false,
+                Message = "You must sign in before placing an order."
+            };
+        }
+
         var validationError = ValidateRequest(request);
         if (!string.IsNullOrWhiteSpace(validationError))
         {
@@ -30,6 +41,15 @@ public class CheckoutService(PharmacyPosDbContext dbContext) : ICheckoutService
         }
 
         var requiresPrescription = request.Items.Any(item => item.RequiresPrescription);
+        if (requiresPrescription && request.PrescriptionFiles.Count == 0)
+        {
+            return new PlaceOrderResult
+            {
+                Success = false,
+                Message = "Prescription upload is required for prescription medicines."
+            };
+        }
+
         if (requiresPrescription && !string.Equals(request.PrescriptionStatus, "Valid", StringComparison.OrdinalIgnoreCase))
         {
             return new PlaceOrderResult
@@ -44,6 +64,7 @@ public class CheckoutService(PharmacyPosDbContext dbContext) : ICheckoutService
         var taxes = request.Items.Sum(item => item.Tax * item.Quantity);
         var discountRate = GetPromoRate(request.PromoCode);
         var discount = subtotal * discountRate;
+        var paymentMethod = NormalizePaymentMethod(request.PaymentMethod);
         var total = Math.Max(0m, subtotal + taxes + shippingProfile.Fee - discount);
 
         var account = string.IsNullOrWhiteSpace(customerEmail)
@@ -63,7 +84,7 @@ public class CheckoutService(PharmacyPosDbContext dbContext) : ICheckoutService
             Landmark = request.Landmark.Trim(),
             AddressType = request.AddressType.Trim(),
             DeliveryOption = shippingProfile.Code,
-            PaymentMethod = request.PaymentMethod.Trim(),
+            PaymentMethod = paymentMethod,
             FulfillmentBranch = shippingProfile.Branch,
             PrescriptionStatus = requiresPrescription ? "Valid" : "NotRequired",
             OrderStatus = "Pending",
@@ -91,7 +112,22 @@ public class CheckoutService(PharmacyPosDbContext dbContext) : ICheckoutService
             }).ToList()
         };
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
         dbContext.Orders.Add(order);
+
+        var paymentRecord = new PaymentRecord
+        {
+            PharmacyOrder = order,
+            PaymentMethod = paymentMethod,
+            Status = string.Equals(paymentMethod, "CashOnDelivery", StringComparison.OrdinalIgnoreCase)
+                ? "PendingCollection"
+                : "AwaitingPayment",
+            Amount = total,
+            ReferenceNumber = GeneratePaymentReference(paymentMethod),
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        dbContext.Payments.Add(paymentRecord);
 
         if (request.SaveAddress && account is not null)
         {
@@ -110,6 +146,47 @@ public class CheckoutService(PharmacyPosDbContext dbContext) : ICheckoutService
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        if (!string.Equals(paymentMethod, "CashOnDelivery", StringComparison.OrdinalIgnoreCase))
+        {
+            var checkoutSession = await payMongoService.CreateCheckoutSessionAsync(
+                order,
+                order.Items,
+                paymentMethod,
+                cancellationToken);
+
+            if (!checkoutSession.Success)
+            {
+                return new PlaceOrderResult
+                {
+                    Success = false,
+                    Message = checkoutSession.Message
+                };
+            }
+
+            paymentRecord.Provider = "PayMongo";
+            paymentRecord.ProviderCheckoutId = checkoutSession.CheckoutId;
+            paymentRecord.CheckoutUrl = checkoutSession.CheckoutUrl;
+            paymentRecord.Status = "RedirectedToGateway";
+            order.OrderStatus = "AwaitingPayment";
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return new PlaceOrderResult
+            {
+                Success = true,
+                OrderNumber = order.OrderNumber,
+                Message = checkoutSession.Message,
+                FulfillmentBranch = order.FulfillmentBranch,
+                EstimatedDeliveryMinMinutes = order.EstimatedDeliveryMinMinutes,
+                EstimatedDeliveryMaxMinutes = order.EstimatedDeliveryMaxMinutes,
+                TotalAmount = order.TotalAmount,
+                CheckoutUrl = checkoutSession.CheckoutUrl,
+                PaymentStatus = paymentRecord.Status
+            };
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+
         return new PlaceOrderResult
         {
             Success = true,
@@ -118,7 +195,8 @@ public class CheckoutService(PharmacyPosDbContext dbContext) : ICheckoutService
             FulfillmentBranch = order.FulfillmentBranch,
             EstimatedDeliveryMinMinutes = order.EstimatedDeliveryMinMinutes,
             EstimatedDeliveryMaxMinutes = order.EstimatedDeliveryMaxMinutes,
-            TotalAmount = order.TotalAmount
+            TotalAmount = order.TotalAmount,
+            PaymentStatus = paymentRecord.Status
         };
     }
 
@@ -172,6 +250,11 @@ public class CheckoutService(PharmacyPosDbContext dbContext) : ICheckoutService
             ? rate
             : 0m;
 
+    private static string NormalizePaymentMethod(string paymentMethod) =>
+        string.Equals(paymentMethod, "EWallet", StringComparison.OrdinalIgnoreCase)
+            ? "GCash"
+            : paymentMethod.Trim();
+
     private static ShippingProfile GetShippingProfile(string deliveryOption) =>
         string.Equals(deliveryOption, "Express", StringComparison.OrdinalIgnoreCase)
             ? new ShippingProfile("Express", 20, 35, 149m, "SafeMed Express Hub - Main Branch")
@@ -180,8 +263,20 @@ public class CheckoutService(PharmacyPosDbContext dbContext) : ICheckoutService
     private static string GenerateOrderNumber() =>
         $"SM-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}";
 
+    private static string GeneratePaymentReference(string paymentMethod)
+    {
+        var prefix = string.Equals(paymentMethod, "CashOnDelivery", StringComparison.OrdinalIgnoreCase)
+            ? "COD"
+            : string.Equals(paymentMethod, "GCash", StringComparison.OrdinalIgnoreCase) ||
+              string.Equals(paymentMethod, "EWallet", StringComparison.OrdinalIgnoreCase)
+                ? "GCS"
+                : "CRD";
+
+        return $"{prefix}-{DateTime.UtcNow:yyyyMMddHHmmss}-{Random.Shared.Next(100, 999)}";
+    }
+
     private static readonly string[] AllowedAddressTypes = ["Home", "Work", "Other"];
-    private static readonly string[] AllowedPaymentMethods = ["CashOnDelivery", "EWallet", "Card"];
+    private static readonly string[] AllowedPaymentMethods = ["CashOnDelivery", "GCash", "EWallet", "Card"];
     private static readonly string[] AllowedDeliveryOptions = ["Standard", "Express"];
 
     private sealed record ShippingProfile(

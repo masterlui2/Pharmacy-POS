@@ -141,6 +141,8 @@
   position: relative;
   display: flex;
   align-items: center;
+  padding-bottom: 18px;
+  margin-bottom: -18px;
 }
 
 .storefront-action-link {
@@ -167,7 +169,7 @@
 
 .storefront-login-dropdown {
   position: absolute;
-  top: calc(100% + 14px);
+  top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
   width: 320px;
@@ -175,7 +177,10 @@
   border: 1px solid var(--storefront-border);
   background: #fff;
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.16s ease, visibility 0.16s ease;
   z-index: 20;
 }
 
@@ -192,9 +197,20 @@
   transform: translateX(-50%) rotate(45deg);
 }
 
+.storefront-login-dropdown::after {
+  content: "";
+  position: absolute;
+  top: -18px;
+  left: 0;
+  right: 0;
+  height: 18px;
+}
+
 .storefront-login-menu:hover .storefront-login-dropdown,
 .storefront-login-menu:focus-within .storefront-login-dropdown {
-  display: block;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .storefront-login-cta {
@@ -235,6 +251,55 @@
 .storefront-login-links a i {
   font-size: 1.05rem;
   color: #475569;
+}
+
+.storefront-login-links a strong {
+  margin-left: auto;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #fff0f1;
+  color: #c1121f;
+  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.storefront-login-user {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  padding: 0.2rem 0 0.8rem;
+  border-bottom: 1px solid #e8edf2;
+}
+
+.storefront-login-user strong {
+  font-size: 1rem;
+  color: var(--storefront-ink);
+}
+
+.storefront-login-user span {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.storefront-login-form {
+  margin: 0;
+}
+
+.storefront-login-logout {
+  width: 100%;
+  min-height: 48px;
+  margin: 0.25rem 0 0.9rem;
+  border: 1px solid #d7dee7;
+  background: #fff;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 700;
 }
 
 .storefront-login-chat {

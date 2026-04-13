@@ -9,6 +9,8 @@
 
   const bagCount = document.querySelector("[data-cart-count]");
   const cartModal = document.querySelector("[data-cart-modal]");
+  const antiForgeryToken =
+    document.querySelector("[data-app-antiforgery]")?.value || "";
   const body = document.body;
   const homeUrl =
     document.querySelector(".storefront-logo")?.getAttribute("href") || "/";
@@ -230,7 +232,9 @@
     homeUrl,
     loginUrl,
     isAuthenticated,
+    antiForgeryToken,
     escapeHtml,
+    parseProduct,
     readCart,
     writeCart,
     readPromo,

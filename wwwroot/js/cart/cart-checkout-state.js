@@ -29,6 +29,8 @@
     try {
       const raw = window.localStorage.getItem(DRAFT_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
+      const normalizedPaymentMethod =
+        parsed?.payment?.method === "EWallet" ? "GCash" : parsed?.payment?.method;
 
       return parsed
         ? {
@@ -36,7 +38,7 @@
             ...parsed,
             address: { ...getDefaultDraft().address, ...parsed.address },
             shipping: { ...getDefaultDraft().shipping, ...parsed.shipping },
-            payment: { ...getDefaultDraft().payment, ...parsed.payment },
+            payment: { ...getDefaultDraft().payment, ...parsed.payment, method: normalizedPaymentMethod || getDefaultDraft().payment.method },
             ui: { ...getDefaultDraft().ui, ...parsed.ui },
           }
         : getDefaultDraft();

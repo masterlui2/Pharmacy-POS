@@ -47,6 +47,7 @@
 }
 
 .medicine-spotlight-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -58,12 +59,34 @@
 }
 
 .medicine-spotlight-card__image-wrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 210px;
   padding: 1.2rem 1rem;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.medicine-spotlight-card__wish {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d7dee7;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.medicine-spotlight-card__wish.is-active,
+.medicine-spotlight-card__secondary.is-active {
+  color: #dc2626;
 }
 
 .medicine-spotlight-card__image {
@@ -192,8 +215,8 @@
 }
 
 .medicine-spotlight-card__cta {
-  min-height: 60px;
-  margin: 1.35rem 1.2rem 1.25rem;
+  min-height: 54px;
+  margin: 0;
   border: 0;
   border-radius: 18px;
   background: #ef1c25;
@@ -202,6 +225,29 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.medicine-spotlight-card__footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+}
+
+.medicine-spotlight-card__secondary {
+  min-width: 122px;
+  min-height: 54px;
+  border: 1px solid #d8dee7;
+  border-radius: 18px;
+  background: #fff;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 @media (max-width: 1100px) {
@@ -230,5 +276,9 @@
 
   .medicine-spotlight-card__price {
     text-align: center;
+  }
+
+  .medicine-spotlight-card__footer {
+    grid-template-columns: 1fr;
   }
 }

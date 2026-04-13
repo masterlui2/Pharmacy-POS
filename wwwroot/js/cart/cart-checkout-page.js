@@ -17,6 +17,30 @@
 
   let draft = stateStore.readDraft();
 
+  const syncQueryFeedback = () => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentState = params.get("payment");
+    const orderNumber = params.get("order");
+    if (!paymentState) {
+      return;
+    }
+
+    if (paymentState === "pending") {
+      draft.ui.message = orderNumber
+        ? `Payment session opened for order ${orderNumber}. Complete payment in PayMongo to finish checkout.`
+        : "Payment session opened. Complete payment in PayMongo.";
+      draft.ui.tone = "info";
+    }
+
+    if (paymentState === "cancelled") {
+      draft.ui.message = "PayMongo checkout was cancelled. You can choose another payment method or try again.";
+      draft.ui.tone = "warning";
+    }
+
+    persistDraft();
+    window.history.replaceState({}, document.title, window.location.pathname);
+  };
+
   const persistDraft = () => {
     stateStore.writeDraft(draft);
   };
@@ -72,6 +96,23 @@
     );
   };
 
+  const canProceedFromSummary = () => {
+    if (!core.isAuthenticated) {
+      setMessage("Sign in to continue with checkout.", "danger");
+      return false;
+    }
+
+    if (isPrescriptionBlocked()) {
+      setMessage(
+        "Upload and submit the prescription before proceeding.",
+        "danger",
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const updateDraftField = (path, value) => {
     const [section, key] = path.split(".");
     draft[section][key] = value;
@@ -81,6 +122,11 @@
 
   const changeStep = (nextStep) => {
     if (nextStep > draft.step + 1) {
+      return;
+    }
+
+    if (draft.step === 1 && nextStep > 1 && !canProceedFromSummary()) {
+      renderPage();
       return;
     }
 
@@ -212,9 +258,14 @@
 
       draft.ui.busy = false;
       draft.ui.orderNumber = result.orderNumber || "";
-      draft.ui.message = "Order placed successfully.";
-      draft.ui.tone = "success";
+      draft.ui.message = result.message || "Order placed successfully.";
+      draft.ui.tone = result.checkoutUrl ? "info" : "success";
       persistDraft();
+
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+        return;
+      }
 
       core.writeCart([]);
       core.writePromo(null);
@@ -294,7 +345,7 @@
       if (uploads.files.length > 0) {
         uploads.submitted = true;
         core.writeRxUploads(uploads);
-        setMessage("Prescription marked as valid for checkout.", "success");
+        setMessage("Prescription submitted and marked valid for checkout.", "success");
         renderPage();
       }
       return;
@@ -376,5 +427,8 @@
   });
 
   window.addEventListener("storage", renderPage);
-  document.addEventListener("DOMContentLoaded", renderPage);
+  document.addEventListener("DOMContentLoaded", () => {
+    syncQueryFeedback();
+    renderPage();
+  });
 })();

@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Wish List";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/wishlist.css" asp-append-version="true" />
+}
+
+<section class="wishlist-page" data-wishlist-page>
+    <div class="wishlist-page__header">
+        <div>
+            <p class="wishlist-page__eyebrow">Saved for later</p>
+            <h1>My Wishlist</h1>
+            <p>Keep medicines here and move them to cart whenever you are ready.</p>
+        </div>
+    </div>
+
+    <div class="wishlist-page__content" data-wishlist-root>
+        <div class="wishlist-page__empty">
+            <h2>Your wishlist is empty</h2>
+            <p>Save medicines from the homepage and they will appear here.</p>
+            <a asp-controller="Home" asp-action="Index">Browse medicines</a>
+        </div>
+    </div>
+</section>

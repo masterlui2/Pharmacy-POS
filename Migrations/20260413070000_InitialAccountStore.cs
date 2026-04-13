@@ -146,12 +146,43 @@ namespace PharmacyPOS.Migrations
                 name: "IX_Orders_AccountId",
                 table: "Orders",
                 column: "AccountId");
+
+            migrationBuilder.CreateTable(
+                name: "Payments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PharmacyOrderId = table.Column<int>(type: "int", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ReferenceNumber = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Payments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Payments_Orders_PharmacyOrderId",
+                        column: x => x.PharmacyOrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_PharmacyOrderId",
+                table: "Payments",
+                column: "PharmacyOrderId",
+                unique: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(name: "CustomerAddresses");
             migrationBuilder.DropTable(name: "OrderItems");
+            migrationBuilder.DropTable(name: "Payments");
             migrationBuilder.DropTable(name: "Orders");
             migrationBuilder.DropTable(name: "Accounts");
         }
@@ -249,6 +280,21 @@ namespace PharmacyPOS.Migrations
                     b.ToTable("OrderItems");
                 });
 
+            modelBuilder.Entity("PharmacyPOS.Models.PaymentRecord", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<decimal>("Amount").HasColumnType("decimal(18,2)");
+                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("datetime2");
+                    b.Property<int>("PharmacyOrderId").HasColumnType("int");
+                    b.Property<string>("PaymentMethod").IsRequired().HasMaxLength(32).HasColumnType("nvarchar(32)");
+                    b.Property<string>("ReferenceNumber").IsRequired().HasMaxLength(64).HasColumnType("nvarchar(64)");
+                    b.Property<string>("Status").IsRequired().HasMaxLength(32).HasColumnType("nvarchar(32)");
+                    b.HasKey("Id");
+                    b.HasIndex("PharmacyOrderId").IsUnique();
+                    b.ToTable("Payments");
+                });
+
             modelBuilder.Entity("PharmacyPOS.Models.CustomerAddress", b =>
                 {
                     b.HasOne("PharmacyPOS.Models.Account", "Account")
@@ -268,6 +314,15 @@ namespace PharmacyPOS.Migrations
                     b.HasOne("PharmacyPOS.Models.PharmacyOrder", "PharmacyOrder")
                         .WithMany("Items")
                         .HasForeignKey("PharmacyOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PharmacyPOS.Models.PaymentRecord", b =>
+                {
+                    b.HasOne("PharmacyPOS.Models.PharmacyOrder", "PharmacyOrder")
+                        .WithOne("Payment")
+                        .HasForeignKey("PharmacyPOS.Models.PaymentRecord", "PharmacyOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -10,6 +10,9 @@
          data-product-tax="@Model.IncludedTax.ToString(System.Globalization.CultureInfo.InvariantCulture)"
          data-product-rx="@Model.RequiresPrescription.ToString().ToLowerInvariant()">
     <div class="medicine-spotlight-card__image-wrap">
+        <button type="button" class="medicine-spotlight-card__wish" data-wishlist-toggle aria-label="Save to wishlist">
+            <i class="bi bi-heart"></i>
+        </button>
         <img class="medicine-spotlight-card__image" src="@Url.Content(Model.ImagePath)" alt="@Model.BrandName" />
     </div>
 
@@ -39,5 +42,11 @@
         <div class="medicine-spotlight-card__price">@Model.PriceLabel</div>
     </div>
 
-    <button class="medicine-spotlight-card__cta" type="button" data-add-to-cart>Add to Cart</button>
+    <div class="medicine-spotlight-card__footer">
+        <button class="medicine-spotlight-card__cta" type="button" data-add-to-cart>Add to Cart</button>
+        <button class="medicine-spotlight-card__secondary" type="button" data-wishlist-toggle>
+            <i class="bi bi-heart"></i>
+            <span>Wishlist</span>
+        </button>
+    </div>
 </article>
