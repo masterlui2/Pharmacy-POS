@@ -14,6 +14,12 @@
       landmark: "",
       addressType: "Home",
       saveAddress: document.body.dataset.authenticated === "true",
+      latitude: null,
+      longitude: null,
+      distanceKm: null,
+      coverageStatus: "unselected",
+      coverageLabel: "",
+      deliveryFee: 0,
     },
     shipping: {
       option: "Standard",

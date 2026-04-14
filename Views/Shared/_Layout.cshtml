@@ -160,6 +160,52 @@
                 @RenderBody()
             </main>
         </div>
+
+        <footer class="storefront-footer">
+            <div class="storefront-container storefront-footer__grid">
+                <section class="storefront-footer__section">
+                    <h2>About SafeMed</h2>
+                    <p>
+                        SafeMed Pharmacy makes medicine ordering around Davao simpler with prescription-ready checkout,
+                        local delivery coverage, and a faster way to manage health essentials online.
+                    </p>
+                    <div class="storefront-footer__socials" aria-label="SafeMed social links">
+                        <a href="#" aria-label="SafeMed on Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="#" aria-label="SafeMed on LinkedIn"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" aria-label="SafeMed on TikTok"><i class="bi bi-tiktok"></i></a>
+                    </div>
+                </section>
+                <section class="storefront-footer__section">
+                    <h2>Quick Links</h2>
+                    <nav class="storefront-footer__links" aria-label="Quick links">
+                        <a asp-controller="Home" asp-action="Index">Browse Products</a>
+                        <a asp-controller="Home" asp-action="Cart">Checkout</a>
+                        <a asp-controller="Orders" asp-action="Index">Order Tracking</a>
+                        <a asp-controller="Home" asp-action="Wishlist">Saved Items</a>
+                        <a asp-controller="Auth" asp-action="Register">Create Account</a>
+                    </nav>
+                </section>
+                <section class="storefront-footer__section">
+                    <h2>Service Hours</h2>
+                    <p>Mon-Sat 8:00am to 6:00pm</p>
+                    <h3>Davao Dispatch</h3>
+                    <p>Serving delivery requests within Davao City coverage zones only.</p>
+                </section>
+                <section class="storefront-footer__section">
+                    <h2>Customer Care</h2>
+                    <nav class="storefront-footer__links" aria-label="Customer care">
+                        <a href="#">FAQs</a>
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms &amp; Conditions</a>
+                    </nav>
+                </section>
+            </div>
+            <div class="storefront-footer__bottom">
+                <div class="storefront-container">
+                    <span>SafeMed Pharmacy @DateTime.Now.Year</span>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <div class="cart-modal" data-cart-modal hidden>

@@ -1,9 +1,22 @@
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject Microsoft.Extensions.Options.IOptions<PharmacyPOS.Models.Checkout.GoogleMapsDeliveryOptions> DeliveryOptionsAccessor
 @{
     ViewData["Title"] = "My Cart";
+    var deliveryOptions = DeliveryOptionsAccessor.Value;
 }
 
-<section class="cart-page" data-cart-page data-place-order-url="@Url.Action("PlaceOrder", "Checkout")">
+<section class="cart-page"
+         data-cart-page
+         data-place-order-url="@Url.Action("PlaceOrder", "Checkout")"
+         data-maps-api-key="@deliveryOptions.ApiKey"
+         data-branch-name="@deliveryOptions.BranchName"
+         data-branch-address="@deliveryOptions.BranchAddress"
+         data-branch-latitude="@deliveryOptions.BranchLatitude"
+         data-branch-longitude="@deliveryOptions.BranchLongitude"
+         data-base-distance-km="@deliveryOptions.BaseDistanceKm"
+         data-max-radius-km="@deliveryOptions.MaxRadiusKm"
+         data-base-fee="@deliveryOptions.BaseFee"
+         data-per-km-fee="@deliveryOptions.PerKmFee">
     <input type="hidden" value="@Antiforgery.GetAndStoreTokens(Context).RequestToken" data-cart-antiforgery />
     <div class="cart-page__shell" data-cart-root>
         <div class="cart-page__empty-state">
@@ -17,5 +30,6 @@
 @section Scripts {
     <script src="~/js/cart/cart-checkout-state.js" asp-append-version="true"></script>
     <script src="~/js/cart/cart-checkout-renderer.js" asp-append-version="true"></script>
+    <script src="~/js/cart/cart-checkout-map.js" asp-append-version="true"></script>
     <script src="~/js/cart/cart-checkout-page.js" asp-append-version="true"></script>
 }

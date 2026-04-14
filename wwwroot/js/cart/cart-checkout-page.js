@@ -7,9 +7,21 @@
   const core = window.SafeMedCartCore;
   const stateStore = window.SafeMedCheckoutState;
   const renderer = window.SafeMedCheckoutRenderer;
+  const mapController = window.SafeMedCheckoutMap;
   const root = page.querySelector("[data-cart-root]");
   const antiForgeryInput = document.querySelector("[data-cart-antiforgery]");
   const placeOrderUrl = page.dataset.placeOrderUrl || "/checkout/place-order";
+  const deliverySettings = {
+    apiKey: page.dataset.mapsApiKey || "",
+    branchName: page.dataset.branchName || "SafeMed Davao Dispatch",
+    branchAddress: page.dataset.branchAddress || "Davao City, Philippines",
+    branchLatitude: Number.parseFloat(page.dataset.branchLatitude || "7.073056"),
+    branchLongitude: Number.parseFloat(page.dataset.branchLongitude || "125.612778"),
+    baseDistanceKm: Number.parseFloat(page.dataset.baseDistanceKm || "3"),
+    maxRadiusKm: Number.parseFloat(page.dataset.maxRadiusKm || "18"),
+    baseFee: Number.parseFloat(page.dataset.baseFee || "59"),
+    perKmFee: Number.parseFloat(page.dataset.perKmFee || "12"),
+  };
 
   if (!core || !stateStore || !renderer || !root) {
     return;
@@ -67,17 +79,6 @@
     stateStore.writeDraft(draft);
   };
 
-  const renderPage = () => {
-    draft = stateStore.readDraft();
-    normalizeDraftForCurrentCart();
-    renderer.render(root, {
-      core,
-      cart: core.readCart(),
-      uploads: core.readRxUploads(),
-      draft,
-    });
-  };
-
   const setMessage = (message, tone = "info") => {
     draft.ui.message = message;
     draft.ui.tone = tone;
@@ -87,6 +88,89 @@
   const clearMessage = () => {
     draft.ui.message = "";
     draft.ui.tone = "";
+  };
+
+  const syncDeliveryCoverage = () => {
+    if (!mapController) {
+      return;
+    }
+
+    mapController.syncCoverage(draft, deliverySettings);
+  };
+
+  const patchAddressLocation = (payload, shouldRender = true) => {
+    draft.address.deliveryAddress = payload.deliveryAddress || draft.address.deliveryAddress;
+    draft.address.latitude = payload.latitude;
+    draft.address.longitude = payload.longitude;
+    draft.address.distanceKm = payload.distanceKm;
+    draft.address.deliveryFee = payload.deliveryFee;
+    draft.address.coverageStatus = payload.coverageStatus;
+    draft.address.coverageLabel = payload.coverageLabel;
+    clearMessage();
+    persistDraft();
+
+    if (shouldRender) {
+      renderPage();
+    }
+  };
+
+  const initializeMapStep = () => {
+    if (!mapController) {
+      return;
+    }
+
+    const mapRoot = page.querySelector("[data-checkout-map]");
+    if (!(mapRoot instanceof HTMLElement)) {
+      return;
+    }
+
+    const searchInput = page.querySelector("[data-map-search]");
+    const statusTarget = page.querySelector("[data-map-status]");
+    if (!deliverySettings.apiKey) {
+      if (statusTarget instanceof HTMLElement) {
+        statusTarget.textContent = "Google Maps is not configured yet. Add your API key in appsettings before using map-based delivery.";
+      }
+      return;
+    }
+
+    mapController
+      .mount({
+        root: mapRoot,
+        searchInput: searchInput instanceof HTMLInputElement ? searchInput : null,
+        statusTarget: statusTarget instanceof HTMLElement ? statusTarget : null,
+        draft,
+        settings: deliverySettings,
+        onChange: (payload) => patchAddressLocation(payload),
+        onError: (message, tone) => {
+          setMessage(message, tone);
+          if (statusTarget instanceof HTMLElement) {
+            statusTarget.textContent = message;
+          }
+        },
+      })
+      .catch(() => {
+        if (statusTarget instanceof HTMLElement) {
+          statusTarget.textContent = "Google Maps failed to load. Check the API key, billing, referrer settings, and enabled APIs.";
+        }
+      });
+  };
+
+  const renderPage = () => {
+    draft = stateStore.readDraft();
+    normalizeDraftForCurrentCart();
+    syncDeliveryCoverage();
+    renderer.render(root, {
+      core,
+      cart: core.readCart(),
+      draft,
+      deliverySettings,
+    });
+
+    if (draft.step === 2) {
+      initializeMapStep();
+    } else {
+      mapController?.teardown();
+    }
   };
 
   const validateAddress = () => {
@@ -102,6 +186,19 @@
 
     if (!draft.address.deliveryAddress.trim()) {
       setMessage("Enter the full delivery address.", "danger");
+      return false;
+    }
+
+    if (
+      typeof draft.address.latitude !== "number" ||
+      typeof draft.address.longitude !== "number"
+    ) {
+      setMessage("Pin the exact delivery location on the map.", "danger");
+      return false;
+    }
+
+    if (draft.address.coverageStatus !== "covered") {
+      setMessage("Delivery is only available for locations within Davao coverage.", "danger");
       return false;
     }
 
@@ -139,6 +236,9 @@
   const updateDraftField = (path, value) => {
     const [section, key] = path.split(".");
     draft[section][key] = value;
+    if (section === "shipping" || section === "address") {
+      syncDeliveryCoverage();
+    }
     clearMessage();
     persistDraft();
   };
@@ -221,6 +321,9 @@
       landmark: draft.address.landmark.trim(),
       addressType: draft.address.addressType,
       saveAddress: Boolean(draft.address.saveAddress),
+      latitude: draft.address.latitude,
+      longitude: draft.address.longitude,
+      distanceKm: draft.address.distanceKm,
       deliveryOption: draft.shipping.option,
       paymentMethod: draft.payment.method,
       prescriptionStatus: renderer.getPrescriptionStatus(core.readCart(), uploads).code,
@@ -382,6 +485,7 @@
     const shippingOption = target.closest("[data-shipping-option]");
     if (shippingOption instanceof HTMLElement) {
       draft.shipping.option = shippingOption.dataset.shippingOption || "Standard";
+      syncDeliveryCoverage();
       persistDraft();
       renderPage();
       return;
@@ -397,6 +501,28 @@
 
     if (target.closest("[data-place-order]")) {
       placeOrder();
+      return;
+    }
+
+    if (target.closest("[data-map-locate]")) {
+      mapController?.locateUser(
+        (location) => {
+          const payload = {
+            deliveryAddress: draft.address.deliveryAddress,
+            latitude: location.lat,
+            longitude: location.lng,
+            distanceKm: draft.address.distanceKm,
+            deliveryFee: draft.address.deliveryFee,
+            coverageStatus: draft.address.coverageStatus,
+            coverageLabel: draft.address.coverageLabel,
+          };
+          patchAddressLocation(payload);
+        },
+        (message, tone) => {
+          setMessage(message, tone);
+          renderPage();
+        },
+      );
     }
   });
 

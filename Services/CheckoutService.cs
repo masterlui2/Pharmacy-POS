@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using PharmacyPOS.Data;
 using PharmacyPOS.Models;
 using PharmacyPOS.Models.Checkout;
@@ -8,8 +9,11 @@ namespace PharmacyPOS.Services;
 
 public class CheckoutService(
     PharmacyPosDbContext dbContext,
-    IPayMongoService payMongoService) : ICheckoutService
+    IPayMongoService payMongoService,
+    IOptions<GoogleMapsDeliveryOptions> deliveryOptionsAccessor) : ICheckoutService
 {
+    private readonly GoogleMapsDeliveryOptions deliveryOptions = deliveryOptionsAccessor.Value;
+
     private static readonly Dictionary<string, decimal> PromoRates = new(StringComparer.OrdinalIgnoreCase)
     {
         ["SAFEMED10"] = 0.10m,
@@ -62,12 +66,25 @@ public class CheckoutService(
         }
 
         var shippingProfile = GetShippingProfile(request.DeliveryOption);
+        var deliveryQuote = BuildDeliveryQuote(
+            request.DeliveryOption,
+            request.Latitude,
+            request.Longitude);
+        if (!deliveryQuote.IsWithinCoverage)
+        {
+            return new PlaceOrderResult
+            {
+                Success = false,
+                Message = $"Delivery is currently limited to addresses within {deliveryOptions.MaxRadiusKm:0.#} km of {deliveryOptions.BranchName} in Davao City."
+            };
+        }
+
         var subtotal = request.Items.Sum(item => item.Price * item.Quantity);
         var taxes = request.Items.Sum(item => item.Tax * item.Quantity);
         var discountRate = GetPromoRate(request.PromoCode);
         var discount = subtotal * discountRate;
         var paymentMethod = NormalizePaymentMethod(request.PaymentMethod);
-        var total = Math.Max(0m, subtotal + taxes + shippingProfile.Fee - discount);
+        var total = Math.Max(0m, subtotal + taxes + deliveryQuote.TotalFee - discount);
 
         var account = string.IsNullOrWhiteSpace(customerEmail)
             ? null
@@ -87,7 +104,7 @@ public class CheckoutService(
             AddressType = request.AddressType.Trim(),
             DeliveryOption = shippingProfile.Code,
             PaymentMethod = paymentMethod,
-            FulfillmentBranch = shippingProfile.Branch,
+            FulfillmentBranch = deliveryOptions.BranchName,
             PrescriptionStatus = requiresPrescription ? "Valid" : "NotRequired",
             OrderStatus = "Pending",
             RequiresPrescription = requiresPrescription,
@@ -95,7 +112,7 @@ public class CheckoutService(
             EstimatedDeliveryMaxMinutes = shippingProfile.MaxEtaMinutes,
             SubtotalAmount = subtotal,
             TaxAmount = taxes,
-            ShippingAmount = shippingProfile.Fee,
+            ShippingAmount = deliveryQuote.TotalFee,
             DiscountAmount = discount,
             TotalAmount = total,
             PromoCode = request.PromoCode.Trim().ToUpperInvariant(),
@@ -226,6 +243,11 @@ public class CheckoutService(
             return "Delivery address is required.";
         }
 
+        if (!request.Latitude.HasValue || !request.Longitude.HasValue)
+        {
+            return "Choose a delivery pin on the map.";
+        }
+
         if (!AllowedAddressTypes.Contains(request.AddressType, StringComparer.OrdinalIgnoreCase))
         {
             return "Select a valid address type.";
@@ -259,10 +281,58 @@ public class CheckoutService(
             ? "GCash"
             : paymentMethod.Trim();
 
-    private static ShippingProfile GetShippingProfile(string deliveryOption) =>
+    private ShippingProfile GetShippingProfile(string deliveryOption) =>
         string.Equals(deliveryOption, "Express", StringComparison.OrdinalIgnoreCase)
-            ? new ShippingProfile("Express", 20, 35, 149m, "SafeMed Express Hub - Main Branch")
-            : new ShippingProfile("Standard", 45, 75, 79m, "SafeMed Main Branch");
+            ? new ShippingProfile("Express", 20, 35, 45m)
+            : new ShippingProfile("Standard", 45, 75, 0m);
+
+    private DeliveryQuote BuildDeliveryQuote(
+        string deliveryOption,
+        double? latitude,
+        double? longitude)
+    {
+        if (!latitude.HasValue || !longitude.HasValue)
+        {
+            return new DeliveryQuote(false, 0, 0m);
+        }
+
+        var distanceKm = CalculateDistanceKm(
+            deliveryOptions.BranchLatitude,
+            deliveryOptions.BranchLongitude,
+            latitude.Value,
+            longitude.Value);
+        var profile = GetShippingProfile(deliveryOption);
+        var billableDistance = Math.Max(0, Math.Ceiling(distanceKm - deliveryOptions.BaseDistanceKm));
+        var baseFee = deliveryOptions.BaseFee + (decimal)billableDistance * deliveryOptions.PerKmFee;
+        var totalFee = baseFee + profile.SurchargeFee;
+        var isWithinCoverage = distanceKm <= deliveryOptions.MaxRadiusKm;
+
+        return new DeliveryQuote(isWithinCoverage, distanceKm, totalFee);
+    }
+
+    private static double CalculateDistanceKm(
+        double originLatitude,
+        double originLongitude,
+        double destinationLatitude,
+        double destinationLongitude)
+    {
+        const double earthRadiusKm = 6371;
+        var latitudeDelta = DegreesToRadians(destinationLatitude - originLatitude);
+        var longitudeDelta = DegreesToRadians(destinationLongitude - originLongitude);
+        var startLatitude = DegreesToRadians(originLatitude);
+        var endLatitude = DegreesToRadians(destinationLatitude);
+
+        var a =
+            Math.Pow(Math.Sin(latitudeDelta / 2), 2) +
+            Math.Cos(startLatitude) *
+            Math.Cos(endLatitude) *
+            Math.Pow(Math.Sin(longitudeDelta / 2), 2);
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+        return earthRadiusKm * c;
+    }
+
+    private static double DegreesToRadians(double degrees) => degrees * (Math.PI / 180);
 
     private static string GenerateOrderNumber() =>
         $"SM-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}";
@@ -287,6 +357,10 @@ public class CheckoutService(
         string Code,
         int MinEtaMinutes,
         int MaxEtaMinutes,
-        decimal Fee,
-        string Branch);
+        decimal SurchargeFee);
+
+    private sealed record DeliveryQuote(
+        bool IsWithinCoverage,
+        double DistanceKm,
+        decimal TotalFee);
 }

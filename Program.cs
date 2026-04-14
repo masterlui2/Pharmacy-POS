@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PharmacyPOS.Data;
 using PharmacyPOS.Models;
+using PharmacyPOS.Models.Checkout;
 using PharmacyPOS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,8 @@ builder.Services.Configure<RecaptchaOptions>(
     builder.Configuration.GetSection(RecaptchaOptions.SectionName));
 builder.Services.Configure<PayMongoOptions>(
     builder.Configuration.GetSection(PayMongoOptions.SectionName));
+builder.Services.Configure<GoogleMapsDeliveryOptions>(
+    builder.Configuration.GetSection(GoogleMapsDeliveryOptions.SectionName));
 builder.Services.AddDbContext<PharmacyPosDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHttpClient<IRecaptchaService, GoogleRecaptchaService>();

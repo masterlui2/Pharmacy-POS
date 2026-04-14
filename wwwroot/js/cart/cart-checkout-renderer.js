@@ -3,16 +3,14 @@
     Standard: {
       label: "Standard delivery",
       etaLabel: "45-75 minutes",
-      fee: 79,
-      branch: "SafeMed Main Branch",
-      detail: "Balanced speed for regular medicine orders.",
+      surcharge: 0,
+      detail: "Balanced speed for regular medicine orders within Davao City coverage.",
     },
     Express: {
       label: "Express delivery",
       etaLabel: "20-35 minutes",
-      fee: 149,
-      branch: "SafeMed Express Hub - Main Branch",
-      detail: "Priority dispatch for urgent medicine needs.",
+      surcharge: 45,
+      detail: "Priority dispatch for urgent medicine needs within active Davao zones.",
     },
   };
 
@@ -189,7 +187,17 @@
   };
 
   const renderAddressStep = (ctx) => {
-    const { core, draft } = ctx;
+    const { core, draft, deliverySettings } = ctx;
+    const hasPin =
+      typeof draft.address.latitude === "number" &&
+      typeof draft.address.longitude === "number";
+    const coverageTone =
+      draft.address.coverageStatus === "covered"
+        ? "success"
+        : draft.address.coverageStatus === "blocked"
+          ? "danger"
+          : "warning";
+
     return `
       <section class="cart-panel">
         <div class="cart-panel__head">
@@ -197,47 +205,104 @@
             <p class="cart-eyebrow">Step 2</p>
             <h1>Address Information</h1>
           </div>
-        </div>
-        <div class="checkout-form-grid">
-          <label class="checkout-field">
-            <span>Full name</span>
-            <input type="text" value="${core.escapeHtml(draft.address.fullName)}" data-draft-field="address.fullName" />
-          </label>
-          <label class="checkout-field">
-            <span>Phone number</span>
-            <input type="tel" value="${core.escapeHtml(draft.address.phoneNumber)}" data-draft-field="address.phoneNumber" />
-          </label>
-          <label class="checkout-field checkout-field--wide">
-            <span>Full delivery address</span>
-            <textarea rows="4" data-draft-field="address.deliveryAddress">${core.escapeHtml(draft.address.deliveryAddress)}</textarea>
-          </label>
-          <label class="checkout-field checkout-field--wide">
-            <span>Landmark <small>(optional)</small></span>
-            <input type="text" value="${core.escapeHtml(draft.address.landmark)}" data-draft-field="address.landmark" />
-          </label>
-        </div>
-        <div class="checkout-choice-group">
-          <span class="checkout-choice-group__label">Address type</span>
-          <div class="checkout-choice-row">
-            ${["Home", "Work", "Other"]
-              .map(
-                (value) => `
-                  <button type="button" class="checkout-choice ${draft.address.addressType === value ? "checkout-choice--active" : ""}" data-address-type="${value}">
-                    ${value}
-                  </button>`,
-              )
-              .join("")}
+          <div class="cart-estimate-mini">
+            <span>Delivery zone</span>
+            <strong>Davao City Only</strong>
           </div>
         </div>
-        <label class="checkout-toggle">
-          <input type="checkbox" ${draft.address.saveAddress ? "checked" : ""} data-draft-checkbox="address.saveAddress" />
-          <span>Save this address for future checkout</span>
-        </label>
+        ${
+          !deliverySettings.apiKey
+            ? `<div class="cart-banner cart-banner--warning">
+                 <i class="bi bi-geo-alt-fill"></i>
+                 <div>
+                   <strong>Google Maps setup required</strong>
+                   <span>Add your Google Maps API key in configuration before enabling address pinning.</span>
+                 </div>
+               </div>`
+            : ""
+        }
+        <div class="checkout-address-layout">
+          <div class="checkout-address-layout__form">
+            <div class="checkout-form-grid">
+              <label class="checkout-field">
+                <span>Full name</span>
+                <input type="text" value="${core.escapeHtml(draft.address.fullName)}" data-draft-field="address.fullName" />
+              </label>
+              <label class="checkout-field">
+                <span>Phone number</span>
+                <input type="tel" value="${core.escapeHtml(draft.address.phoneNumber)}" data-draft-field="address.phoneNumber" />
+              </label>
+              <label class="checkout-field checkout-field--wide">
+                <span>Search location</span>
+                <input type="text" value="${core.escapeHtml(draft.address.deliveryAddress)}" placeholder="Search within Davao City" data-map-search />
+              </label>
+              <label class="checkout-field checkout-field--wide">
+                <span>Full delivery address</span>
+                <textarea rows="4" data-draft-field="address.deliveryAddress">${core.escapeHtml(draft.address.deliveryAddress)}</textarea>
+              </label>
+              <label class="checkout-field checkout-field--wide">
+                <span>Landmark <small>(optional)</small></span>
+                <input type="text" value="${core.escapeHtml(draft.address.landmark)}" data-draft-field="address.landmark" />
+              </label>
+            </div>
+            <div class="checkout-choice-group">
+              <span class="checkout-choice-group__label">Address type</span>
+              <div class="checkout-choice-row">
+                ${["Home", "Work", "Other"]
+                  .map(
+                    (value) => `
+                      <button type="button" class="checkout-choice ${draft.address.addressType === value ? "checkout-choice--active" : ""}" data-address-type="${value}">
+                        ${value}
+                      </button>`,
+                  )
+                  .join("")}
+              </div>
+            </div>
+            <label class="checkout-toggle">
+              <input type="checkbox" ${draft.address.saveAddress ? "checked" : ""} data-draft-checkbox="address.saveAddress" />
+              <span>Save this address for future checkout</span>
+            </label>
+          </div>
+          <div class="checkout-map-card">
+            <div class="checkout-map-card__head">
+              <div>
+                <h2>Pin Your Delivery Location</h2>
+                <p>Search, click, or drag the marker to confirm a Davao delivery point.</p>
+              </div>
+              <button type="button" class="cart-secondary-btn checkout-map-card__locate" data-map-locate>Use My Location</button>
+            </div>
+            <div class="checkout-map-canvas" data-checkout-map></div>
+            <div class="checkout-map-card__status">
+              <span class="cart-status-badge cart-status-badge--${coverageTone}">
+                ${hasPin ? "Location selected" : "Pin required"}
+              </span>
+              <p data-map-status>${core.escapeHtml(draft.address.coverageLabel || "Pick a location within Davao City to continue.")}</p>
+            </div>
+            <div class="checkout-map-card__meta">
+              <div class="cart-kv">
+                <span>Dispatch branch</span>
+                <strong>${core.escapeHtml(deliverySettings.branchName)}</strong>
+              </div>
+              <div class="cart-kv">
+                <span>Coverage radius</span>
+                <strong>${deliverySettings.maxRadiusKm.toFixed(0)} km</strong>
+              </div>
+              <div class="cart-kv">
+                <span>Current distance</span>
+                <strong>${draft.address.distanceKm ? `${draft.address.distanceKm.toFixed(1)} km` : "Not set"}</strong>
+              </div>
+              <div class="cart-kv">
+                <span>Estimated fee</span>
+                <strong>${core.currency.format(draft.address.deliveryFee || 0)}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>`;
   };
 
   const renderShippingStep = (ctx) => {
-    const { draft, core } = ctx;
+    const { draft, core, deliverySettings } = ctx;
     return `
       <section class="cart-panel">
         <div class="cart-panel__head">
@@ -253,12 +318,12 @@
                 <button type="button" class="shipping-card ${draft.shipping.option === key ? "shipping-card--active" : ""}" data-shipping-option="${key}">
                   <div class="shipping-card__top">
                     <strong>${profile.label}</strong>
-                    <span>${core.currency.format(profile.fee)}</span>
+                    <span>${core.currency.format((draft.address.deliveryFee || 0) + profile.surcharge)}</span>
                   </div>
                   <p>${profile.detail}</p>
                   <div class="shipping-card__meta">
                     <span>${profile.etaLabel}</span>
-                    <span>${profile.branch}</span>
+                    <span>${core.escapeHtml(deliverySettings.branchName)}</span>
                   </div>
                 </button>`,
             )
@@ -268,7 +333,7 @@
           <i class="bi bi-shop"></i>
           <div>
             <strong>Pharmacy fulfillment</strong>
-            <span>${shippingProfiles[draft.shipping.option].branch} will prepare and process this order.</span>
+            <span>${core.escapeHtml(deliverySettings.branchName)} will prepare and process this order.</span>
           </div>
         </div>
       </section>`;
@@ -339,7 +404,7 @@
             )
             .join("")}
           <div class="cart-kv"><span>Subtotal</span><strong>${core.currency.format(totals.subtotal)}</strong></div>
-          <div class="cart-kv"><span>Shipping</span><strong>${core.currency.format(deliveryProfile.fee)}</strong></div>
+          <div class="cart-kv"><span>Delivery Fee</span><strong>${core.currency.format(deliveryProfile.fee)}</strong></div>
           <div class="cart-kv"><span>Taxes</span><strong>${core.currency.format(totals.taxes)}</strong></div>
           ${
             promo
@@ -352,14 +417,15 @@
   };
 
   const renderSidebar = (ctx) => {
-    const { core, draft, totals, prescription } = ctx;
-    const deliveryProfile = shippingProfiles[draft.shipping.option];
-    const finalTotal =
-      totals.subtotal + totals.taxes + deliveryProfile.fee - totals.discount;
-    const blocked =
+    const { core, draft, totals, prescription, deliverySettings } = ctx;
+    const selectedProfile = shippingProfiles[draft.shipping.option];
+    const shippingFee = (draft.address.deliveryFee || 0) + selectedProfile.surcharge;
+    const finalTotal = totals.subtotal + totals.taxes + shippingFee - totals.discount;
+    const placeOrderBlocked =
       !core.isAuthenticated ||
       prescription.code === "Missing" ||
-      prescription.code === "Uploaded";
+      prescription.code === "Uploaded" ||
+      draft.address.coverageStatus !== "covered";
 
     return `
       <aside class="checkout-sidebar">
@@ -369,7 +435,7 @@
             <span>${totals.itemCount} item${totals.itemCount === 1 ? "" : "s"}</span>
           </div>
           <div class="cart-kv"><span>Subtotal</span><strong>${core.currency.format(totals.subtotal)}</strong></div>
-          <div class="cart-kv"><span>Shipping</span><strong>${core.currency.format(deliveryProfile.fee)}</strong></div>
+          <div class="cart-kv"><span>Delivery Fee</span><strong>${core.currency.format(shippingFee)}</strong></div>
           <div class="cart-kv"><span>Taxes</span><strong>${core.currency.format(totals.taxes)}</strong></div>
           ${
             totals.discount > 0
@@ -381,10 +447,11 @@
         <div class="cart-panel cart-panel--sidebar">
           <div class="cart-panel__subhead">
             <h2>Delivery</h2>
-            <span>${deliveryProfile.label}</span>
+            <span>${selectedProfile.label}</span>
           </div>
-          <div class="cart-kv"><span>ETA</span><strong>${deliveryProfile.etaLabel}</strong></div>
-          <div class="cart-kv"><span>Branch</span><strong>${deliveryProfile.branch}</strong></div>
+          <div class="cart-kv"><span>ETA</span><strong>${selectedProfile.etaLabel}</strong></div>
+          <div class="cart-kv"><span>Branch</span><strong>${core.escapeHtml(deliverySettings.branchName)}</strong></div>
+          <div class="cart-kv"><span>Distance</span><strong>${draft.address.distanceKm ? `${draft.address.distanceKm.toFixed(1)} km` : "Pending"}</strong></div>
           <div class="cart-kv"><span>Prescription</span><strong>${prescription.label}</strong></div>
         </div>
         ${
@@ -405,8 +472,8 @@
             !core.isAuthenticated
               ? `<a class="cart-primary-btn cart-primary-btn--link" href="${core.escapeHtml(core.loginUrl)}">Log in to Continue</a>`
               : draft.step < 4
-                ? `<button type="button" class="cart-primary-btn" data-step-next ${blocked ? "disabled" : ""}>Next Step</button>`
-                : `<button type="button" class="cart-primary-btn" data-place-order ${draft.ui.busy || blocked ? "disabled" : ""}>
+                ? `<button type="button" class="cart-primary-btn" data-step-next>Next Step</button>`
+                : `<button type="button" class="cart-primary-btn" data-place-order ${draft.ui.busy || placeOrderBlocked ? "disabled" : ""}>
                      ${draft.ui.busy ? "Placing Order..." : "Place Order"}
                    </button>`
           }
@@ -415,7 +482,7 @@
   };
 
   const render = (root, ctx) => {
-    const { core, cart, uploads, draft } = ctx;
+    const { core, cart, draft } = ctx;
 
     if (cart.length === 0 && !draft.ui.orderNumber) {
       root.innerHTML = `
@@ -429,9 +496,13 @@
 
     const promo = core.readPromo();
     const totals = core.getCartTotals(cart, promo);
+    const uploads = core.readRxUploads();
     const prescription = getPrescriptionStatus(cart, uploads);
-    const deliveryProfile = shippingProfiles[draft.shipping.option];
-    const context = { ...ctx, promo, totals, prescription, deliveryProfile };
+    const deliveryProfile = {
+      ...shippingProfiles[draft.shipping.option],
+      fee: (draft.address.deliveryFee || 0) + shippingProfiles[draft.shipping.option].surcharge,
+    };
+    const context = { ...ctx, uploads, promo, totals, prescription, deliveryProfile };
 
     const successMarkup = `
       <section class="cart-panel cart-panel--success">
@@ -439,7 +510,7 @@
           <i class="bi bi-check-circle-fill"></i>
           <div>
             <strong>Order ${core.escapeHtml(draft.ui.orderNumber)} confirmed</strong>
-            <span>Your order is queued at ${deliveryProfile.branch}.</span>
+            <span>Your order is queued for dispatch.</span>
           </div>
         </div>
         <a class="cart-page__continue-link" href="${core.escapeHtml(core.homeUrl)}">Continue Shopping</a>
