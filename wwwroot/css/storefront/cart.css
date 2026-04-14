@@ -568,6 +568,45 @@
     #f8fafc;
 }
 
+.checkout-map-canvas--unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkout-map-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  max-width: 300px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.checkout-map-fallback i {
+  color: #ef1c25;
+  font-size: 1.5rem;
+}
+
+.checkout-map-fallback strong,
+.checkout-map-fallback p {
+  margin: 0;
+}
+
+.checkout-map-fallback strong {
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.checkout-map-fallback p {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .checkout-map-card__status,
 .checkout-map-card__meta {
   margin-top: 0.95rem;

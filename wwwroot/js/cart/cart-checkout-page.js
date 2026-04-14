@@ -90,6 +90,29 @@
     draft.ui.tone = "";
   };
 
+  const renderMapUnavailable = (mapRoot, statusTarget, message) => {
+    if (!(mapRoot instanceof HTMLElement)) {
+      return;
+    }
+
+    mapRoot.classList.add("checkout-map-canvas--unavailable");
+    mapRoot.innerHTML = `
+      <div class="checkout-map-fallback">
+        <i class="bi bi-geo-alt"></i>
+        <strong>Map unavailable</strong>
+        <p>${core.escapeHtml(message)}</p>
+      </div>`;
+
+    const locateButton = page.querySelector("[data-map-locate]");
+    if (locateButton instanceof HTMLButtonElement) {
+      locateButton.disabled = true;
+    }
+
+    if (statusTarget instanceof HTMLElement) {
+      statusTarget.textContent = message;
+    }
+  };
+
   const syncDeliveryCoverage = () => {
     if (!mapController) {
       return;
@@ -127,11 +150,16 @@
     const searchInput = page.querySelector("[data-map-search]");
     const statusTarget = page.querySelector("[data-map-status]");
     if (!deliverySettings.apiKey) {
-      if (statusTarget instanceof HTMLElement) {
-        statusTarget.textContent = "Google Maps is not configured yet. Add your API key in appsettings before using map-based delivery.";
-      }
+      renderMapUnavailable(
+        mapRoot,
+        statusTarget,
+        "Google Maps is not configured yet. Add your API key in appsettings before using map-based delivery.",
+      );
       return;
     }
+
+    mapRoot.classList.remove("checkout-map-canvas--unavailable");
+    mapRoot.innerHTML = "";
 
     mapController
       .mount({
@@ -148,10 +176,12 @@
           }
         },
       })
-      .catch(() => {
-        if (statusTarget instanceof HTMLElement) {
-          statusTarget.textContent = "Google Maps failed to load. Check the API key, billing, referrer settings, and enabled APIs.";
-        }
+      .catch((error) => {
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : "Google Maps failed to load. Check the API key, billing, referrer settings, and enabled APIs.";
+        renderMapUnavailable(mapRoot, statusTarget, message);
       });
   };
 
@@ -506,9 +536,10 @@
 
     if (target.closest("[data-map-locate]")) {
       mapController?.locateUser(
+        deliverySettings,
         (location) => {
           const payload = {
-            deliveryAddress: draft.address.deliveryAddress,
+            deliveryAddress: location.deliveryAddress || draft.address.deliveryAddress,
             latitude: location.lat,
             longitude: location.lng,
             distanceKm: draft.address.distanceKm,

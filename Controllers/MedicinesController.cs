@@ -4,15 +4,10 @@ using PharmacyPOS.Services;
 
 namespace PharmacyPOS.Controllers;
 
-public class MedicinesController(IMedicineService medicineService) : Controller
+public class MedicinesController(IMedicineService medicineService) : BaseController
 {
     public IActionResult Index(string? search, string? category, string? status)
     {
-        if (!IsAuthenticated())
-        {
-            return RedirectToAction("Login", "Auth");
-        }
-
         var medicines = medicineService.GetAll();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -49,7 +44,6 @@ public class MedicinesController(IMedicineService medicineService) : Controller
     [HttpGet]
     public IActionResult Create()
     {
-        if (!IsAuthenticated()) return RedirectToAction("Login", "Auth");
         return View(new Medicine { ExpiryDate = DateTime.Today.AddMonths(12) });
     }
 
@@ -57,8 +51,6 @@ public class MedicinesController(IMedicineService medicineService) : Controller
     [ValidateAntiForgeryToken]
     public IActionResult Create(Medicine medicine)
     {
-        if (!IsAuthenticated()) return RedirectToAction("Login", "Auth");
-
         if (!ModelState.IsValid)
         {
             return View(medicine);
@@ -72,8 +64,6 @@ public class MedicinesController(IMedicineService medicineService) : Controller
     [HttpGet]
     public IActionResult Edit(int id)
     {
-        if (!IsAuthenticated()) return RedirectToAction("Login", "Auth");
-
         var medicine = medicineService.GetById(id);
         if (medicine is null) return NotFound();
 
@@ -84,8 +74,6 @@ public class MedicinesController(IMedicineService medicineService) : Controller
     [ValidateAntiForgeryToken]
     public IActionResult Edit(Medicine medicine)
     {
-        if (!IsAuthenticated()) return RedirectToAction("Login", "Auth");
-
         if (!ModelState.IsValid)
         {
             return View(medicine);
@@ -99,8 +87,6 @@ public class MedicinesController(IMedicineService medicineService) : Controller
     [HttpGet]
     public IActionResult Details(int id)
     {
-        if (!IsAuthenticated()) return RedirectToAction("Login", "Auth");
-
         var medicine = medicineService.GetById(id);
         if (medicine is null) return NotFound();
 
@@ -111,12 +97,8 @@ public class MedicinesController(IMedicineService medicineService) : Controller
     [ValidateAntiForgeryToken]
     public IActionResult Delete(int id)
     {
-        if (!IsAuthenticated()) return RedirectToAction("Login", "Auth");
-
         medicineService.Delete(id);
         TempData["Success"] = "Medicine deleted.";
         return RedirectToAction(nameof(Index));
     }
-
-    private bool IsAuthenticated() => !string.IsNullOrWhiteSpace(HttpContext.Session.GetString("Username"));
 }

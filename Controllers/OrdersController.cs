@@ -8,8 +8,14 @@ namespace PharmacyPOS.Controllers;
 
 public class OrdersController(PharmacyPosDbContext dbContext) : BaseController
 {
+    private const int OrdersPageSize = 5;
+
     [HttpGet]
-    public async Task<IActionResult> Index(string? order = null, string? payment = null, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Index(
+        int page = 1,
+        string? order = null,
+        string? payment = null,
+        CancellationToken cancellationToken = default)
     {
         var customerEmail = HttpContext.Session.GetString("Email") ?? string.Empty;
         if (string.IsNullOrWhiteSpace(customerEmail))
@@ -22,12 +28,24 @@ public class OrdersController(PharmacyPosDbContext dbContext) : BaseController
             await MarkOrderPaidAsync(customerEmail, order, cancellationToken);
         }
 
-        var orders = await dbContext.Orders
+        var normalizedPage = Math.Max(1, page);
+        var ordersQuery = dbContext.Orders
             .AsNoTracking()
             .Include(entry => entry.Items)
             .Include(entry => entry.Payment)
             .Where(entry => entry.CustomerEmail == customerEmail)
-            .OrderByDescending(entry => entry.CreatedAtUtc)
+            .OrderByDescending(entry => entry.CreatedAtUtc);
+
+        var totalOrders = await ordersQuery.CountAsync(cancellationToken);
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalOrders / (double)OrdersPageSize));
+        if (normalizedPage > totalPages)
+        {
+            normalizedPage = totalPages;
+        }
+
+        var orders = await ordersQuery
+            .Skip((normalizedPage - 1) * OrdersPageSize)
+            .Take(OrdersPageSize)
             .Select(entry => new OrderSummaryViewModel
             {
                 OrderNumber = entry.OrderNumber,
@@ -59,7 +77,10 @@ public class OrdersController(PharmacyPosDbContext dbContext) : BaseController
                 (string.Equals(payment, "success", StringComparison.OrdinalIgnoreCase) ||
                  string.Equals(payment, "placed", StringComparison.OrdinalIgnoreCase)),
             HighlightOrderNumber = order ?? string.Empty,
-            Orders = orders
+            Orders = orders,
+            CurrentPage = normalizedPage,
+            PageSize = OrdersPageSize,
+            TotalOrders = totalOrders
         };
 
         return View(vm);

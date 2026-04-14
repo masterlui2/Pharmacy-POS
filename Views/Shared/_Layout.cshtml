@@ -136,14 +136,20 @@
         {
             <nav class="storefront-category-nav">
                 <div class="storefront-container storefront-category-links">
-                    <a class="storefront-category-link" asp-controller="Home" asp-action="Index">
-                        <span>Our Products</span>
-                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
-                    </a>
-                    <a class="storefront-category-link" href="#">
-                        <span>Medical Conditions</span>
-                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
-                    </a>
+                    <div class="storefront-category-item storefront-category-item--left">
+                        <a class="storefront-category-link" asp-controller="Home" asp-action="Index">
+                            <span>Our Products</span>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                        </a>
+                        <partial name="_StorefrontProductsMegaMenu" />
+                    </div>
+                    <div class="storefront-category-item storefront-category-item--right">
+                        <a class="storefront-category-link" href="#">
+                            <span>Medical Conditions</span>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                        </a>
+                        <partial name="_StorefrontConditionsMegaMenu" />
+                    </div>
                     <a class="storefront-category-link" href="#">
                         <span>Latest Promos</span>
                     </a>

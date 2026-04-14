@@ -1,8 +1,29 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
 @{
-    ViewData["Title"] = ViewData["ModuleName"];
+    ViewData["Title"] = Model.Title;
 }
 
-<div class="page-card p-4">
-    <h3>@ViewData["ModuleName"]</h3>
-    <p class="text-muted mb-0">This module is ready for implementation. Sidebar navigation and active highlighting are already dynamic.</p>
-</div>
+<section class="admin-module-hero">
+    <div>
+        <p class="admin-module-hero__eyebrow">Admin module</p>
+        <h2>@Model.Title</h2>
+        <p>@Model.Description</p>
+    </div>
+    <div class="admin-topbar-badge">Inside admin shell</div>
+</section>
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Module Status</h4>
+            <p>Navigation and shell behavior are now isolated from the storefront layout.</p>
+        </div>
+    </div>
+
+    <ul class="admin-alert-list admin-alert-list--compact">
+        @foreach (var item in Model.Checklist)
+        {
+            <li>@item</li>
+        }
+    </ul>
+</section>

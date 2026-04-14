@@ -3,8 +3,16 @@
   let activeMap;
 
   const scriptId = "safemed-google-maps-script";
+  const authFailureMessage =
+    "Google Maps authorization failed. Use a valid API key with billing, Maps JavaScript API, Places API, and the correct allowed referrers.";
 
   const loadGoogleMaps = (apiKey) => {
+    if (window.SafeMedGoogleMapsState?.status === "failed") {
+      return Promise.reject(
+        new Error(window.SafeMedGoogleMapsState.error || authFailureMessage),
+      );
+    }
+
     if (window.google?.maps) {
       return Promise.resolve(window.google.maps);
     }
@@ -18,10 +26,48 @@
     }
 
     loaderPromise = new Promise((resolve, reject) => {
+      let settled = false;
+
+      const fail = (message) => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        loaderPromise = null;
+        window.SafeMedGoogleMapsState = {
+          status: "failed",
+          error: message,
+        };
+        reject(new Error(message));
+      };
+
+      const succeed = () => {
+        if (settled) {
+          return;
+        }
+
+        if (window.SafeMedGoogleMapsState?.status === "failed") {
+          fail(window.SafeMedGoogleMapsState.error || authFailureMessage);
+          return;
+        }
+
+        if (!window.google?.maps) {
+          fail("Unable to load Google Maps.");
+          return;
+        }
+
+        settled = true;
+        window.SafeMedGoogleMapsState = { status: "ready", error: "" };
+        resolve(window.google.maps);
+      };
+
+      window.gm_authFailure = () => fail(authFailureMessage);
+
       const existing = document.getElementById(scriptId);
       if (existing) {
-        existing.addEventListener("load", () => resolve(window.google.maps), { once: true });
-        existing.addEventListener("error", () => reject(new Error("Unable to load Google Maps.")), { once: true });
+        existing.addEventListener("load", succeed, { once: true });
+        existing.addEventListener("error", () => fail("Unable to load Google Maps."), { once: true });
         return;
       }
 
@@ -30,8 +76,8 @@
       script.async = true;
       script.defer = true;
       script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places`;
-      script.onload = () => resolve(window.google.maps);
-      script.onerror = () => reject(new Error("Unable to load Google Maps."));
+      script.onload = succeed;
+      script.onerror = () => fail("Unable to load Google Maps.");
       document.head.appendChild(script);
     });
 
@@ -110,6 +156,24 @@
     draft.address.coverageStatus = quote.coverageStatus;
     draft.address.coverageLabel = quote.coverageLabel;
     return quote;
+  };
+
+  const reverseGeocodeLocation = async (geocoder, location) => {
+    if (!geocoder) {
+      throw new Error("Unable to resolve a formatted address for this location.");
+    }
+
+    try {
+      const response = await geocoder.geocode({ location });
+      const formattedAddress = response.results?.[0]?.formatted_address?.trim();
+      if (!formattedAddress) {
+        throw new Error("No formatted address was returned for this location.");
+      }
+
+      return formattedAddress;
+    } catch {
+      throw new Error("Unable to resolve a formatted address for this location.");
+    }
   };
 
   const mount = async ({
@@ -236,7 +300,7 @@
       );
     }
 
-    activeMap = { listeners };
+    activeMap = { listeners, geocoder };
 
     if (draft.address.latitude && draft.address.longitude) {
       if (searchInput && draft.address.deliveryAddress) {
@@ -250,18 +314,38 @@
     }
   };
 
-  const locateUser = (onSuccess, onError) => {
+  const locateUser = (settings, onSuccess, onError) => {
     if (!navigator.geolocation) {
       onError("This browser does not support location access.", "warning");
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        onSuccess({
+      async (position) => {
+        const location = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        });
+        };
+        try {
+          let geocoder = activeMap?.geocoder ?? null;
+          if (!geocoder) {
+            const maps = await loadGoogleMaps(settings.apiKey);
+            geocoder = new maps.Geocoder();
+          }
+
+          const deliveryAddress = await reverseGeocodeLocation(geocoder, location);
+          onSuccess({
+            ...location,
+            deliveryAddress,
+          });
+        } catch (error) {
+          onError(
+            error instanceof Error && error.message
+              ? error.message
+              : "Unable to resolve a formatted address for this location.",
+            "warning",
+          );
+        }
       },
       () => {
         onError("Location access was blocked. You can search or pin the map manually.", "warning");

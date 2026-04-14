@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using PharmacyPOS.Models.Admin;
 
 namespace PharmacyPOS.Controllers;
 
-public class ModulesController : Controller
+public class ModulesController : BaseController
 {
     public IActionResult Pos() => GuardedView("POS / Sales");
     public IActionResult Payment() => GuardedView("Payment");
@@ -13,12 +14,18 @@ public class ModulesController : Controller
 
     private IActionResult GuardedView(string moduleName)
     {
-        if (string.IsNullOrWhiteSpace(HttpContext.Session.GetString("Username")))
+        var vm = new AdminModuleViewModel
         {
-            return RedirectToAction("Login", "Auth");
-        }
+            Title = moduleName,
+            Description = $"{moduleName} stays inside the admin shell and is ready for a dedicated implementation.",
+            Checklist =
+            [
+                "Admin sidebar and active state remain visible while navigating.",
+                "This page now uses the admin layout instead of the storefront shell.",
+                "You can expand this module without mixing dashboard, layout, and feature logic in one file."
+            ]
+        };
 
-        ViewData["ModuleName"] = moduleName;
-        return View("ModulePlaceholder");
+        return View("ModulePlaceholder", vm);
     }
 }
