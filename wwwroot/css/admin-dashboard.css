@@ -29,25 +29,25 @@ body {
     Arial,
     sans-serif;
   color: var(--text);
-  overflow: hidden; /* Removes global scroll */
-}
-
-/* ========= LAYOUT ========= */
-.pos-layout {
-  height: 100vh;
-  display: grid;
-  grid-template-columns: 260px 1fr;
   overflow: hidden;
 }
 
-/* SIDEBAR modern - no scroll */
+.pos-layout {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  overflow: hidden;
+}
+
 .pos-sidebar {
   background: var(--surface);
   border-right: 1px solid var(--line);
-  padding: 10px 18px;
-  display: flex;
-  flex-direction: column;
+  padding: 10px 14px 14px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
   height: 100vh;
+  overflow: hidden;
 }
 
 .pos-brand {
@@ -56,37 +56,37 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 12px;
-  margin-bottom: 32px;
-  padding-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 0;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
-  flex-shrink: 0; /* Prevents logo from shrinking */
+  flex-shrink: 0;
 }
 
 .pos-brand .pos-logo {
-  width: 158px;
-  height: 100px;
+  width: 124px;
+  height: 78px;
   margin: 0 auto;
 }
 
 .pos-brand span {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.88rem;
+  font-weight: 650;
 }
 
 .pos-nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  overflow-y: auto; /* Allows navigation to scroll if needed, but modules arranged */
+  gap: 2px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .pos-nav-section {
-  margin: 20px 12px 8px 12px;
+  margin: 14px 10px 6px;
   color: #9aa4bf;
   text-transform: uppercase;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   letter-spacing: 0.08em;
   font-weight: 700;
   flex-shrink: 0;
@@ -95,21 +95,29 @@ body {
 .pos-nav-link {
   text-decoration: none;
   color: #4f5a6e;
-  padding: 10px 14px;
-  border-radius: 14px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  padding: 9px 11px;
+  border-radius: 11px;
+  font-size: 0.87rem;
+  font-weight: 650;
   transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   flex-shrink: 0;
 }
 
-.pos-nav-link i.emoji-icon {
-  font-style: normal;
-  width: 24px;
-  font-size: 1.1rem;
+.pos-nav-link i {
+  width: 18px;
+  color: inherit;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.pos-nav-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
 }
 
 .pos-nav-link:hover {
@@ -123,7 +131,50 @@ body {
   box-shadow: 0 10px 22px rgba(207, 22, 54, 0.22);
 }
 
-/* MAIN CONTENT - no scroll */
+.pos-user-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fafcff;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.pos-user-footer__avatar {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(207, 22, 54, 0.1);
+  color: var(--primary);
+}
+
+.pos-user-footer strong,
+.pos-user-footer span {
+  display: block;
+  line-height: 1.2;
+}
+
+.pos-user-footer strong {
+  max-width: 158px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pos-user-footer span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
 .pos-main {
   padding: 24px 28px;
   overflow-y: auto;
@@ -145,7 +196,6 @@ body {
   border-radius: 4px;
 }
 
-/* top bar */
 .pos-topbar {
   display: flex;
   justify-content: space-between;
@@ -186,7 +236,6 @@ body {
   box-shadow: 0 0 0 3px rgba(207, 22, 54, 0.12);
 }
 
-/* metric cards row */
 .pos-metrics {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -224,7 +273,6 @@ body {
   font-weight: 600;
 }
 
-/* double grid (left + right) */
 .pos-dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -261,7 +309,6 @@ body {
   color: var(--muted);
 }
 
-/* revenue chart (line/bar area simulation) */
 .revenue-chart {
   margin: 12px 0 18px;
 }
@@ -349,7 +396,6 @@ body {
   padding-top: 14px;
 }
 
-/* best selling products table */
 .best-products {
   margin-top: 8px;
 }
@@ -412,7 +458,6 @@ body {
   font-size: 1.3rem;
 }
 
-/* Second row modules */
 .secondary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -440,8 +485,13 @@ body {
     position: sticky;
     top: 0;
     height: auto;
-    max-height: 100vh;
+    max-height: none;
     z-index: 20;
+    grid-template-rows: auto;
+    overflow: visible;
+  }
+  .pos-nav {
+    overflow: visible;
   }
   .pos-main {
     padding: 20px;
@@ -450,8 +500,6 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
-/* subtle icon / modern touches */
 .badge-icon {
   background: rgba(78, 107, 255, 0.1);
   border-radius: 12px;

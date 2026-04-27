@@ -51,6 +51,11 @@ public class PharmacyPosDbContext(DbContextOptions<PharmacyPosDbContext> options
             entity.Property(order => order.OrderStatus).HasMaxLength(32);
             entity.Property(order => order.PromoCode).HasMaxLength(32);
             entity.Property(order => order.PrescriptionFilesJson).HasMaxLength(4000);
+            entity.Property(order => order.SubtotalAmount).HasPrecision(18, 2);
+            entity.Property(order => order.TaxAmount).HasPrecision(18, 2);
+            entity.Property(order => order.ShippingAmount).HasPrecision(18, 2);
+            entity.Property(order => order.DiscountAmount).HasPrecision(18, 2);
+            entity.Property(order => order.TotalAmount).HasPrecision(18, 2);
         });
 
         modelBuilder.Entity<PharmacyOrderItem>(entity =>
@@ -59,6 +64,8 @@ public class PharmacyPosDbContext(DbContextOptions<PharmacyPosDbContext> options
             entity.Property(item => item.ProductName).HasMaxLength(200);
             entity.Property(item => item.BrandName).HasMaxLength(100);
             entity.Property(item => item.ImageUrl).HasMaxLength(500);
+            entity.Property(item => item.UnitPrice).HasPrecision(18, 2);
+            entity.Property(item => item.TaxAmount).HasPrecision(18, 2);
         });
 
         modelBuilder.Entity<PaymentRecord>(entity =>
@@ -69,6 +76,7 @@ public class PharmacyPosDbContext(DbContextOptions<PharmacyPosDbContext> options
             entity.Property(payment => payment.Provider).HasMaxLength(32);
             entity.Property(payment => payment.ProviderCheckoutId).HasMaxLength(128);
             entity.Property(payment => payment.CheckoutUrl).HasMaxLength(1000);
+            entity.Property(payment => payment.Amount).HasPrecision(18, 2);
             entity.HasOne(payment => payment.PharmacyOrder)
                 .WithOne(order => order.Payment)
                 .HasForeignKey<PaymentRecord>(payment => payment.PharmacyOrderId);
@@ -80,6 +88,7 @@ public class PharmacyPosDbContext(DbContextOptions<PharmacyPosDbContext> options
             entity.Property(item => item.ProductName).HasMaxLength(200);
             entity.Property(item => item.BrandName).HasMaxLength(100);
             entity.Property(item => item.ImageUrl).HasMaxLength(500);
+            entity.Property(item => item.UnitPrice).HasPrecision(18, 2);
             entity.HasOne(item => item.Account)
                 .WithMany(account => account.WishlistItems)
                 .HasForeignKey(item => item.AccountId)

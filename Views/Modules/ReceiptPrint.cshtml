@@ -1,0 +1,53 @@
+@model PharmacyPOS.Models.Admin.AdminReceiptViewModel
+@using PharmacyPOS.Helpers
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Receipt @Model.OrderNumber</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" asp-append-version="true" />
+    <style>
+        body {
+            padding: 24px;
+            background: #ffffff;
+        }
+
+        .receipt-print-shell {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .receipt-print-toolbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 16px;
+        }
+
+        @@media print {
+            .receipt-print-toolbar {
+                display: none !important;
+            }
+
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-print-shell">
+        <div class="receipt-print-toolbar">
+            <button type="button" class="btn btn-danger" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print
+            </button>
+        </div>
+        <partial name="Partials/_ReceiptPreview" model="Model" />
+    </div>
+</body>
+</html>

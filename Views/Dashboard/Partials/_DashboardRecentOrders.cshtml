@@ -1,0 +1,54 @@
+@model PharmacyPOS.Models.Admin.AdminDashboardViewModel
+@using PharmacyPOS.Helpers
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Recent Orders</h4>
+            <p>Latest transactions from the storefront and in-store checkout flow.</p>
+        </div>
+        <a class="btn btn-outline-danger" asp-controller="Modules" asp-action="SalesHistory">
+            <i class="bi bi-clock-history"></i> View History
+        </a>
+    </div>
+
+    @if (Model.RecentOrders.Count == 0)
+    {
+        <div class="admin-empty-state">No orders have been placed yet.</div>
+    }
+    else
+    {
+        <div class="admin-table-shell">
+            <table class="admin-table admin-table--responsive">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Total</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.RecentOrders)
+                    {
+                        <tr>
+                            <td data-label="Order"><strong>@order.OrderNumber</strong></td>
+                            <td data-label="Customer">@order.CustomerName</td>
+                            <td data-label="Status"><span class="@AdminViewHelper.StatusClass(order.OrderStatus)">@order.OrderStatus</span></td>
+                            <td data-label="Payment"><span class="@AdminViewHelper.StatusClass(AdminViewHelper.PaymentStatusLabel(order.PaymentStatus))">@AdminViewHelper.PaymentStatusLabel(order.PaymentStatus)</span></td>
+                            <td data-label="Total">PHP @order.TotalAmount.ToString("N2")</td>
+                            <td data-label="Created">@order.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.RecentOrdersPagination is not null)
+        {
+            <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.RecentOrdersPagination" />
+        }
+    }
+</section>

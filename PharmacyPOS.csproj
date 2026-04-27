@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>PharmacyPOS-8b4f5d9d-6ce3-4ea4-9e32-cb43bf507121</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

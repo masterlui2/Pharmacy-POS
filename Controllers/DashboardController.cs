@@ -9,13 +9,20 @@ namespace PharmacyPOS.Controllers;
 
 public class DashboardController(
     PharmacyPosDbContext dbContext,
-    IMedicineService medicineService) : BaseController
+    IMedicineService medicineService) : AdminController
 {
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    private const int DefaultPageSize = 10;
+    private static readonly int[] AllowedPageSizes = [10, 25, 50];
+
+    public async Task<IActionResult> Index(
+        int page = 1,
+        int pageSize = DefaultPageSize,
+        CancellationToken cancellationToken = default)
     {
         var username = HttpContext.Session.GetString("Username") ?? "Admin";
         var monthStartUtc = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
         var medicines = medicineService.GetAll().ToList();
+        var normalizedPageSize = AllowedPageSizes.Contains(pageSize) ? pageSize : DefaultPageSize;
 
         var totalCustomers = await dbContext.Accounts
             .AsNoTracking()
@@ -83,11 +90,19 @@ public class DashboardController(
             .Take(5)
             .ToListAsync(cancellationToken);
 
+        var recentOrdersCount = await dbContext.Orders
+            .AsNoTracking()
+            .CountAsync(cancellationToken);
+
+        var totalPages = Math.Max(1, (int)Math.Ceiling(recentOrdersCount / (double)normalizedPageSize));
+        var currentPage = Math.Clamp(page, 1, totalPages);
+
         var recentOrders = await dbContext.Orders
             .AsNoTracking()
             .Include(order => order.Payment)
             .OrderByDescending(order => order.CreatedAtUtc)
-            .Take(6)
+            .Skip((currentPage - 1) * normalizedPageSize)
+            .Take(normalizedPageSize)
             .Select(order => new AdminRecentOrderViewModel
             {
                 OrderNumber = order.OrderNumber,
@@ -132,6 +147,14 @@ public class DashboardController(
             RevenueByPaymentMethod = revenueByPaymentMethod,
             TopProducts = topProducts,
             RecentOrders = recentOrders,
+            RecentOrdersPagination = new AdminPaginationViewModel
+            {
+                Controller = "Dashboard",
+                Action = nameof(Index),
+                CurrentPage = currentPage,
+                PageSize = normalizedPageSize,
+                TotalItems = recentOrdersCount
+            },
             InventoryAlerts = inventoryAlerts,
         };
 

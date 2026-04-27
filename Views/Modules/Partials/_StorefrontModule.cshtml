@@ -1,0 +1,93 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@{
+    var pageSize = Model.Pagination?.PageSize ?? 10;
+    var storefrontFilters = new[] { "Available", "Low Stock", "Unavailable" };
+}
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Customer-Facing Products</h4>
+            <p>Review searchable storefront inventory and keep availability aligned with stock.</p>
+        </div>
+    </div>
+
+    <form method="get" class="admin-filter-grid admin-filter-grid--three">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Search products or suppliers" />
+        <select class="form-select" name="status">
+            <option value="">All availability states</option>
+            @foreach (var filter in storefrontFilters)
+            {
+                <option value="@filter" selected="@(Model.StatusFilter == filter)">@filter</option>
+            }
+        </select>
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value="@pageSize" />
+        <button class="btn btn-danger" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+    </form>
+
+    <div class="admin-table-shell">
+        <table class="admin-table admin-table--responsive">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Supplier</th>
+                    <th>Price</th>
+                    <th>Availability</th>
+                    <th>Customer Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Medicines.Count == 0)
+                {
+                    <tr><td colspan="6" class="admin-table__empty">No storefront products matched the current filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var medicine in Model.Medicines)
+                    {
+                        <tr>
+                            <td data-label="Product">
+                                <strong>@medicine.BrandName</strong>
+                                <span>@medicine.GenericName | @medicine.Category</span>
+                            </td>
+                            <td data-label="Supplier">@medicine.Supplier</td>
+                            <td data-label="Price">PHP @medicine.Price.ToString("N2")</td>
+                            <td data-label="Availability">@medicine.Stock unit@(medicine.Stock == 1 ? string.Empty : "s")</td>
+                            <td data-label="Customer Status">
+                                @if (medicine.Stock > 0 && medicine.Stock <= 20)
+                                {
+                                    <span class="admin-badge admin-badge--warning">Low Stock</span>
+                                }
+                                else if (medicine.Stock > 0)
+                                {
+                                    <span class="admin-badge admin-badge--success">Available</span>
+                                }
+                                else
+                                {
+                                    <span class="admin-badge admin-badge--danger">Unavailable</span>
+                                }
+                            </td>
+                            <td data-label="Actions">
+                                <div class="admin-row-actions">
+                                    <a asp-controller="Medicines" asp-action="Edit" asp-route-id="@medicine.Id" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Edit product details">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a asp-controller="Modules" asp-action="StockAlerts" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Open stock alerts">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Pagination is not null)
+    {
+        <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
+    }
+</section>

@@ -1,0 +1,88 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@using PharmacyPOS.Helpers
+@{
+    var pageSize = Model.Pagination?.PageSize ?? 10;
+    var paymentMethods = new[] { "Cash", "CashOnDelivery", "GCash", "PayMaya", "Card" };
+    var paymentStatuses = new[] { "Paid", "Unpaid" };
+}
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Payment Tracking</h4>
+            <p>Review all payment methods, including cash on delivery, with clear paid and unpaid status.</p>
+        </div>
+    </div>
+
+    <form method="get" class="admin-filter-grid admin-filter-grid--payment">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Search reference, order, customer" />
+        <select class="form-select" name="method">
+            <option value="">All methods</option>
+            @foreach (var method in paymentMethods)
+            {
+                <option value="@method" selected="@(Model.PaymentFilter == method)">@AdminViewHelper.PaymentMethodLabel(method)</option>
+            }
+        </select>
+        <select class="form-select" name="status">
+            <option value="">All statuses</option>
+            @foreach (var status in paymentStatuses)
+            {
+                <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
+            }
+        </select>
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value="@pageSize" />
+        <button class="btn btn-danger" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+    </form>
+
+    <div class="admin-table-shell">
+        <table class="admin-table admin-table--responsive">
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Payment Status</th>
+                    <th>Order Status</th>
+                    <th>Recorded</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Payments.Count == 0)
+                {
+                    <tr><td colspan="8" class="admin-table__empty">No payment records matched the current filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var payment in Model.Payments)
+                    {
+                        <tr>
+                            <td data-label="Reference">
+                                <strong>@payment.ReferenceNumber</strong>
+                                <span>@payment.Provider</span>
+                            </td>
+                            <td data-label="Order">@payment.OrderNumber</td>
+                            <td data-label="Customer">@payment.CustomerName</td>
+                            <td data-label="Method">@AdminViewHelper.PaymentMethodLabel(payment.PaymentMethod)</td>
+                            <td data-label="Amount">PHP @payment.Amount.ToString("N2")</td>
+                            <td data-label="Payment Status">
+                                <span class="@AdminViewHelper.StatusClass(payment.Status)">@payment.Status</span>
+                            </td>
+                            <td data-label="Order Status">
+                                <span class="@AdminViewHelper.StatusClass(payment.OrderStatus)">@payment.OrderStatus</span>
+                            </td>
+                            <td data-label="Recorded">@payment.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Pagination is not null)
+    {
+        <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
+    }
+</section>

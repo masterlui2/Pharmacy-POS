@@ -1,0 +1,91 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@using PharmacyPOS.Helpers
+@{
+    var pageSize = Model.Pagination?.PageSize ?? 10;
+}
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Fast Checkout</h4>
+            <p>Find an available medicine, then open the action modal to complete the counter sale.</p>
+        </div>
+    </div>
+
+    <form method="get" class="admin-filter-grid admin-filter-grid--inventory">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Search medicine, code, supplier" />
+        <select class="form-select" name="category">
+            <option value="">All categories</option>
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category" selected="@(Model.CategoryFilter == category)">@category</option>
+            }
+        </select>
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value="@pageSize" />
+        <button class="btn btn-danger" type="submit"><i class="bi bi-search"></i> Search</button>
+    </form>
+
+    <div class="admin-table-shell">
+        <table class="admin-table admin-table--responsive admin-table--comfortable">
+            <thead>
+                <tr>
+                    <th>Medicine</th>
+                    <th>Category</th>
+                    <th>Supplier</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Sale</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Medicines.Count == 0)
+                {
+                    <tr><td colspan="6" class="admin-table__empty">No medicine matched the current filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var medicine in Model.Medicines)
+                    {
+                        <tr>
+                            <td data-label="Medicine">
+                                <strong>@medicine.BrandName</strong>
+                                <span>@medicine.Code | @medicine.GenericName</span>
+                            </td>
+                            <td data-label="Category">@medicine.Category</td>
+                            <td data-label="Supplier">@medicine.Supplier</td>
+                            <td data-label="Price">PHP @medicine.Price.ToString("N2")</td>
+                            <td data-label="Stock">
+                                <span class="@AdminViewHelper.StatusClass(medicine.Status)">@medicine.Stock @medicine.Status</span>
+                            </td>
+                            <td data-label="Sale">
+                                <button type="button"
+                                        class="btn btn-outline-danger btn-sm admin-icon-button"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#posSaleModal"
+                                        data-medicine-id="@medicine.Id"
+                                        data-medicine-name="@medicine.BrandName"
+                                        data-medicine-caption="@($"{medicine.Code} | {medicine.GenericName}")"
+                                        data-medicine-price="@($"PHP {medicine.Price:N2}")"
+                                        data-medicine-stock="@medicine.Stock"
+                                        @(medicine.Stock <= 0 ? "disabled" : string.Empty)
+                                        aria-label="Start sale"
+                                        data-bs-toggle="tooltip"
+                                        title="Start sale">
+                                    <i class="bi bi-bag-check"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Pagination is not null)
+    {
+        <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
+    }
+</section>
+
+<partial name="~/Views/Modules/Partials/_PosSaleModal.cshtml" model="Model" />

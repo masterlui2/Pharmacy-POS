@@ -1,0 +1,167 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@using PharmacyPOS.Helpers
+@using PharmacyPOS.Models.Admin
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<section class="admin-module-hero">
+    <div>
+        <p class="admin-module-hero__eyebrow">@Model.Eyebrow</p>
+        <h2>@Model.Title</h2>
+        <p>@Model.Description</p>
+    </div>
+    <div class="admin-module-hero__actions">
+        @foreach (var action in Model.Actions)
+        {
+            <a class="@AdminViewHelper.ActionButtonClass(action.Style)"
+               asp-controller="@action.Controller"
+               asp-action="@action.Action"
+               data-bs-toggle="tooltip"
+               title="@action.Tooltip">
+                <i class="bi @action.Icon"></i> @action.Label
+            </a>
+        }
+    </div>
+</section>
+
+@if (Model.WorkflowSteps.Count > 0)
+{
+    <nav class="admin-workflow-strip" aria-label="@Model.Title workflow">
+        @foreach (var step in Model.WorkflowSteps)
+        {
+            <span class="@(step == "List View" ? "active" : string.Empty)">
+                <i class="bi @AdminViewHelper.WorkflowIcon(step)"></i> @step
+            </span>
+        }
+    </nav>
+}
+
+@if (TempData["Success"] is string successMessage)
+{
+    <div class="alert alert-success admin-flash">@successMessage</div>
+}
+
+@if (TempData["Error"] is string errorMessage)
+{
+    <div class="alert alert-danger admin-flash">@errorMessage</div>
+}
+
+@if (Model.Metrics.Count > 0)
+{
+    <section class="admin-stat-grid">
+        @foreach (var metric in Model.Metrics)
+        {
+            <article class="admin-stat-card admin-stat-card--@metric.Tone">
+                <div class="admin-stat-card__icon"><i class="bi @metric.Icon"></i></div>
+                <span class="admin-stat-card__label">@metric.Label</span>
+                <strong>@metric.Value</strong>
+                <small>@metric.Hint</small>
+            </article>
+        }
+    </section>
+}
+
+@switch (Model.Kind)
+{
+    case AdminModuleKind.Pos:
+        <partial name="Partials/_PosModule" model="Model" />
+        break;
+    case AdminModuleKind.Payment:
+        <partial name="Partials/_PaymentModule" model="Model" />
+        break;
+    case AdminModuleKind.Receipt:
+        <partial name="Partials/_ReceiptModule" model="Model" />
+        break;
+    case AdminModuleKind.SalesHistory:
+        <partial name="Partials/_SalesHistoryModule" model="Model" />
+        break;
+    case AdminModuleKind.Reports:
+        <partial name="Partials/_ReportsModule" model="Model" />
+        break;
+    case AdminModuleKind.StockAlerts:
+        <partial name="Partials/_StockAlertsModule" model="Model" />
+        break;
+    case AdminModuleKind.Storefront:
+        <partial name="Partials/_StorefrontModule" model="Model" />
+        break;
+    case AdminModuleKind.AdminUsers:
+        <partial name="Partials/_AdminUsersModule" model="Model" />
+        break;
+}
+
+@if (Model.Kind == AdminModuleKind.Pos)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const saleModal = document.getElementById("posSaleModal");
+            if (!saleModal) {
+                return;
+            }
+
+            saleModal.addEventListener("show.bs.modal", (event) => {
+                const button = event.relatedTarget;
+                if (!button) {
+                    return;
+                }
+
+                saleModal.querySelector("[data-pos-title]").textContent = button.getAttribute("data-medicine-name") || "Medicine";
+                saleModal.querySelector("[data-pos-caption]").textContent = button.getAttribute("data-medicine-caption") || "";
+                saleModal.querySelector("input[name='MedicineId']").value = button.getAttribute("data-medicine-id") || "";
+                saleModal.querySelector("[data-pos-price]").textContent = button.getAttribute("data-medicine-price") || "PHP 0.00";
+                saleModal.querySelector("[data-pos-stock]").textContent = button.getAttribute("data-medicine-stock") || "0";
+
+                const quantityInput = saleModal.querySelector("input[name='Quantity']");
+                const maxStock = button.getAttribute("data-medicine-stock") || "1";
+                quantityInput.max = maxStock;
+                quantityInput.value = "1";
+
+                saleModal.querySelector("input[name='DiscountPercent']").value = "0";
+                saleModal.querySelector("input[name='CustomerName']").value = "Walk-in Customer";
+                saleModal.querySelector("input[name='PhoneNumber']").value = "";
+                saleModal.querySelector("select[name='PaymentMethod']").value = "Cash";
+            });
+        });
+    </script>
+}
+
+@if (Model.Kind == AdminModuleKind.Receipt)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const receiptModal = document.getElementById("receiptPreviewModal");
+            if (!receiptModal) {
+                return;
+            }
+
+            const receiptContent = receiptModal.querySelector("[data-receipt-preview-content]");
+            const loadingMarkup = receiptContent.innerHTML;
+
+            receiptModal.addEventListener("show.bs.modal", async (event) => {
+                const trigger = event.relatedTarget;
+                const previewUrl = trigger?.getAttribute("data-preview-url");
+                if (!previewUrl) {
+                    return;
+                }
+
+                receiptContent.innerHTML = loadingMarkup;
+
+                try {
+                    const response = await fetch(previewUrl, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Receipt preview failed.");
+                    }
+
+                    receiptContent.innerHTML = await response.text();
+                } catch {
+                    receiptContent.innerHTML = "<div class=\"admin-empty-state\">Receipt preview could not be loaded.</div>";
+                }
+            });
+        });
+    </script>
+}

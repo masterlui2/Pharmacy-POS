@@ -1,0 +1,56 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@{
+    var pageSize = Model.Pagination?.PageSize ?? 10;
+    var paymentMethods = new[] { "Cash", "CashOnDelivery", "GCash", "PayMaya", "Card" };
+    var orderStatuses = new[] { "Pending", "AwaitingPayment", "Processing", "Completed", "PaymentFailed", "Refunded" };
+}
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Transaction History</h4>
+            <p>Use the same search, filter, and paging flow as the other admin lists.</p>
+        </div>
+        <a class="btn btn-outline-danger"
+           asp-action="ExportSalesCsv"
+           asp-route-search="@Model.Search"
+           asp-route-from="@Model.FromDate?.ToString("yyyy-MM-dd")"
+           asp-route-to="@Model.ToDate?.ToString("yyyy-MM-dd")"
+           asp-route-status="@Model.StatusFilter"
+           asp-route-method="@Model.PaymentFilter"
+           data-bs-toggle="tooltip"
+           title="Export the filtered transaction list">
+            <i class="bi bi-download"></i> Export
+        </a>
+    </div>
+
+    <form method="get" class="admin-filter-grid admin-filter-grid--wide">
+        <input class="form-control" name="search" value="@Model.Search" placeholder="Search order, customer, phone" />
+        <input class="form-control" type="date" name="from" value="@Model.FromDate?.ToString("yyyy-MM-dd")" />
+        <input class="form-control" type="date" name="to" value="@Model.ToDate?.ToString("yyyy-MM-dd")" />
+        <select class="form-select" name="status">
+            <option value="">All order statuses</option>
+            @foreach (var status in orderStatuses)
+            {
+                <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
+            }
+        </select>
+        <select class="form-select" name="method">
+            <option value="">All payment methods</option>
+            @foreach (var method in paymentMethods)
+            {
+                <option value="@method" selected="@(Model.PaymentFilter == method)">@method</option>
+            }
+        </select>
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value="@pageSize" />
+        <button class="btn btn-danger" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+    </form>
+
+    @await Html.PartialAsync("~/Views/Modules/_AdminOrdersTable.cshtml", Model.Orders)
+
+    @if (Model.Pagination is not null)
+    {
+        <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
+    }
+</section>

@@ -1,0 +1,98 @@
+@model PharmacyPOS.Models.Admin.AdminDashboardViewModel
+
+<section class="admin-panel-grid admin-panel-grid--balanced">
+    <article class="admin-panel">
+        <div class="admin-panel__header">
+            <div>
+                <h4>Operational Snapshot</h4>
+                <p>Use this panel for the high-signal numbers that drive daily admin work.</p>
+            </div>
+        </div>
+
+        <div class="admin-kpi-grid">
+            <div class="admin-kpi">
+                <span>Average order value</span>
+                <strong>PHP @Model.AverageOrderValue.ToString("N2")</strong>
+            </div>
+            <div class="admin-kpi">
+                <span>Paid orders</span>
+                <strong>@Model.PaidOrders</strong>
+            </div>
+            <div class="admin-kpi">
+                <span>Pending orders</span>
+                <strong>@Model.PendingOrders</strong>
+            </div>
+            <div class="admin-kpi">
+                <span>Total medicines</span>
+                <strong>@Model.TotalMedicines</strong>
+            </div>
+        </div>
+
+        <div class="admin-breakdown-list">
+            @if (Model.RevenueByPaymentMethod.Count == 0)
+            {
+                <div class="admin-empty-state">No payment data yet.</div>
+            }
+            else
+            {
+                @foreach (var item in Model.RevenueByPaymentMethod)
+                {
+                    <div class="admin-breakdown-item">
+                        <div class="admin-breakdown-item__meta">
+                            <strong>@item.Label</strong>
+                            <span>PHP @item.Amount.ToString("N2")</span>
+                        </div>
+                        <div class="admin-progress">
+                            <div class="admin-progress__fill" style="width:@item.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </article>
+
+    <article class="admin-panel">
+        <div class="admin-panel__header">
+            <div>
+                <h4>Inventory Focus</h4>
+                <p>Immediate inventory follow-up items and best-performing products.</p>
+            </div>
+        </div>
+
+        @if (Model.InventoryAlerts.Count == 0)
+        {
+            <div class="admin-empty-state">Inventory is stable right now.</div>
+        }
+        else
+        {
+            <ul class="admin-alert-list admin-alert-list--compact">
+                @foreach (var alert in Model.InventoryAlerts)
+                {
+                    <li>@alert</li>
+                }
+            </ul>
+        }
+
+        <div class="admin-divider"></div>
+
+        @if (Model.TopProducts.Count == 0)
+        {
+            <div class="admin-empty-state">No product sales recorded yet.</div>
+        }
+        else
+        {
+            <div class="admin-product-list">
+                @foreach (var product in Model.TopProducts)
+                {
+                    <div class="admin-product-row">
+                        <div>
+                            <strong>@product.ProductName</strong>
+                            <span>@product.QuantitySold sold</span>
+                        </div>
+                        <strong>PHP @product.Revenue.ToString("N2")</strong>
+                    </div>
+                }
+            </div>
+        }
+    </article>
+</section>

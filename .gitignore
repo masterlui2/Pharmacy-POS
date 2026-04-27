@@ -1,5 +1,6 @@
 bin/
 obj/
 .dotnet/
+.codex-build-out/
 appsettings.Local.json
 appsettings.Development.local.json

@@ -1,0 +1,82 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@{
+    var pageSize = Model.Pagination?.PageSize ?? 10;
+}
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Receipt Lookup</h4>
+            <p>Search completed orders, then use the row actions to preview or download the receipt.</p>
+        </div>
+    </div>
+
+    <form method="get" class="admin-filter-grid admin-filter-grid--three">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Search order, customer, phone" />
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value="@pageSize" />
+        <button class="btn btn-danger" type="submit"><i class="bi bi-search"></i> Search</button>
+    </form>
+
+    <div class="admin-table-shell admin-table-shell--compact">
+        <table class="admin-table admin-table--responsive">
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.ReceiptOrders.Count == 0)
+                {
+                    <tr><td colspan="5" class="admin-table__empty">No receipt records matched the current search.</td></tr>
+                }
+                else
+                {
+                    @foreach (var receiptOrder in Model.ReceiptOrders)
+                    {
+                        <tr>
+                            <td data-label="Order">
+                                <strong>@receiptOrder.OrderNumber</strong>
+                            </td>
+                            <td data-label="Customer">@receiptOrder.CustomerName</td>
+                            <td data-label="Total">PHP @receiptOrder.TotalAmount.ToString("N2")</td>
+                            <td data-label="Created">@receiptOrder.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                            <td data-label="Actions">
+                                <div class="admin-row-actions">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary admin-icon-button"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#receiptPreviewModal"
+                                            data-preview-url="@Url.Action("ReceiptPreview", "Modules", new { orderNumber = receiptOrder.OrderNumber })"
+                                            aria-label="Preview receipt"
+                                            title="Preview receipt">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <a class="btn btn-sm btn-outline-danger admin-icon-button"
+                                       asp-action="DownloadReceipt"
+                                       asp-route-orderNumber="@receiptOrder.OrderNumber"
+                                       aria-label="Download receipt"
+                                       data-bs-toggle="tooltip"
+                                       title="Download receipt">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Pagination is not null)
+    {
+        <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
+    }
+</section>
+
+<partial name="~/Views/Modules/Partials/_ReceiptPreviewModal.cshtml" />

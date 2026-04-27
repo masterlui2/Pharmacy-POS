@@ -1,0 +1,20 @@
+@model PharmacyPOS.Models.Admin.AdminDashboardViewModel
+
+<section class="admin-dashboard-hero">
+    <div class="admin-dashboard-hero__content">
+        <p class="admin-dashboard-hero__eyebrow">Admin overview</p>
+        <h1>Welcome back, @Model.Username</h1>
+        <p>Track revenue, recent orders, payment activity, and inventory risk from one operational workspace.</p>
+    </div>
+    <div class="admin-dashboard-hero__actions">
+        <a class="btn btn-danger admin-hero-action" asp-controller="Modules" asp-action="Pos">
+            <i class="bi bi-cart3"></i> Open POS
+        </a>
+        <a class="btn btn-outline-danger admin-hero-action" asp-controller="Medicines" asp-action="Index">
+            <i class="bi bi-capsule"></i> Inventory
+        </a>
+        <a class="btn btn-outline-danger admin-hero-action" asp-controller="Modules" asp-action="Payment">
+            <i class="bi bi-credit-card-2-front"></i> Payments
+        </a>
+    </div>
+</section>

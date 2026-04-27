@@ -1,0 +1,75 @@
+@model PharmacyPOS.Models.Admin.AdminReceiptViewModel
+@using PharmacyPOS.Helpers
+
+<div class="admin-receipt-preview">
+    <div class="admin-receipt-preview__actions">
+        <a class="btn btn-outline-danger admin-print-button"
+           asp-action="PrintReceipt"
+           asp-controller="Modules"
+           asp-route-orderNumber="@Model.OrderNumber"
+           target="_blank"
+           rel="noopener">
+            <i class="bi bi-printer"></i> Print
+        </a>
+        <a class="btn btn-outline-danger admin-print-button"
+           asp-action="DownloadReceipt"
+           asp-controller="Modules"
+           asp-route-orderNumber="@Model.OrderNumber">
+            <i class="bi bi-download"></i> Download
+        </a>
+    </div>
+
+    <article class="admin-receipt admin-receipt--paper admin-receipt--modal">
+        <div class="admin-receipt__brand">
+            <h4>SafeMed Pharmacy</h4>
+            <p>@Model.Branch</p>
+            <span>Official Sales Receipt</span>
+        </div>
+
+        <div class="admin-receipt__divider"></div>
+
+        <div class="admin-receipt__meta admin-receipt__meta--paper">
+            <span><label>Order</label><strong>@Model.OrderNumber</strong></span>
+            <span><label>Date</label><strong>@Model.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</strong></span>
+            <span><label>Customer</label><strong>@Model.CustomerName</strong></span>
+            <span><label>Phone</label><strong>@Model.CustomerPhoneNumber</strong></span>
+            <span><label>Method</label><strong>@AdminViewHelper.PaymentMethodLabel(Model.PaymentMethod)</strong></span>
+            <span><label>Status</label><strong>@Model.PaymentStatus</strong></span>
+        </div>
+
+        <div class="admin-receipt__divider"></div>
+
+        <table class="admin-receipt__table admin-receipt__table--paper">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <strong>@item.ProductName</strong>
+                            <span>@item.BrandName</span>
+                        </td>
+                        <td>@item.Quantity</td>
+                        <td>PHP @item.LineTotal.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="admin-receipt__divider"></div>
+
+        <div class="admin-receipt__totals admin-receipt__totals--paper">
+            <span>Subtotal <b>PHP @Model.SubtotalAmount.ToString("N2")</b></span>
+            <span>Tax <b>PHP @Model.TaxAmount.ToString("N2")</b></span>
+            <span>Delivery <b>PHP @Model.ShippingAmount.ToString("N2")</b></span>
+            <span>Discount <b>-PHP @Model.DiscountAmount.ToString("N2")</b></span>
+            <strong>Total <b>PHP @Model.TotalAmount.ToString("N2")</b></strong>
+        </div>
+    </article>
+</div>

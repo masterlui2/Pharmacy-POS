@@ -5,8 +5,22 @@ using PharmacyPOS.Models.Checkout;
 using PharmacyPOS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+const string FlutterWebCorsPolicy = "FlutterWebCors";
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(FlutterWebCorsPolicy, policy =>
+    {
+        policy.WithOrigins("http://localhost:53192")
+            .WithMethods("POST", "OPTIONS")
+            .AllowAnyHeader();
+    });
+});
 builder.Services.Configure<RecaptchaOptions>(
     builder.Configuration.GetSection(RecaptchaOptions.SectionName));
 builder.Services.Configure<PayMongoOptions>(
@@ -47,10 +61,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors(FlutterWebCorsPolicy);
 app.UseSession();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",

@@ -18,6 +18,9 @@ public class Medicine
     [Required, StringLength(50)]
     public string Category { get; set; } = string.Empty;
 
+    [Required, StringLength(120)]
+    public string Supplier { get; set; } = string.Empty;
+
     [Range(0.01, 100000)]
     public decimal Price { get; set; }
 

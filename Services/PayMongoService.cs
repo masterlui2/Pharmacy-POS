@@ -30,7 +30,7 @@ public class PayMongoService(
             return new PayMongoCheckoutSessionResult
             {
                 Success = false,
-                Message = "PayMongo is not configured yet. Add your secret key in appsettings first."
+                Message = "PayMongo is not configured yet. Add your keys through user secrets or environment configuration first."
             };
         }
 
@@ -73,7 +73,7 @@ public class PayMongoService(
                     billing = new
                     {
                         name = order.CustomerFullName,
-                        email = order.CustomerEmail,
+                        email = string.IsNullOrWhiteSpace(order.CustomerEmail) ? null : order.CustomerEmail,
                         phone = order.CustomerPhoneNumber
                     },
                     cancel_url = BuildReturnUrl(cancelReturnUrl, _options.CancelUrl, order.OrderNumber, "cancelled"),
@@ -126,9 +126,13 @@ public class PayMongoService(
     private static int ToMinorAmount(decimal amount) => (int)Math.Round(amount * 100m, MidpointRounding.AwayFromZero);
 
     private static string[] GetPaymentMethodTypes(string paymentMethod) =>
-        string.Equals(paymentMethod, "GCash", StringComparison.OrdinalIgnoreCase)
-            ? ["gcash"]
-            : ["card"];
+        paymentMethod.Trim().ToLowerInvariant() switch
+        {
+            "gcash" => ["gcash"],
+            "paymaya" => ["paymaya"],
+            "maya" => ["paymaya"],
+            _ => ["card"]
+        };
 
     private static string BuildReturnUrl(string? runtimeUrl, string configuredUrl, string orderNumber, string status)
     {

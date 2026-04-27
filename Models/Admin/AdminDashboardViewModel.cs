@@ -17,5 +17,6 @@ public class AdminDashboardViewModel
     public List<AdminRevenueBreakdownViewModel> RevenueByPaymentMethod { get; init; } = [];
     public List<AdminTopProductViewModel> TopProducts { get; init; } = [];
     public List<AdminRecentOrderViewModel> RecentOrders { get; init; } = [];
+    public AdminPaginationViewModel? RecentOrdersPagination { get; init; }
     public List<string> InventoryAlerts { get; init; } = [];
 }

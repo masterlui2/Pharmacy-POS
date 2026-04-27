@@ -3,18 +3,42 @@
     ViewData["Title"] = "Add Medicine";
 }
 
-<div class="page-card p-4">
-    <h3>Add Medicine</h3>
-    <form asp-action="Create" method="post" class="mt-3">
+<section class="admin-module-hero">
+    <div>
+        <p class="admin-module-hero__eyebrow">Inventory module</p>
+        <h2>Add Medicine</h2>
+        <p>Create a medicine record with supplier, pricing, stock, and expiry details.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-danger admin-hero-action">
+        <i class="bi bi-list-ul"></i> Back to List
+    </a>
+</section>
+
+<nav class="admin-workflow-strip" aria-label="Inventory create workflow">
+    <span><i class="bi bi-list-ul"></i> List View</span>
+    <span class="active"><i class="bi bi-plus-circle"></i> Create/Add</span>
+    <span><i class="bi bi-pencil-square"></i> Edit</span>
+    <span><i class="bi bi-eye"></i> View Details</span>
+    <span><i class="bi bi-lightning-charge"></i> Actions</span>
+</nav>
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Medicine Details</h4>
+            <p>Required fields keep checkout, storefront, and stock alerts consistent.</p>
+        </div>
+    </div>
+    <form asp-action="Create" method="post">
         @Html.AntiForgeryToken()
         <partial name="_Form" model="Model" />
 
-        <div class="mt-4 d-flex gap-2">
-            <button class="btn btn-danger" type="submit">Save</button>
+        <div class="admin-form-actions">
+            <button class="btn btn-danger" type="submit"><i class="bi bi-save"></i> Save Medicine</button>
             <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
         </div>
     </form>
-</div>
+</section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

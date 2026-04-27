@@ -1,60 +1,105 @@
 @model PharmacyPOS.Models.MedicineIndexViewModel
 @{
     ViewData["Title"] = "Medicine Inventory";
+    var pageSize = Model.Pagination?.PageSize ?? 10;
+    var totalStock = Model.Medicines.Sum(medicine => medicine.Stock);
+    var lowStock = Model.Medicines.Count(medicine => medicine.Stock > 0 && medicine.Stock <= 20);
+    var outOfStock = Model.Medicines.Count(medicine => medicine.Stock <= 0);
 }
 
-<div class="page-card p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+<section class="admin-module-hero">
+    <div>
+        <p class="admin-module-hero__eyebrow">Inventory module</p>
+        <h2>Medicine Inventory</h2>
+        <p>Maintain product records, suppliers, pricing, stock levels, and expiry dates from a single operating list.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-danger admin-hero-action" data-bs-toggle="tooltip" title="Create a new medicine record">
+        <i class="bi bi-plus-circle"></i> Add Medicine
+    </a>
+</section>
+
+<nav class="admin-workflow-strip" aria-label="Inventory workflow">
+    <span class="active"><i class="bi bi-list-ul"></i> List View</span>
+    <span><i class="bi bi-plus-circle"></i> Create/Add</span>
+    <span><i class="bi bi-pencil-square"></i> Edit</span>
+    <span><i class="bi bi-eye"></i> View Details</span>
+    <span><i class="bi bi-lightning-charge"></i> Actions</span>
+</nav>
+
+@if (TempData["Success"] is string message)
+{
+    <div class="alert alert-success admin-flash">@message</div>
+}
+
+<section class="admin-stat-grid">
+    <article class="admin-stat-card">
+        <div class="admin-stat-card__icon"><i class="bi bi-capsule"></i></div>
+        <span class="admin-stat-card__label">Visible SKUs</span>
+        <strong>@(Model.Pagination?.TotalItems ?? Model.Medicines.Count)</strong>
+        <small>Current filter result</small>
+    </article>
+    <article class="admin-stat-card admin-stat-card--success">
+        <div class="admin-stat-card__icon"><i class="bi bi-box-seam"></i></div>
+        <span class="admin-stat-card__label">Units On Hand</span>
+        <strong>@totalStock</strong>
+        <small>Shown on this page</small>
+    </article>
+    <article class="admin-stat-card admin-stat-card--warning">
+        <div class="admin-stat-card__icon"><i class="bi bi-exclamation-triangle"></i></div>
+        <span class="admin-stat-card__label">Low Stock</span>
+        <strong>@lowStock</strong>
+        <small>Shown on this page</small>
+    </article>
+    <article class="admin-stat-card admin-stat-card--danger">
+        <div class="admin-stat-card__icon"><i class="bi bi-x-octagon"></i></div>
+        <span class="admin-stat-card__label">Out of Stock</span>
+        <strong>@outOfStock</strong>
+        <small>Shown on this page</small>
+    </article>
+</section>
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
         <div>
-            <h3 class="mb-1">Medicine Inventory</h3>
-            <p class="text-muted mb-0">Manage medicine records with dynamic filtering and CRUD actions.</p>
+            <h4>Medicine List</h4>
+            <p>Search, filter, view, edit, or remove records using the same action position on every row.</p>
         </div>
-        <a asp-action="Create" class="btn btn-danger"><i class="bi bi-plus-circle me-1"></i> Add Medicine</a>
+        <a class="btn btn-outline-danger" asp-controller="Modules" asp-action="ExportInventoryCsv" data-bs-toggle="tooltip" title="Export inventory as CSV">
+            <i class="bi bi-download"></i> Export
+        </a>
     </div>
 
-    @if (TempData["Success"] is string message)
-    {
-        <div class="alert alert-success">@message</div>
-    }
-
-    <form method="get" class="row g-2 mb-3">
-        <div class="col-md-4">
-            <input name="search" value="@Model.Search" class="form-control" placeholder="Search code / brand / generic" />
-        </div>
-        <div class="col-md-3">
-            <select name="category" class="form-select">
-                <option value="">All Categories</option>
-                @foreach (var cat in Model.Categories)
-                {
-                    <option value="@cat" selected="@(Model.Category == cat)">@cat</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select name="status" class="form-select">
-                <option value="">All Status</option>
-                @foreach (var item in new[] { "In Stock", "Low Stock", "Out of Stock" })
-                {
-                    <option value="@item" selected="@(Model.Status == item)">@item</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-2 d-grid">
-            <button class="btn btn-outline-danger" type="submit">Filter</button>
-        </div>
+    <form method="get" class="admin-filter-grid admin-filter-grid--inventory">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Search code, brand, generic, supplier" />
+        <select name="category" class="form-select">
+            <option value="">All categories</option>
+            @foreach (var cat in Model.Categories)
+            {
+                <option value="@cat" selected="@(Model.Category == cat)">@cat</option>
+            }
+        </select>
+        <select name="status" class="form-select">
+            <option value="">All statuses</option>
+            @foreach (var item in new[] { "In Stock", "Low Stock", "Out of Stock" })
+            {
+                <option value="@item" selected="@(Model.Status == item)">@item</option>
+            }
+        </select>
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value="@pageSize" />
+        <button class="btn btn-danger" type="submit"><i class="bi bi-funnel"></i> Filter</button>
     </form>
 
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
+    <div class="admin-table-shell">
+        <table class="admin-table admin-table--responsive">
             <thead>
                 <tr>
-                    <th>Code</th>
-                    <th>Brand Name</th>
-                    <th>Generic Name</th>
+                    <th>Medicine</th>
                     <th>Category</th>
+                    <th>Supplier</th>
                     <th>Price</th>
                     <th>Stock</th>
-                    <th>Expiry Date</th>
+                    <th>Expiry</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -62,41 +107,36 @@
             <tbody>
                 @if (!Model.Medicines.Any())
                 {
-                    <tr><td colspan="9" class="text-center text-muted py-4">No medicine records found.</td></tr>
+                    <tr><td colspan="8" class="admin-table__empty">No medicine records found.</td></tr>
                 }
                 else
                 {
                     @foreach (var med in Model.Medicines)
                     {
                         <tr>
-                            <td>@med.Code</td>
-                            <td>@med.BrandName</td>
-                            <td>@med.GenericName</td>
-                            <td>@med.Category</td>
-                            <td>@med.Price.ToString("C")</td>
-                            <td>@med.Stock</td>
-                            <td>@med.ExpiryDate.ToString("yyyy-MM-dd")</td>
-                            <td>
-                                @if (med.Status == "In Stock")
-                                {
-                                    <span class="badge text-bg-success badge-status">In Stock</span>
-                                }
-                                else if (med.Status == "Low Stock")
-                                {
-                                    <span class="badge text-bg-warning badge-status">Low Stock</span>
-                                }
-                                else
-                                {
-                                    <span class="badge text-bg-danger badge-status">Out of Stock</span>
-                                }
+                            <td data-label="Medicine">
+                                <strong>@med.BrandName</strong>
+                                <span>@med.Code | @med.GenericName</span>
                             </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a asp-action="Details" asp-route-id="@med.Id" class="btn btn-outline-secondary">View</a>
-                                    <a asp-action="Edit" asp-route-id="@med.Id" class="btn btn-outline-primary">Edit</a>
-                                    <form asp-action="Delete" asp-route-id="@med.Id" method="post" onsubmit="return confirm('Delete this medicine?');" class="d-inline">
+                            <td data-label="Category">@med.Category</td>
+                            <td data-label="Supplier">@med.Supplier</td>
+                            <td data-label="Price">PHP @med.Price.ToString("N2")</td>
+                            <td data-label="Stock">@med.Stock</td>
+                            <td data-label="Expiry">@med.ExpiryDate.ToString("yyyy-MM-dd")</td>
+                            <td data-label="Status"><span class="@StatusClass(med.Status)">@med.Status</span></td>
+                            <td data-label="Actions">
+                                <div class="admin-row-actions">
+                                    <a asp-action="Details" asp-route-id="@med.Id" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="View details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@med.Id" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Edit medicine">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@med.Id" method="post" onsubmit="return confirm('Delete @med.BrandName from inventory?');">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-outline-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Delete medicine">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </td>
@@ -106,4 +146,22 @@
             </tbody>
         </table>
     </div>
-</div>
+
+    @if (Model.Pagination is not null)
+    {
+        <partial name="_AdminPagination" model="Model.Pagination" />
+    }
+</section>
+
+@functions {
+    private static string StatusClass(string value)
+    {
+        return value switch
+        {
+            "In Stock" => "admin-badge admin-badge--success",
+            "Low Stock" => "admin-badge admin-badge--warning",
+            "Out of Stock" => "admin-badge admin-badge--danger",
+            _ => "admin-badge"
+        };
+    }
+}

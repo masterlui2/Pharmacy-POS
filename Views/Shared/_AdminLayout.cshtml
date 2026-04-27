@@ -25,48 +25,56 @@
                 <span>Admin POS Panel</span>
             </div>
 
-            <nav class="pos-nav">
-                <a class="pos-nav-link @(currentController == "dashboard" ? "active" : string.Empty)" asp-controller="Dashboard" asp-action="Index">
+            <nav class="pos-nav" aria-label="Admin navigation">
+                <a class="pos-nav-link @(currentController == "dashboard" ? "active" : string.Empty)" asp-controller="Dashboard" asp-action="Index" data-bs-toggle="tooltip" data-bs-placement="right" title="Sales, revenue, orders, and stock overview">
                     <i class="bi bi-grid-1x2"></i> Dashboard
                 </a>
 
                 <p class="pos-nav-section">Applications</p>
-                <a class="pos-nav-link @(currentController == "medicines" ? "active" : string.Empty)" asp-controller="Medicines" asp-action="Index">
+                <a class="pos-nav-link @(currentController == "medicines" ? "active" : string.Empty)" asp-controller="Medicines" asp-action="Index" data-bs-toggle="tooltip" data-bs-placement="right" title="List, add, edit, and track medicine stock">
                     <i class="bi bi-capsule"></i> Medicine Inventory
                 </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "pos" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Pos">
-                    <i class="bi bi-cart3"></i> POS / Sales
+                <a class="pos-nav-link @(currentController == "modules" && currentAction == "pos" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Pos" data-bs-toggle="tooltip" data-bs-placement="right" title="Fast counter checkout and transaction processing">
+                    <i class="bi bi-cart3"></i> POS
                 </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "payment" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Payment">
-                    <i class="bi bi-credit-card"></i> Payment
+                <a class="pos-nav-link @(currentController == "modules" && currentAction == "payment" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Payment" data-bs-toggle="tooltip" data-bs-placement="right" title="Track payment methods, status, and reconciliation">
+                    <i class="bi bi-credit-card-2-front"></i> Payment
                 </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "receipt" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Receipt">
-                    <i class="bi bi-receipt"></i> Receipt
+                <a class="pos-nav-link @(currentController == "modules" && currentAction == "receipt" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Receipt" data-bs-toggle="tooltip" data-bs-placement="right" title="Find, print, and download order receipts">
+                    <i class="bi bi-receipt-cutoff"></i> Receipt
                 </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "saleshistory" ? "active" : string.Empty)" asp-controller="Modules" asp-action="SalesHistory">
+                <a class="pos-nav-link @(currentController == "modules" && currentAction == "saleshistory" ? "active" : string.Empty)" asp-controller="Modules" asp-action="SalesHistory" data-bs-toggle="tooltip" data-bs-placement="right" title="Filter and review past transactions">
                     <i class="bi bi-graph-up-arrow"></i> Sales History
                 </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "reports" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Reports">
-                    <i class="bi bi-file-earmark-text"></i> Reports
+                <a class="pos-nav-link @(currentController == "modules" && currentAction == "reports" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Reports" data-bs-toggle="tooltip" data-bs-placement="right" title="Sales, revenue, and inventory analytics">
+                    <i class="bi bi-bar-chart-line"></i> Reports
                 </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "stockalerts" ? "active" : string.Empty)" asp-controller="Modules" asp-action="StockAlerts">
+                <a class="pos-nav-link @(currentController == "modules" && currentAction == "stockalerts" ? "active" : string.Empty)" asp-controller="Modules" asp-action="StockAlerts" data-bs-toggle="tooltip" data-bs-placement="right" title="Low stock and expiring medicine queue">
                     <i class="bi bi-exclamation-triangle"></i> Stock Alerts
+                </a>
+                <a class="pos-nav-link @(currentController == "modules" && currentAction == "storefront" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Storefront" data-bs-toggle="tooltip" data-bs-placement="right" title="Manage customer-facing product availability">
+                    <i class="bi bi-shop-window"></i> Storefront
                 </a>
 
                 <p class="pos-nav-section">Access</p>
-                <a class="pos-nav-link" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-shop"></i> Storefront
+                <a class="pos-nav-link @(currentController == "modules" && currentAction == "adminusers" ? "active" : string.Empty)" asp-controller="Modules" asp-action="AdminUsers" data-bs-toggle="tooltip" data-bs-placement="right" title="Manage admin roles and account activity">
+                    <i class="bi bi-person-gear"></i> Admin User
                 </a>
-                <div class="pos-nav-link" style="cursor: default; margin-top: auto;">
-                    <i class="bi bi-person-circle"></i> @username
-                </div>
                 <form asp-controller="Auth" asp-action="Logout" method="post">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="pos-nav-link" style="width: 100%; border: 0; background: transparent; text-align: left;">
+                    <button type="submit" class="pos-nav-link pos-nav-button" data-bs-toggle="tooltip" data-bs-placement="right" title="End the current admin session">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </button>
                 </form>
             </nav>
+
+            <div class="pos-user-footer">
+                <div class="pos-user-footer__avatar"><i class="bi bi-person-badge"></i></div>
+                <div>
+                    <strong>@username</strong>
+                    <span>Administrator</span>
+                </div>
+            </div>
         </aside>
 
         <main class="pos-main">
@@ -75,6 +83,11 @@
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((element) => {
+            new bootstrap.Tooltip(element);
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

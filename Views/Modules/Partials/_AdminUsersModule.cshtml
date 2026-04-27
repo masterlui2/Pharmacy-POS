@@ -1,0 +1,86 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@using PharmacyPOS.Helpers
+@{
+    var pageSize = Model.Pagination?.PageSize ?? 10;
+    var roleFilters = new[] { "Admin", "Customer" };
+}
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Admin Access</h4>
+            <p>Search accounts, filter by role, and update access from the same table workflow used elsewhere.</p>
+        </div>
+    </div>
+
+    <form method="get" class="admin-filter-grid admin-filter-grid--three">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Search name, email, phone" />
+        <select class="form-select" name="role">
+            <option value="">All roles</option>
+            @foreach (var role in roleFilters)
+            {
+                <option value="@role" selected="@(Model.RoleFilter == role)">@role</option>
+            }
+        </select>
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value="@pageSize" />
+        <button class="btn btn-danger" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+    </form>
+
+    <div class="admin-table-shell">
+        <table class="admin-table admin-table--responsive">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Phone</th>
+                    <th>Orders</th>
+                    <th>Lifetime Spend</th>
+                    <th>Joined</th>
+                    <th>Role Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Users.Count == 0)
+                {
+                    <tr><td colspan="7" class="admin-table__empty">No accounts matched the current filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td data-label="User">
+                                <strong>@user.Name</strong>
+                                <span>@user.Email</span>
+                            </td>
+                            <td data-label="Role"><span class="@AdminViewHelper.StatusClass(user.Role)">@user.Role</span></td>
+                            <td data-label="Phone">@user.PhoneNumber</td>
+                            <td data-label="Orders">@user.OrdersCount</td>
+                            <td data-label="Lifetime Spend">PHP @user.LifetimeSpend.ToString("N2")</td>
+                            <td data-label="Joined">@user.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                            <td data-label="Role Action">
+                                <form asp-action="UpdateAdminRole" method="post" class="admin-inline-form admin-inline-form--compact">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="AccountId" value="@user.Id" />
+                                    <select class="form-select" name="Role" aria-label="Role">
+                                        <option value="Customer" selected="@(user.Role == "Customer")">Customer</option>
+                                        <option value="Admin" selected="@(user.Role == "Admin")">Admin</option>
+                                    </select>
+                                    <button class="btn btn-outline-danger" type="submit" data-bs-toggle="tooltip" title="Update role">
+                                        <i class="bi bi-save"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Pagination is not null)
+    {
+        <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
+    }
+</section>

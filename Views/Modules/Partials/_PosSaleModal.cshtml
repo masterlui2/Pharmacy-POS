@@ -1,0 +1,64 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+
+<div class="modal fade" id="posSaleModal" tabindex="-1" aria-labelledby="posSaleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content admin-modal">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="posSaleModalLabel" data-pos-title>Medicine</h5>
+                    <small class="text-muted" data-pos-caption></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="CreateCounterSale" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="MedicineId" value="" />
+
+                    <div class="admin-modal-summary">
+                        <div>
+                            <span>Unit Price</span>
+                            <strong data-pos-price>PHP 0.00</strong>
+                        </div>
+                        <div>
+                            <span>Available</span>
+                            <strong><span data-pos-stock>0</span> units</strong>
+                        </div>
+                    </div>
+
+                    <div class="admin-modal-grid">
+                        <div>
+                            <label class="form-label">Quantity</label>
+                            <input class="form-control" name="Quantity" type="number" min="1" value="1" />
+                        </div>
+                        <div>
+                            <label class="form-label">Discount %</label>
+                            <input class="form-control" name="DiscountPercent" type="number" min="0" max="100" step="0.5" value="0" />
+                        </div>
+                        <div>
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select" name="PaymentMethod">
+                                <option value="Cash">Cash</option>
+                                <option value="GCash">GCash</option>
+                                <option value="PayMaya">PayMaya</option>
+                                <option value="Card">Card</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Customer Name</label>
+                            <input class="form-control" name="CustomerName" value="Walk-in Customer" />
+                        </div>
+                        <div class="admin-modal-grid__full">
+                            <label class="form-label">Phone Number</label>
+                            <input class="form-control" name="PhoneNumber" placeholder="Optional contact number" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-bag-check"></i> Complete Sale</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

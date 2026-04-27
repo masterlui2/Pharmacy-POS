@@ -1,0 +1,81 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@using PharmacyPOS.Helpers
+@{
+    var pageSize = Model.Pagination?.PageSize ?? 10;
+    var alertFilters = new[] { "Low Stock", "Out of Stock", "Expiring Soon" };
+}
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Alert Queue</h4>
+            <p>Search and filter actionable stock issues without leaving the inventory workflow.</p>
+        </div>
+    </div>
+
+    <form method="get" class="admin-filter-grid admin-filter-grid--three">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Search code, product, category" />
+        <select class="form-select" name="status">
+            <option value="">All alerts</option>
+            @foreach (var filter in alertFilters)
+            {
+                <option value="@filter" selected="@(Model.StatusFilter == filter)">@filter</option>
+            }
+        </select>
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value="@pageSize" />
+        <button class="btn btn-danger" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+    </form>
+
+    <div class="admin-table-shell">
+        <table class="admin-table admin-table--responsive">
+            <thead>
+                <tr>
+                    <th>Alert</th>
+                    <th>Medicine</th>
+                    <th>Category</th>
+                    <th>Stock</th>
+                    <th>Expiry</th>
+                    <th>Restock</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.InventoryAlerts.Count == 0)
+                {
+                    <tr><td colspan="6" class="admin-table__empty">No stock alerts matched the current filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var alert in Model.InventoryAlerts)
+                    {
+                        <tr>
+                            <td data-label="Alert"><span class="@AdminViewHelper.StatusClass(alert.Severity)">@alert.Reason</span></td>
+                            <td data-label="Medicine">
+                                <strong>@alert.BrandName</strong>
+                                <span>@alert.Code | @alert.GenericName</span>
+                            </td>
+                            <td data-label="Category">@alert.Category</td>
+                            <td data-label="Stock">@alert.Stock</td>
+                            <td data-label="Expiry">@alert.ExpiryDate.ToString("yyyy-MM-dd")</td>
+                            <td data-label="Restock">
+                                <form asp-action="Restock" method="post" class="admin-inline-form admin-inline-form--compact">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="MedicineId" value="@alert.MedicineId" />
+                                    <input class="form-control" name="Quantity" type="number" min="1" value="10" aria-label="Restock quantity" />
+                                    <button class="btn btn-outline-danger" type="submit" data-bs-toggle="tooltip" title="Add stock">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Pagination is not null)
+    {
+        <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
+    }
+</section>
