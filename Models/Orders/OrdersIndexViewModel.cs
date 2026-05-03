@@ -2,9 +2,15 @@ namespace PharmacyPOS.Models.Orders;
 
 public class OrdersIndexViewModel
 {
-    public bool ShowSuccessBanner { get; init; }
+    public bool ShowBanner => !string.IsNullOrWhiteSpace(BannerTitle);
 
     public string HighlightOrderNumber { get; init; } = string.Empty;
+
+    public string BannerTitle { get; init; } = string.Empty;
+
+    public string BannerMessage { get; init; } = string.Empty;
+
+    public string BannerTone { get; init; } = "success";
 
     public List<OrderSummaryViewModel> Orders { get; init; } = [];
 

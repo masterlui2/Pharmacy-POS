@@ -4,3 +4,6 @@ obj/
 .codex-build-out/
 appsettings.Local.json
 appsettings.Development.local.json
+*.bak
+App_Data/
+wwwroot/uploads/

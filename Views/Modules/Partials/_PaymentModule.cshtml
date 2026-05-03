@@ -4,6 +4,7 @@
     var pageSize = Model.Pagination?.PageSize ?? 10;
     var paymentMethods = new[] { "Cash", "CashOnDelivery", "GCash", "PayMaya", "Card" };
     var paymentStatuses = new[] { "Paid", "Unpaid" };
+    var updateStatuses = new[] { "AwaitingPayment", "RedirectedToGateway", "PendingCollection", "Paid", "Failed", "Refunded" };
 }
 
 <section class="admin-panel">
@@ -43,16 +44,18 @@
                     <th>Order</th>
                     <th>Customer</th>
                     <th>Method</th>
-                    <th>Amount</th>
+                    <th>Rx Status</th>
+                    <th class="admin-table__numeric">Amount</th>
                     <th>Payment Status</th>
                     <th>Order Status</th>
                     <th>Recorded</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Payments.Count == 0)
                 {
-                    <tr><td colspan="8" class="admin-table__empty">No payment records matched the current filters.</td></tr>
+                    <tr><td colspan="10" class="admin-table__empty">No payment records matched the current filters.</td></tr>
                 }
                 else
                 {
@@ -66,7 +69,12 @@
                             <td data-label="Order">@payment.OrderNumber</td>
                             <td data-label="Customer">@payment.CustomerName</td>
                             <td data-label="Method">@AdminViewHelper.PaymentMethodLabel(payment.PaymentMethod)</td>
-                            <td data-label="Amount">PHP @payment.Amount.ToString("N2")</td>
+                            <td data-label="Rx Status">
+                                <span class="@AdminViewHelper.StatusClass(payment.PrescriptionStatus)">
+                                    @(payment.RequiresPrescription ? payment.PrescriptionStatus : "NotRequired")
+                                </span>
+                            </td>
+                            <td data-label="Amount" class="admin-table__numeric">PHP @payment.Amount.ToString("N2")</td>
                             <td data-label="Payment Status">
                                 <span class="@AdminViewHelper.StatusClass(payment.Status)">@payment.Status</span>
                             </td>
@@ -74,6 +82,36 @@
                                 <span class="@AdminViewHelper.StatusClass(payment.OrderStatus)">@payment.OrderStatus</span>
                             </td>
                             <td data-label="Recorded">@payment.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                            <td data-label="Action">
+                                @if (!Model.AllowPaymentUpdates)
+                                {
+                                    <span class="text-muted small">Read only</span>
+                                }
+                                else if (payment.PaymentId <= 0)
+                                {
+                                    <span class="text-muted small">No payment record</span>
+                                }
+                                else if (!payment.CanProceed)
+                                {
+                                    <span class="text-danger small">@payment.BlockingReason</span>
+                                }
+                                else
+                                {
+                                    <form method="post" action="@Url.Action("UpdatePaymentStatus", Model.ModuleController)" class="admin-inline-form admin-inline-form--compact">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="PaymentId" value="@payment.PaymentId" />
+                                        <select class="form-select" name="Status" aria-label="Payment status">
+                                            @foreach (var updateStatus in updateStatuses)
+                                            {
+                                                <option value="@updateStatus" selected="@(payment.Status == updateStatus)">@updateStatus</option>
+                                            }
+                                        </select>
+                                        <button class="btn btn-outline-danger" type="submit" data-bs-toggle="tooltip" title="Update payment status">
+                                            <i class="bi bi-save"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </td>
                         </tr>
                     }
                 }

@@ -37,6 +37,13 @@
         <span asp-validation-for="Stock" class="text-danger small"></span>
     </div>
     <div class="col-md-4">
+        <label class="form-label d-block">Prescription Requirement</label>
+        <div class="form-check mt-2">
+            <input asp-for="RequiresPrescription" class="form-check-input" />
+            <label asp-for="RequiresPrescription" class="form-check-label">Requires validated prescription before checkout</label>
+        </div>
+    </div>
+    <div class="col-md-4">
         <label asp-for="ExpiryDate" class="form-label"></label>
         <input asp-for="ExpiryDate" class="form-control" type="date" />
         <span asp-validation-for="ExpiryDate" class="text-danger small"></span>

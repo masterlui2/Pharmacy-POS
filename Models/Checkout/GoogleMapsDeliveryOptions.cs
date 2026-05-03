@@ -6,6 +6,8 @@ public class GoogleMapsDeliveryOptions
 
     public string ApiKey { get; set; } = string.Empty;
 
+    public string MapId { get; set; } = string.Empty;
+
     public string BranchName { get; set; } = "SafeMed Davao Dispatch";
 
     public string BranchAddress { get; set; } = "Davao City, Davao del Sur, Philippines";

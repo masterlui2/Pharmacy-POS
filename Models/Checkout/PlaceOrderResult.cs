@@ -19,4 +19,6 @@ public class PlaceOrderResult
     public string CheckoutUrl { get; init; } = string.Empty;
 
     public string PaymentStatus { get; init; } = string.Empty;
+
+    public bool AwaitingPrescriptionApproval { get; init; }
 }

@@ -1,0 +1,71 @@
+@model PharmacyPOS.Models.Admin.PrescriptionPreviewViewModel
+@using PharmacyPOS.Helpers
+
+<section class="admin-rx-preview">
+    <header class="admin-rx-preview__header">
+        <div>
+            <p class="admin-rx-preview__eyebrow">Prescription Review</p>
+            <h4>@Model.OrderNumber</h4>
+            <p>@Model.CustomerName</p>
+        </div>
+        <div class="admin-rx-preview__meta">
+            <span class="@AdminViewHelper.StatusClass(Model.PrescriptionStatus)">@Model.PrescriptionStatus</span>
+            <span class="@AdminViewHelper.StatusClass(Model.PaymentStatus)">@Model.PaymentStatus</span>
+            <small>@Model.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</small>
+        </div>
+    </header>
+
+    @if (Model.Files.Count == 0)
+    {
+        <div class="admin-empty-state">No prescription files were uploaded for this order.</div>
+    }
+    else
+    {
+        <div class="admin-rx-gallery">
+            @foreach (var file in Model.Files)
+            {
+                <article class="admin-rx-card">
+                    <div class="admin-rx-card__head">
+                        <div>
+                            <strong>@file.Label</strong>
+                            <div class="text-muted small">@file.FileName</div>
+                        </div>
+                        @if (file.CanOpen)
+                        {
+                            <a href="@file.Url" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-box-arrow-up-right"></i> Open
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="btn btn-sm btn-outline-secondary disabled">
+                                <i class="bi bi-exclamation-circle"></i> Missing file
+                            </span>
+                        }
+                    </div>
+
+                    @if (!file.CanOpen)
+                    {
+                        <div class="admin-empty-state">
+                            @file.UnavailableMessage
+                        </div>
+                    }
+                    else if (file.IsImage)
+                    {
+                        <img class="admin-rx-card__image" src="@file.Url" alt="@file.Label" />
+                    }
+                    else if (file.IsPdf)
+                    {
+                        <iframe class="admin-rx-card__document" src="@file.Url" title="@file.FileName"></iframe>
+                    }
+                    else
+                    {
+                        <div class="admin-empty-state">
+                            Preview is not available in this card. Open the file in a new tab.
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>

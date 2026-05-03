@@ -1,16 +1,20 @@
-using System.Text;
+﻿using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PharmacyPOS.Data;
 using PharmacyPOS.Models;
 using PharmacyPOS.Models.Admin;
+using PharmacyPOS.Models.Security;
 using PharmacyPOS.Services;
 
 namespace PharmacyPOS.Controllers;
 
 public class ModulesController(
     PharmacyPosDbContext dbContext,
-    IMedicineService medicineService) : AdminController
+    IMedicineService medicineService,
+    IFirebaseSyncService firebaseSyncService,
+    IAuditLogService auditLogService,
+    ILogger<ModulesController> logger) : AdminController
 {
     private const int DefaultPageSize = 10;
     private static readonly int[] AllowedPageSizes = [10, 25, 50];
@@ -21,6 +25,11 @@ public class ModulesController(
         int page = 1,
         int pageSize = DefaultPageSize)
     {
+        if (AppRoles.Matches(CurrentRole, AppRoles.Admin))
+        {
+            return RedirectToPharmacistPortal("Process Sales / Checkout");
+        }
+
         var inventory = medicineService.GetAll().ToList();
         var filteredMedicines = FilterMedicines(search, category).ToList();
         var pagination = BuildPagination(
@@ -65,6 +74,11 @@ public class ModulesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateCounterSale(CounterSaleRequest request, CancellationToken cancellationToken)
     {
+        if (AppRoles.Matches(CurrentRole, AppRoles.Admin))
+        {
+            return RedirectToPharmacistPortal("Process Sales / Checkout");
+        }
+
         var medicine = medicineService.GetById(request.MedicineId);
         if (medicine is null)
         {
@@ -149,9 +163,18 @@ public class ModulesController(
         dbContext.Orders.Add(order);
         dbContext.Payments.Add(payment);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await TrySyncOrderAsync(order, payment, cancellationToken);
 
         medicine.Stock -= request.Quantity;
         medicineService.Update(medicine);
+
+        await auditLogService.WriteAsync(
+            "Admin POS",
+            "Create Counter Sale",
+            CurrentUsername,
+            CurrentRole,
+            $"Completed admin counter sale {order.OrderNumber} for {medicine.BrandName} x{request.Quantity}.",
+            cancellationToken);
 
         TempData["Success"] = $"Counter sale {order.OrderNumber} completed.";
         return RedirectToAction(nameof(Receipt), new { orderNumber = order.OrderNumber });
@@ -165,6 +188,11 @@ public class ModulesController(
         int pageSize = DefaultPageSize,
         CancellationToken cancellationToken = default)
     {
+        if (AppRoles.Matches(CurrentRole, AppRoles.Admin))
+        {
+            return RedirectToPharmacistPortal("Handle Payments");
+        }
+
         var ordersQuery = dbContext.Orders
             .AsNoTracking()
             .Include(order => order.Payment)
@@ -214,7 +242,7 @@ public class ModulesController(
                 OrderNumber = order.OrderNumber,
                 CustomerName = order.CustomerFullName,
                 PaymentMethod = order.PaymentMethod,
-                Status = order.Payment != null && order.Payment.Status == "Paid" ? "Paid" : "Unpaid",
+                Status = order.Payment != null ? order.Payment.Status : "AwaitingPayment",
                 OrderStatus = order.OrderStatus,
                 Amount = order.Payment != null && order.Payment.Amount > 0 ? order.Payment.Amount : order.TotalAmount,
                 ReferenceNumber = order.Payment != null && !string.IsNullOrWhiteSpace(order.Payment.ReferenceNumber)
@@ -225,6 +253,9 @@ public class ModulesController(
                     : order.PaymentMethod == "CashOnDelivery"
                         ? "Delivery collection"
                         : "Manual",
+                RequiresPrescription = order.RequiresPrescription,
+                PrescriptionStatus = order.PrescriptionStatus,
+                CanProceed = true,
                 CreatedAtUtc = order.Payment != null ? order.Payment.CreatedAtUtc : order.CreatedAtUtc
             })
             .ToListAsync(cancellationToken);
@@ -278,6 +309,11 @@ public class ModulesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdatePaymentStatus(PaymentStatusUpdateRequest request, CancellationToken cancellationToken)
     {
+        if (AppRoles.Matches(CurrentRole, AppRoles.Admin))
+        {
+            return RedirectToPharmacistPortal("Handle Payments");
+        }
+
         var normalizedStatus = NormalizePaymentStatus(request.Status);
         if (string.IsNullOrWhiteSpace(normalizedStatus))
         {
@@ -295,6 +331,9 @@ public class ModulesController(
             return RedirectToAction(nameof(Payment));
         }
 
+        var previousPaymentStatus = payment.Status;
+        var previousOrderStatus = payment.PharmacyOrder?.OrderStatus ?? string.Empty;
+        var previousPrescriptionStatus = payment.PharmacyOrder?.PrescriptionStatus ?? string.Empty;
         payment.Status = normalizedStatus;
         if (payment.PharmacyOrder is not null)
         {
@@ -310,6 +349,37 @@ public class ModulesController(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await auditLogService.WriteAsync(
+            "Admin Payments",
+            "Update Payment Status",
+            CurrentUsername,
+            CurrentRole,
+            $"Updated payment {payment.ReferenceNumber} from {previousPaymentStatus} to {normalizedStatus} for order {payment.PharmacyOrder?.OrderNumber ?? "Unknown"}.",
+            cancellationToken);
+
+        if (payment.PharmacyOrder is not null)
+        {
+            await TrySyncOrderStatusAsync(payment.PharmacyOrder, payment.Status, cancellationToken);
+
+            var notification = BuildOrderNotification(
+                previousOrderStatus,
+                payment.PharmacyOrder.OrderStatus,
+                previousPrescriptionStatus,
+                payment.PharmacyOrder.PrescriptionStatus,
+                previousPaymentStatus,
+                payment.Status);
+            if (notification is not null)
+            {
+                await TryCreateNotificationAsync(
+                    payment.PharmacyOrder.CustomerUid,
+                    payment.PharmacyOrder.OrderNumber,
+                    notification.Value.Title,
+                    notification.Value.Message,
+                    cancellationToken);
+            }
+        }
+
         TempData["Success"] = $"Payment {payment.ReferenceNumber} is now {normalizedStatus}.";
         return RedirectToAction(nameof(Payment));
     }
@@ -321,6 +391,11 @@ public class ModulesController(
         int pageSize = DefaultPageSize,
         CancellationToken cancellationToken = default)
     {
+        if (AppRoles.Matches(CurrentRole, AppRoles.Admin))
+        {
+            return RedirectToPharmacistPortal("Generate Receipts");
+        }
+
         var ordersQuery = dbContext.Orders
             .AsNoTracking()
             .Include(order => order.Payment)
@@ -353,6 +428,9 @@ public class ModulesController(
                 OrderNumber = order.OrderNumber,
                 CustomerName = order.CustomerFullName,
                 TotalAmount = order.TotalAmount,
+                RequiresPrescription = order.RequiresPrescription,
+                PrescriptionStatus = order.PrescriptionStatus,
+                CanRelease = true,
                 CreatedAtUtc = order.CreatedAtUtc
             })
             .ToListAsync(cancellationToken);
@@ -402,6 +480,11 @@ public class ModulesController(
     [HttpGet]
     public async Task<IActionResult> ReceiptPreview(string orderNumber, CancellationToken cancellationToken)
     {
+        if (AppRoles.Matches(CurrentRole, AppRoles.Admin))
+        {
+            return RedirectToPharmacistPortal("Generate Receipts");
+        }
+
         if (string.IsNullOrWhiteSpace(orderNumber))
         {
             return BadRequest();
@@ -424,6 +507,11 @@ public class ModulesController(
     [HttpGet]
     public async Task<IActionResult> PrintReceipt(string orderNumber, CancellationToken cancellationToken)
     {
+        if (AppRoles.Matches(CurrentRole, AppRoles.Admin))
+        {
+            return RedirectToPharmacistPortal("Generate Receipts");
+        }
+
         if (string.IsNullOrWhiteSpace(orderNumber))
         {
             return RedirectToAction(nameof(Receipt));
@@ -445,6 +533,11 @@ public class ModulesController(
 
     public async Task<IActionResult> DownloadReceipt(string orderNumber, CancellationToken cancellationToken)
     {
+        if (AppRoles.Matches(CurrentRole, AppRoles.Admin))
+        {
+            return RedirectToPharmacistPortal("Generate Receipts");
+        }
+
         if (string.IsNullOrWhiteSpace(orderNumber))
         {
             return RedirectToAction(nameof(Receipt));
@@ -499,6 +592,11 @@ public class ModulesController(
         int pageSize = DefaultPageSize,
         CancellationToken cancellationToken = default)
     {
+        if (AppRoles.Matches(CurrentRole, AppRoles.Admin))
+        {
+            return RedirectToPharmacistPortal("Process Sales / Checkout");
+        }
+
         var ordersQuery = dbContext.Orders
             .AsNoTracking()
             .Include(order => order.Items)
@@ -638,6 +736,7 @@ public class ModulesController(
 
         var revenueByPaymentMethod = await BuildRevenueBreakdownAsync(cancellationToken);
         var topProducts = await BuildTopProductsAsync(cancellationToken);
+        var dailySales = await BuildDailySalesAsync(cancellationToken);
         var pagination = BuildPagination(
             "Modules",
             nameof(Reports),
@@ -652,6 +751,7 @@ public class ModulesController(
             with
             {
                 RevenueByPaymentMethod = revenueByPaymentMethod,
+                DailySales = dailySales,
                 TopProducts = Paginate(topProducts, pagination.CurrentPage, pagination.PageSize),
                 Pagination = pagination,
                 Actions =
@@ -735,7 +835,7 @@ public class ModulesController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Restock(StockAdjustmentRequest request)
+    public async Task<IActionResult> Restock(StockAdjustmentRequest request, CancellationToken cancellationToken)
     {
         var medicine = medicineService.GetById(request.MedicineId);
         if (medicine is null)
@@ -752,6 +852,13 @@ public class ModulesController(
 
         medicine.Stock += request.Quantity;
         medicineService.Update(medicine);
+        await auditLogService.WriteAsync(
+            "Inventory",
+            "Restock",
+            CurrentUsername,
+            CurrentRole,
+            $"Increased stock for {medicine.BrandName} by {request.Quantity} unit{Plural(request.Quantity)}.",
+            cancellationToken);
         TempData["Success"] = $"{medicine.BrandName} stock increased by {request.Quantity} unit{Plural(request.Quantity)}.";
         return RedirectToAction(nameof(StockAlerts));
     }
@@ -867,8 +974,8 @@ public class ModulesController(
 
         var model = CreateModule(
             AdminModuleKind.AdminUsers,
-            "Admin User",
-            "Search and manage admin access with a compact account table and consistent paging.")
+            "User Accounts",
+            "Manage admin, pharmacist, and customer access with a compact account table and consistent paging.")
             with
             {
                 Search = search,
@@ -881,8 +988,9 @@ public class ModulesController(
                 ],
                 Metrics =
                 [
-                    Metric("Accounts", allUsers.Count.ToString("N0"), $"{allUsers.Count(user => string.Equals(user.Role, "Customer", StringComparison.OrdinalIgnoreCase))} customers", "bi-people", "neutral"),
-                    Metric("Admins", allUsers.Count(user => string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase)).ToString("N0"), "Accounts with admin access", "bi-shield-lock", "danger"),
+                    Metric("Accounts", allUsers.Count.ToString("N0"), $"{allUsers.Count(user => string.Equals(user.Role, AppRoles.Customer, StringComparison.OrdinalIgnoreCase))} customers", "bi-people", "neutral"),
+                    Metric("Admins", allUsers.Count(user => string.Equals(user.Role, AppRoles.Admin, StringComparison.OrdinalIgnoreCase)).ToString("N0"), "Accounts with admin access", "bi-shield-lock", "danger"),
+                    Metric("Pharmacists", allUsers.Count(user => string.Equals(user.Role, AppRoles.Pharmacist, StringComparison.OrdinalIgnoreCase)).ToString("N0"), "Accounts with pharmacist access", "bi-capsule-pill", "warning"),
                     Metric("New this month", allUsers.Count(user => user.CreatedAtUtc >= monthStartUtc).ToString("N0"), monthStartUtc.ToString("MMM yyyy"), "bi-person-plus", "success"),
                     Metric("Customer spend", Currency(totalSpend), "Total account-linked orders", "bi-cash-coin", "success")
                 ]
@@ -896,8 +1004,9 @@ public class ModulesController(
     public async Task<IActionResult> UpdateAdminRole(AdminRoleUpdateRequest request, CancellationToken cancellationToken)
     {
         var normalizedRole = request.Role.Trim();
-        if (!string.Equals(normalizedRole, "Admin", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(normalizedRole, "Customer", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(normalizedRole, AppRoles.Admin, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(normalizedRole, AppRoles.Customer, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(normalizedRole, AppRoles.Pharmacist, StringComparison.OrdinalIgnoreCase))
         {
             TempData["Error"] = "Choose a valid role.";
             return RedirectToAction(nameof(AdminUsers));
@@ -911,11 +1020,11 @@ public class ModulesController(
             return RedirectToAction(nameof(AdminUsers));
         }
 
-        if (string.Equals(account.Role, "Admin", StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(normalizedRole, "Customer", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(account.Role, AppRoles.Admin, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(normalizedRole, AppRoles.Admin, StringComparison.OrdinalIgnoreCase))
         {
             var adminCount = await dbContext.Accounts
-                .CountAsync(candidate => candidate.Role == "Admin", cancellationToken);
+                .CountAsync(candidate => candidate.Role == AppRoles.Admin, cancellationToken);
             if (adminCount <= 1)
             {
                 TempData["Error"] = "At least one admin account must remain active.";
@@ -923,13 +1032,52 @@ public class ModulesController(
             }
         }
 
-        account.Role = string.Equals(normalizedRole, "Admin", StringComparison.OrdinalIgnoreCase)
-            ? "Admin"
-            : "Customer";
+        var previousRole = account.Role;
+        account.Role = string.Equals(normalizedRole, AppRoles.Admin, StringComparison.OrdinalIgnoreCase)
+            ? AppRoles.Admin
+            : string.Equals(normalizedRole, AppRoles.Pharmacist, StringComparison.OrdinalIgnoreCase)
+                ? AppRoles.Pharmacist
+                : AppRoles.Customer;
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await auditLogService.WriteAsync(
+            "User Accounts",
+            "Update Role",
+            CurrentUsername,
+            CurrentRole,
+            $"Changed {account.Email} role from {previousRole} to {account.Role}.",
+            cancellationToken);
 
         TempData["Success"] = $"{account.Email} role updated to {account.Role}.";
         return RedirectToAction(nameof(AdminUsers));
+    }
+
+    public async Task<IActionResult> AuditLogs(CancellationToken cancellationToken = default)
+    {
+        var logs = await auditLogService.GetRecentAsync(150, cancellationToken);
+
+        var model = CreateModule(
+            AdminModuleKind.AuditLogs,
+            "Audit Logs",
+            "Recent back-office events across user access, prescriptions, payments, receipts, and messages.")
+            with
+            {
+                AuditLogs = logs.ToList(),
+                Actions =
+                [
+                    ActionLink("User Accounts", "Modules", nameof(AdminUsers), "bi-person-gear", "outline", "Open account management"),
+                    ActionLink("Stock Alerts", "Modules", nameof(StockAlerts), "bi-exclamation-triangle", "outline", "Open inventory alerts")
+                ],
+                Metrics =
+                [
+                    Metric("Recent events", logs.Count.ToString("N0"), "Entries shown in the audit view", "bi-journal-text", "neutral"),
+                    Metric("Admin events", logs.Count(entry => string.Equals(entry.ActorRole, AppRoles.Admin, StringComparison.OrdinalIgnoreCase)).ToString("N0"), "Performed by administrators", "bi-shield-lock", "danger"),
+                    Metric("Pharmacist events", logs.Count(entry => string.Equals(entry.ActorRole, AppRoles.Pharmacist, StringComparison.OrdinalIgnoreCase)).ToString("N0"), "Performed by pharmacists", "bi-capsule-pill", "warning"),
+                    Metric("Today", logs.Count(entry => entry.OccurredAtUtc.Date == DateTime.UtcNow.Date).ToString("N0"), "Logged today", "bi-calendar-day", "success")
+                ]
+            };
+
+        return View("Module", model);
     }
 
     public IActionResult ExportInventoryCsv()
@@ -1056,6 +1204,8 @@ public class ModulesController(
             PaymentMethod = order.PaymentMethod,
             PaymentStatus = order.Payment?.Status ?? "Pending",
             OrderStatus = order.OrderStatus,
+            RequiresPrescription = order.RequiresPrescription,
+            PrescriptionStatus = order.PrescriptionStatus,
             TotalAmount = order.TotalAmount,
             ItemsCount = order.Items.Sum(item => item.Quantity),
             CreatedAtUtc = order.CreatedAtUtc
@@ -1097,7 +1247,8 @@ public class ModulesController(
             .Select(group => new
             {
                 Label = group.Key,
-                Amount = group.Sum(order => order.TotalAmount)
+                Amount = group.Sum(order => order.TotalAmount),
+                OrdersCount = group.Count()
             })
             .OrderByDescending(entry => entry.Amount)
             .ToListAsync(cancellationToken);
@@ -1107,9 +1258,53 @@ public class ModulesController(
             {
                 Label = string.IsNullOrWhiteSpace(entry.Label) ? "Unknown" : entry.Label,
                 Amount = entry.Amount,
-                Percentage = total <= 0m ? 0 : (double)(entry.Amount / total * 100m)
+                Percentage = total <= 0m ? 0 : (double)(entry.Amount / total * 100m),
+                OrdersCount = entry.OrdersCount
             })
             .ToList();
+    }
+
+    private async Task<List<AdminDailySalesViewModel>> BuildDailySalesAsync(CancellationToken cancellationToken)
+    {
+        var today = DateTime.UtcNow.Date;
+        var windowStart = today.AddDays(-6);
+
+        var orders = await dbContext.Orders
+            .AsNoTracking()
+            .Where(order => order.CreatedAtUtc >= windowStart)
+            .ToListAsync(cancellationToken);
+
+        var grouped = orders
+            .GroupBy(order => order.CreatedAtUtc.Date)
+            .ToDictionary(
+                group => group.Key,
+                group => new
+                {
+                    Revenue = group.Sum(order => order.TotalAmount),
+                    Orders = group.Count()
+                });
+
+        var totalRevenue = grouped.Values.Sum(entry => entry.Revenue);
+        var dailySales = new List<AdminDailySalesViewModel>();
+
+        for (var offset = 0; offset < 7; offset++)
+        {
+            var day = windowStart.AddDays(offset);
+            var hasSummary = grouped.TryGetValue(day, out var summary);
+            var revenue = hasSummary ? summary!.Revenue : 0m;
+            var ordersCount = hasSummary ? summary!.Orders : 0;
+
+            dailySales.Add(new AdminDailySalesViewModel
+            {
+                Label = day.ToString("MMM dd"),
+                Revenue = revenue,
+                Orders = ordersCount,
+                Percentage = totalRevenue <= 0m ? 0 : (double)(revenue / totalRevenue * 100m)
+            });
+        }
+
+        dailySales.Reverse();
+        return dailySales;
     }
 
     private async Task<List<AdminTopProductViewModel>> BuildTopProductsAsync(CancellationToken cancellationToken) =>
@@ -1129,7 +1324,6 @@ public class ModulesController(
 
     private static AdminInventoryAlertViewModel BuildInventoryAlert(Medicine medicine, DateTime today)
     {
-        var isExpiredOrExpiring = medicine.ExpiryDate <= today.AddDays(60);
         var reason = medicine.Stock <= 0
             ? "Out of Stock"
             : medicine.Stock <= 20
@@ -1148,15 +1342,17 @@ public class ModulesController(
             BrandName = medicine.BrandName,
             GenericName = medicine.GenericName,
             Category = medicine.Category,
+            Supplier = medicine.Supplier,
             Stock = medicine.Stock,
             ExpiryDate = medicine.ExpiryDate,
+            DaysUntilExpiry = (medicine.ExpiryDate.Date - today.Date).Days,
             Status = medicine.Status,
             Severity = severity,
             Reason = reason
         };
     }
 
-    private static AdminModuleViewModel CreateModule(
+    private AdminModuleViewModel CreateModule(
         AdminModuleKind kind,
         string title,
         string description) =>
@@ -1164,6 +1360,8 @@ public class ModulesController(
         {
             Kind = kind,
             Title = title,
+            ModuleController = "Modules",
+            CurrentRole = CurrentRole,
             Description = description,
             WorkflowSteps =
             [
@@ -1271,6 +1469,125 @@ public class ModulesController(
             _ => string.Empty
         };
 
+    private IActionResult RedirectToPharmacistPortal(string moduleLabel)
+    {
+        TempData["Error"] = $"{moduleLabel} now belongs to the Pharmacist portal.";
+        return RedirectToAction("Index", "Dashboard");
+    }
+
+    private async Task TrySyncOrderAsync(
+        PharmacyOrder order,
+        PaymentRecord? payment,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await firebaseSyncService.SyncOrderAsync(order, payment, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Firebase order sync failed for order {OrderNumber}.",
+                order.OrderNumber);
+        }
+    }
+
+    private async Task TrySyncOrderStatusAsync(
+        PharmacyOrder order,
+        string paymentStatus,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await firebaseSyncService.UpdateOrderStatusAsync(
+                order.OrderNumber,
+                order.OrderStatus,
+                paymentStatus,
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Firebase order status sync failed for order {OrderNumber}.",
+                order.OrderNumber);
+        }
+    }
+
+    private async Task TryCreateNotificationAsync(
+        string customerUid,
+        string orderNumber,
+        string title,
+        string message,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await firebaseSyncService.CreateNotificationAsync(
+                customerUid,
+                orderNumber,
+                title,
+                message,
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Firebase notification creation failed for order {OrderNumber}.",
+                orderNumber);
+        }
+    }
+
+    private static (string Title, string Message)? BuildOrderNotification(
+        string previousOrderStatus,
+        string currentOrderStatus,
+        string previousPrescriptionStatus,
+        string currentPrescriptionStatus,
+        string previousPaymentStatus,
+        string currentPaymentStatus)
+    {
+        if (!string.Equals(previousPrescriptionStatus, currentPrescriptionStatus, StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.Equals(currentPrescriptionStatus, "Approved", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(currentPrescriptionStatus, "Valid", StringComparison.OrdinalIgnoreCase))
+            {
+                return ("Prescription Approved", "Your prescription has been approved.");
+            }
+
+            if (string.Equals(currentPrescriptionStatus, "Rejected", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(currentPrescriptionStatus, "Invalid", StringComparison.OrdinalIgnoreCase))
+            {
+                return ("Prescription Rejected", "Your prescription was rejected. Please upload a new prescription.");
+            }
+        }
+
+        if (!string.Equals(previousOrderStatus, currentOrderStatus, StringComparison.OrdinalIgnoreCase))
+        {
+            return NormalizeOrderNotification(currentOrderStatus);
+        }
+
+        if (!string.Equals(previousPaymentStatus, currentPaymentStatus, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(currentPaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase))
+        {
+            return ("Order Approved", "Your payment was confirmed and your order has been approved.");
+        }
+
+        return null;
+    }
+
+    private static (string Title, string Message)? NormalizeOrderNotification(string orderStatus) =>
+        orderStatus.Trim().ToLowerInvariant() switch
+        {
+            "approved" => ("Order Approved", "Your order has been approved."),
+            "processing" => ("Preparing Order", "Your order is now being prepared."),
+            "preparing" => ("Preparing Order", "Your order is now being prepared."),
+            "outfordelivery" => ("Out for Delivery", "Your order is out for delivery."),
+            "completed" => ("Order Completed", "Your order has been completed."),
+            _ => null
+        };
+
     private static string GenerateOrderNumber() =>
         $"POS-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}";
 
@@ -1291,3 +1608,4 @@ public class ModulesController(
 
     private static string Plural(int count) => count == 1 ? string.Empty : "s";
 }
+

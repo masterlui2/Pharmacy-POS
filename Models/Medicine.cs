@@ -27,6 +27,8 @@ public class Medicine
     [Range(0, int.MaxValue)]
     public int Stock { get; set; }
 
+    public bool RequiresPrescription { get; set; }
+
     [DataType(DataType.Date)]
     public DateTime ExpiryDate { get; set; }
 

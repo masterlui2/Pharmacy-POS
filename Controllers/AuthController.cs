@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PharmacyPOS.Models;
+using PharmacyPOS.Models.Security;
 using PharmacyPOS.Services;
 using Microsoft.Extensions.Options;
 
@@ -15,7 +16,7 @@ public class AuthController(
     {
         if (IsAuthenticated())
         {
-            return RedirectToAction("Index", "Dashboard");
+            return RedirectAuthenticatedUser();
         }
 
         return View(new LoginViewModel());
@@ -37,12 +38,7 @@ public class AuthController(
             HttpContext.Session.SetString("Email", account.Email);
             HttpContext.Session.SetString("PhoneNumber", account.PhoneNumber);
 
-            if (string.Equals(account.Role, "Admin", StringComparison.OrdinalIgnoreCase))
-            {
-                return RedirectToAction("Index", "Dashboard");
-            }
-
-            return RedirectToAction("Index", "Home");
+            return RedirectAuthenticatedUser(account.Role);
         }
 
         ModelState.AddModelError(string.Empty, "Invalid username or password.");
@@ -54,7 +50,7 @@ public class AuthController(
     {
         if (IsAuthenticated())
         {
-            return RedirectToAction("Index", "Home");
+            return RedirectAuthenticatedUser();
         }
 
         ViewBag.RecaptchaSiteKey = recaptchaOptions.Value.SiteKey;
@@ -98,8 +94,24 @@ public class AuthController(
     public IActionResult Logout()
     {
         HttpContext.Session.Clear();
-        return RedirectToAction("Index", "Dashboard");
+        return RedirectToAction("Index", "Home");
     }
 
     private bool IsAuthenticated() => !string.IsNullOrWhiteSpace(HttpContext.Session.GetString("Username"));
+
+    private IActionResult RedirectAuthenticatedUser(string? role = null)
+    {
+        var resolvedRole = role ?? HttpContext.Session.GetString("Role");
+        if (AppRoles.Matches(resolvedRole, AppRoles.Admin))
+        {
+            return RedirectToAction("Index", "Dashboard");
+        }
+
+        if (AppRoles.Matches(resolvedRole, AppRoles.Pharmacist))
+        {
+            return RedirectToAction("Prescriptions", "PharmacistModules");
+        }
+
+        return RedirectToAction("Index", "Home");
+    }
 }

@@ -1,0 +1,114 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@using PharmacyPOS.Helpers
+@{
+    var pageSize = Model.Pagination?.PageSize ?? 10;
+    var statuses = new[] { "Pending", "PendingReview", "Approved", "Valid", "Rejected", "Invalid" };
+}
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Prescription Queue</h4>
+            <p>Approve or reject prescription-dependent orders before payment, receipt, or handoff.</p>
+        </div>
+    </div>
+
+    <form method="get" class="admin-filter-grid admin-filter-grid--three">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Search order, customer, phone" />
+        <select class="form-select" name="status">
+            <option value="">All prescription states</option>
+            @foreach (var status in statuses)
+            {
+                <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
+            }
+        </select>
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value="@pageSize" />
+        <button class="btn btn-danger" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+    </form>
+
+    <div class="admin-table-shell">
+        <table class="admin-table admin-table--responsive">
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Files</th>
+                    <th>Payment</th>
+                    <th>Prescription</th>
+                    <th class="admin-table__numeric">Items</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.PrescriptionQueue.Count == 0)
+                {
+                    <tr><td colspan="8" class="admin-table__empty">No prescription orders matched the current filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var order in Model.PrescriptionQueue)
+                    {
+                        <tr>
+                            <td data-label="Order">
+                                <strong>@order.OrderNumber</strong>
+                                <span>@order.OrderStatus</span>
+                            </td>
+                            <td data-label="Customer">
+                                <strong>@order.CustomerName</strong>
+                                <span>@order.DeliveryAddress</span>
+                            </td>
+                            <td data-label="Files">
+                                @if (order.HasPreviewablePrescription)
+                                {
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#prescriptionPreviewModal"
+                                            data-preview-url="@Url.Action("PrescriptionPreview", Model.ModuleController, new { orderNumber = order.OrderNumber })">
+                                        <i class="bi bi-image"></i> View (@order.PrescriptionFileCount)
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">No uploaded file</span>
+                                }
+                            </td>
+                            <td data-label="Payment">
+                                <span class="@AdminViewHelper.StatusClass(order.PaymentStatus)">@order.PaymentStatus</span>
+                            </td>
+                            <td data-label="Prescription">
+                                <span class="@AdminViewHelper.StatusClass(order.PrescriptionStatus)">@order.PrescriptionStatus</span>
+                            </td>
+                            <td data-label="Items" class="admin-table__numeric">@order.ItemsCount</td>
+                            <td data-label="Created">@order.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                            <td data-label="Action">
+                                <form method="post" action="@Url.Action("UpdatePrescriptionStatus", Model.ModuleController)" class="admin-inline-form admin-inline-form--compact">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="OrderNumber" value="@order.OrderNumber" />
+                                    <select class="form-select" name="Status" aria-label="Prescription status">
+                                        <option value="Pending" selected="@(order.PrescriptionStatus == "Pending")">Pending</option>
+                                        <option value="PendingReview" selected="@(order.PrescriptionStatus == "PendingReview")">PendingReview</option>
+                                        <option value="Approved" selected="@(order.PrescriptionStatus == "Approved" || order.PrescriptionStatus == "Valid")">Approved</option>
+                                        <option value="Rejected" selected="@(order.PrescriptionStatus == "Rejected" || order.PrescriptionStatus == "Invalid")">Rejected</option>
+                                    </select>
+                                    <button class="btn btn-outline-danger" type="submit" data-bs-toggle="tooltip" title="Update prescription status">
+                                        <i class="bi bi-save"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Pagination is not null)
+    {
+        <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
+    }
+</section>
+
+<partial name="~/Views/Modules/Partials/_PrescriptionPreviewModal.cshtml" />

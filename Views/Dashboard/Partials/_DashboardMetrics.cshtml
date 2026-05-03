@@ -4,25 +4,25 @@
     <article class="admin-stat-card admin-stat-card--accent">
         <div class="admin-stat-card__icon"><i class="bi bi-currency-exchange"></i></div>
         <span class="admin-stat-card__label">Total revenue</span>
-        <strong>PHP @Model.TotalRevenue.ToString("N2")</strong>
-        <small>PHP @Model.MonthlyRevenue.ToString("N2") this month</small>
+        <strong class="admin-number admin-number--block">PHP @Model.TotalRevenue.ToString("N2")</strong>
+        <small class="admin-number-meta">PHP @Model.MonthlyRevenue.ToString("N2") this month</small>
     </article>
     <article class="admin-stat-card admin-stat-card--success">
         <div class="admin-stat-card__icon"><i class="bi bi-bag-check"></i></div>
         <span class="admin-stat-card__label">Orders</span>
-        <strong>@Model.TotalOrders</strong>
-        <small>@Model.PaidOrders paid, @Model.PendingOrders pending</small>
+        <strong class="admin-number admin-number--block">@Model.TotalOrders</strong>
+        <small class="admin-number-meta">@Model.PaidOrders paid, @Model.PendingOrders pending</small>
     </article>
     <article class="admin-stat-card">
         <div class="admin-stat-card__icon"><i class="bi bi-people"></i></div>
         <span class="admin-stat-card__label">Customers</span>
-        <strong>@Model.TotalCustomers</strong>
-        <small>@Model.PrescriptionOrders prescription orders recorded</small>
+        <strong class="admin-number admin-number--block">@Model.TotalCustomers</strong>
+        <small class="admin-number-meta">@Model.PrescriptionOrders prescription orders recorded</small>
     </article>
     <article class="admin-stat-card admin-stat-card--warning">
         <div class="admin-stat-card__icon"><i class="bi bi-exclamation-triangle"></i></div>
         <span class="admin-stat-card__label">Inventory Risk</span>
-        <strong>@(Model.LowStockMedicines + Model.OutOfStockMedicines)</strong>
-        <small>@Model.LowStockMedicines low stock, @Model.OutOfStockMedicines out of stock</small>
+        <strong class="admin-number admin-number--block">@(Model.LowStockMedicines + Model.OutOfStockMedicines)</strong>
+        <small class="admin-number-meta">@Model.LowStockMedicines low stock, @Model.OutOfStockMedicines out of stock</small>
     </article>
 </section>

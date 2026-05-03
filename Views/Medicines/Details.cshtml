@@ -44,6 +44,7 @@
         <div><dt>Supplier</dt><dd>@Model.Supplier</dd></div>
         <div><dt>Price</dt><dd>@Model.Price.ToString("C")</dd></div>
         <div><dt>Stock</dt><dd>@Model.Stock</dd></div>
+        <div><dt>Prescription</dt><dd>@(Model.RequiresPrescription ? "Required" : "Not required")</dd></div>
         <div><dt>Expiry Date</dt><dd>@Model.ExpiryDate.ToString("yyyy-MM-dd")</dd></div>
     </dl>
 </section>

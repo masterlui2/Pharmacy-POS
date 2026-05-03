@@ -14,9 +14,19 @@ public class OrderSummaryViewModel
 
     public string DeliveryOption { get; init; } = string.Empty;
 
+    public bool RequiresPrescription { get; init; }
+
+    public string PrescriptionStatus { get; init; } = string.Empty;
+
     public DateTime CreatedAtUtc { get; init; }
 
     public decimal TotalAmount { get; init; }
+
+    public bool CanContinuePayment { get; init; }
+
+    public bool ShowContinuePayment { get; init; }
+
+    public string ContinuePaymentLabel { get; init; } = string.Empty;
 
     public List<OrderItemViewModel> Items { get; init; } = [];
 }

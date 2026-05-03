@@ -3,8 +3,11 @@
   let activeMap;
 
   const scriptId = "safemed-google-maps-script";
+  const mapsCallbackName = "SafeMedGoogleMapsLoaded";
   const authFailureMessage =
-    "Google Maps authorization failed. Use a valid API key with billing, Maps JavaScript API, Places API, and the correct allowed referrers.";
+    "Google Maps authorization failed. Check the API key, billing, Maps JavaScript API, and allowed referrers.";
+  const autocompleteUnavailableMessage =
+    "Search suggestions are unavailable. You can still click or drag the map pin to choose the delivery location.";
 
   const loadGoogleMaps = (apiKey) => {
     if (window.SafeMedGoogleMapsState?.status === "failed") {
@@ -39,6 +42,7 @@
           status: "failed",
           error: message,
         };
+        window[mapsCallbackName] = undefined;
         reject(new Error(message));
       };
 
@@ -59,10 +63,12 @@
 
         settled = true;
         window.SafeMedGoogleMapsState = { status: "ready", error: "" };
+        window[mapsCallbackName] = undefined;
         resolve(window.google.maps);
       };
 
       window.gm_authFailure = () => fail(authFailureMessage);
+      window[mapsCallbackName] = succeed;
 
       const existing = document.getElementById(scriptId);
       if (existing) {
@@ -75,13 +81,111 @@
       script.id = scriptId;
       script.async = true;
       script.defer = true;
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places`;
-      script.onload = succeed;
+      const params = new URLSearchParams({
+        key: apiKey,
+        loading: "async",
+        callback: mapsCallbackName,
+        v: "weekly",
+      });
+      script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
       script.onerror = () => fail("Unable to load Google Maps.");
       document.head.appendChild(script);
     });
 
     return loaderPromise;
+  };
+
+  const loadOptionalLibrary = async (maps, libraryName) => {
+    if (typeof maps.importLibrary !== "function") {
+      return null;
+    }
+
+    try {
+      return await maps.importLibrary(libraryName);
+    } catch {
+      return null;
+    }
+  };
+
+  const buildCoordinateLabel = (location) =>
+    `Pinned location: ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`;
+
+  const normalizeLocation = (location) => {
+    if (!location) {
+      return null;
+    }
+
+    const lat =
+      typeof location.lat === "function"
+        ? location.lat()
+        : Number.parseFloat(location.lat);
+    const lng =
+      typeof location.lng === "function"
+        ? location.lng()
+        : Number.parseFloat(location.lng);
+
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  };
+
+  const createGeocoder = async (maps) => {
+    const geocodingLibrary = await loadOptionalLibrary(maps, "geocoding");
+    const Geocoder = geocodingLibrary?.Geocoder || maps.Geocoder;
+    return Geocoder ? new Geocoder() : null;
+  };
+
+  const createMarkerAdapter = (maps, markerLibrary, map, position) => {
+    const AdvancedMarkerElement =
+      markerLibrary?.AdvancedMarkerElement || maps.marker?.AdvancedMarkerElement;
+
+    if (AdvancedMarkerElement) {
+      const marker = new AdvancedMarkerElement({
+        map,
+        position,
+        title: "Delivery location",
+        gmpDraggable: true,
+      });
+
+      return {
+        setPosition: (location) => {
+          marker.position = location;
+        },
+        addDragEndListener: (handler) =>
+          marker.addListener("dragend", (event) => {
+            const location =
+              normalizeLocation(event?.latLng) || normalizeLocation(marker.position);
+            if (location) {
+              handler(location);
+            }
+          }),
+        remove: () => {
+          marker.map = null;
+        },
+      };
+    }
+
+    if (maps.Marker) {
+      const marker = new maps.Marker({
+        map,
+        position,
+        draggable: true,
+        animation: maps.Animation?.DROP,
+      });
+
+      return {
+        setPosition: (location) => marker.setPosition(location),
+        addDragEndListener: (handler) =>
+          marker.addListener("dragend", (event) => {
+            const location =
+              normalizeLocation(event?.latLng) || normalizeLocation(marker.getPosition?.());
+            if (location) {
+              handler(location);
+            }
+          }),
+        remove: () => marker.setMap(null),
+      };
+    }
+
+    throw new Error("Google Maps marker support is unavailable.");
   };
 
   const toRadians = (degrees) => degrees * (Math.PI / 180);
@@ -101,13 +205,12 @@
     return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
   };
 
-  const buildDeliveryQuote = (settings, shippingOption, position) => {
+  const buildDeliveryQuote = (settings, position) => {
     const branch = { lat: settings.branchLatitude, lng: settings.branchLongitude };
     const distanceKm = calculateDistanceKm(branch, position);
     const extraKm = Math.max(0, Math.ceil(distanceKm - settings.baseDistanceKm));
     const zoneFee = settings.baseFee + extraKm * settings.perKmFee;
-    const surcharge = shippingOption === "Express" ? 45 : 0;
-    const totalFee = zoneFee + surcharge;
+    const totalFee = zoneFee;
     const inCoverage = distanceKm <= settings.maxRadiusKm;
 
     return {
@@ -131,6 +234,7 @@
       activeMap.listeners.forEach((listener) => listener.remove());
     }
 
+    activeMap.marker?.remove();
     activeMap = null;
   };
 
@@ -146,7 +250,7 @@
       return null;
     }
 
-    const quote = buildDeliveryQuote(settings, draft.shipping.option, {
+    const quote = buildDeliveryQuote(settings, {
       lat: draft.address.latitude,
       lng: draft.address.longitude,
     });
@@ -188,35 +292,48 @@
     teardown();
 
     const maps = await loadGoogleMaps(settings.apiKey);
+    const [mapsLibrary, markerLibrary] = await Promise.all([
+      loadOptionalLibrary(maps, "maps"),
+      loadOptionalLibrary(maps, "marker"),
+    ]);
+    const MapClass = mapsLibrary?.Map || maps.Map;
+    const CircleClass = mapsLibrary?.Circle || maps.Circle;
+    if (!MapClass) {
+      throw new Error("Google Maps map support is unavailable.");
+    }
+
     const center = {
       lat: draft.address.latitude ?? settings.branchLatitude,
       lng: draft.address.longitude ?? settings.branchLongitude,
     };
-    const map = new maps.Map(root, {
+    const mapOptions = {
       center,
       zoom: draft.address.latitude ? 15 : 12,
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
-    });
-    const geocoder = new maps.Geocoder();
-    const marker = new maps.Marker({
-      map,
-      position: center,
-      draggable: true,
-      animation: maps.Animation.DROP,
-    });
+    };
+    const mapId = settings.mapId?.trim() || "DEMO_MAP_ID";
+    if (mapId) {
+      mapOptions.mapId = mapId;
+    }
 
-    new maps.Circle({
-      strokeColor: "#ef1c25",
-      strokeOpacity: 0.85,
-      strokeWeight: 1.5,
-      fillColor: "#ef1c25",
-      fillOpacity: 0.08,
-      map,
-      center: { lat: settings.branchLatitude, lng: settings.branchLongitude },
-      radius: settings.maxRadiusKm * 1000,
-    });
+    const map = new MapClass(root, mapOptions);
+    const geocoder = await createGeocoder(maps);
+    const marker = createMarkerAdapter(maps, markerLibrary, map, center);
+
+    if (CircleClass) {
+      new CircleClass({
+        strokeColor: "#ef1c25",
+        strokeOpacity: 0.85,
+        strokeWeight: 1.5,
+        fillColor: "#ef1c25",
+        fillOpacity: 0.08,
+        map,
+        center: { lat: settings.branchLatitude, lng: settings.branchLongitude },
+        radius: settings.maxRadiusKm * 1000,
+      });
+    }
 
     const applySelection = async (location) => {
       marker.setPosition(location);
@@ -225,13 +342,16 @@
       let selectedAddress = searchInput?.value?.trim() || "";
 
       try {
-        const response = await geocoder.geocode({ location });
-        selectedAddress = response.results?.[0]?.formatted_address?.trim() || selectedAddress;
+        if (geocoder) {
+          const response = await geocoder.geocode({ location });
+          selectedAddress = response.results?.[0]?.formatted_address?.trim() || selectedAddress;
+        }
       } catch {
-        selectedAddress = selectedAddress || `Pinned location: ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`;
+        selectedAddress = selectedAddress || buildCoordinateLabel(location);
       }
 
-      const quote = buildDeliveryQuote(settings, draft.shipping.option, location);
+      selectedAddress = selectedAddress || buildCoordinateLabel(location);
+      const quote = buildDeliveryQuote(settings, location);
       onChange({
         deliveryAddress: selectedAddress,
         latitude: location.lat,
@@ -251,13 +371,25 @@
       }
     };
 
-    const autocomplete =
-      searchInput
-        ? new maps.places.Autocomplete(searchInput, {
+    let autocomplete = null;
+    if (searchInput) {
+      const placesLibrary = await loadOptionalLibrary(maps, "places");
+      const Autocomplete =
+        placesLibrary?.Autocomplete || maps.places?.Autocomplete || null;
+
+      if (Autocomplete) {
+        try {
+          autocomplete = new Autocomplete(searchInput, {
             componentRestrictions: { country: "ph" },
             fields: ["formatted_address", "geometry"],
-          })
-        : null;
+          });
+        } catch {
+          onError(autocompleteUnavailableMessage, "warning");
+        }
+      } else {
+        onError(autocompleteUnavailableMessage, "warning");
+      }
+    }
 
     const listeners = [
       map.addListener("click", (event) => {
@@ -270,16 +402,7 @@
           lng: event.latLng.lng(),
         });
       }),
-      marker.addListener("dragend", (event) => {
-        if (!event.latLng) {
-          return;
-        }
-
-        applySelection({
-          lat: event.latLng.lat(),
-          lng: event.latLng.lng(),
-        });
-      }),
+      marker.addDragEndListener(applySelection),
     ];
 
     if (autocomplete) {
@@ -300,7 +423,7 @@
       );
     }
 
-    activeMap = { listeners, geocoder };
+    activeMap = { listeners, geocoder, marker };
 
     if (draft.address.latitude && draft.address.longitude) {
       if (searchInput && draft.address.deliveryAddress) {
@@ -326,18 +449,18 @@
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         };
+        let deliveryAddress = buildCoordinateLabel(location);
+
         try {
           let geocoder = activeMap?.geocoder ?? null;
           if (!geocoder) {
             const maps = await loadGoogleMaps(settings.apiKey);
-            geocoder = new maps.Geocoder();
+            geocoder = await createGeocoder(maps);
           }
 
-          const deliveryAddress = await reverseGeocodeLocation(geocoder, location);
-          onSuccess({
-            ...location,
-            deliveryAddress,
-          });
+          if (geocoder) {
+            deliveryAddress = await reverseGeocodeLocation(geocoder, location);
+          }
         } catch (error) {
           onError(
             error instanceof Error && error.message
@@ -346,6 +469,11 @@
             "warning",
           );
         }
+
+        onSuccess({
+          ...location,
+          deliveryAddress,
+        });
       },
       () => {
         onError("Location access was blocked. You can search or pin the map manually.", "warning");

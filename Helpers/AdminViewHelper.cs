@@ -7,9 +7,9 @@ public static class AdminViewHelper
         var normalized = value.Trim().ToLowerInvariant();
         return normalized switch
         {
-            "paid" or "completed" or "success" or "admin" or "in stock" or "available" => "admin-badge admin-badge--success",
-            "low stock" or "warning" or "processing" or "expiring soon" or "pending" or "pendingcollection" or "awaitingpayment" or "redirectedtogateway" => "admin-badge admin-badge--warning",
-            "out of stock" or "danger" or "failed" or "paymentfailed" or "refunded" or "unavailable" or "unpaid" => "admin-badge admin-badge--danger",
+            "paid" or "completed" or "success" or "admin" or "in stock" or "available" or "approved" or "valid" or "notrequired" => "admin-badge admin-badge--success",
+            "low stock" or "warning" or "processing" or "expiring soon" or "pending" or "pendingreview" or "pendingcollection" or "awaitingapproval" or "awaitingpayment" or "redirectedtogateway" or "pharmacist" => "admin-badge admin-badge--warning",
+            "out of stock" or "danger" or "failed" or "paymentfailed" or "refunded" or "unavailable" or "unpaid" or "rejected" or "invalid" => "admin-badge admin-badge--danger",
             _ => "admin-badge"
         };
     }

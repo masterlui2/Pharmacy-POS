@@ -35,25 +35,25 @@
     <article class="admin-stat-card">
         <div class="admin-stat-card__icon"><i class="bi bi-capsule"></i></div>
         <span class="admin-stat-card__label">Visible SKUs</span>
-        <strong>@(Model.Pagination?.TotalItems ?? Model.Medicines.Count)</strong>
+        <strong class="admin-number admin-number--block">@(Model.Pagination?.TotalItems ?? Model.Medicines.Count)</strong>
         <small>Current filter result</small>
     </article>
     <article class="admin-stat-card admin-stat-card--success">
         <div class="admin-stat-card__icon"><i class="bi bi-box-seam"></i></div>
         <span class="admin-stat-card__label">Units On Hand</span>
-        <strong>@totalStock</strong>
+        <strong class="admin-number admin-number--block">@totalStock</strong>
         <small>Shown on this page</small>
     </article>
     <article class="admin-stat-card admin-stat-card--warning">
         <div class="admin-stat-card__icon"><i class="bi bi-exclamation-triangle"></i></div>
         <span class="admin-stat-card__label">Low Stock</span>
-        <strong>@lowStock</strong>
+        <strong class="admin-number admin-number--block">@lowStock</strong>
         <small>Shown on this page</small>
     </article>
     <article class="admin-stat-card admin-stat-card--danger">
         <div class="admin-stat-card__icon"><i class="bi bi-x-octagon"></i></div>
         <span class="admin-stat-card__label">Out of Stock</span>
-        <strong>@outOfStock</strong>
+        <strong class="admin-number admin-number--block">@outOfStock</strong>
         <small>Shown on this page</small>
     </article>
 </section>
@@ -97,8 +97,9 @@
                     <th>Medicine</th>
                     <th>Category</th>
                     <th>Supplier</th>
-                    <th>Price</th>
-                    <th>Stock</th>
+                    <th class="admin-table__numeric">Price</th>
+                    <th class="admin-table__numeric">Stock</th>
+                    <th>Prescription</th>
                     <th>Expiry</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -107,7 +108,7 @@
             <tbody>
                 @if (!Model.Medicines.Any())
                 {
-                    <tr><td colspan="8" class="admin-table__empty">No medicine records found.</td></tr>
+                    <tr><td colspan="9" class="admin-table__empty">No medicine records found.</td></tr>
                 }
                 else
                 {
@@ -120,8 +121,13 @@
                             </td>
                             <td data-label="Category">@med.Category</td>
                             <td data-label="Supplier">@med.Supplier</td>
-                            <td data-label="Price">PHP @med.Price.ToString("N2")</td>
-                            <td data-label="Stock">@med.Stock</td>
+                            <td data-label="Price" class="admin-table__numeric">PHP @med.Price.ToString("N2")</td>
+                            <td data-label="Stock" class="admin-table__numeric">@med.Stock</td>
+                            <td data-label="Prescription">
+                                <span class="@(med.RequiresPrescription ? "admin-badge admin-badge--warning" : "admin-badge admin-badge--success")">
+                                    @(med.RequiresPrescription ? "Required" : "Not required")
+                                </span>
+                            </td>
                             <td data-label="Expiry">@med.ExpiryDate.ToString("yyyy-MM-dd")</td>
                             <td data-label="Status"><span class="@StatusClass(med.Status)">@med.Status</span></td>
                             <td data-label="Actions">

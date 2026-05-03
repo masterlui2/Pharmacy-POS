@@ -218,6 +218,38 @@
   font-size: 0.9rem;
 }
 
+.admin-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-number--block {
+  display: block;
+  text-align: right;
+}
+
+.admin-number-meta {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-table th.admin-table__numeric,
+.admin-table td.admin-table__numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin-table td.admin-table__numeric strong,
+.admin-table td.admin-table__numeric span:not(.admin-badge) {
+  text-align: right;
+}
+
+.admin-table td.admin-table__numeric .admin-badge {
+  display: flex;
+  width: max-content;
+  margin-left: auto;
+}
+
 .admin-badge {
   display: inline-flex;
   align-items: center;
@@ -1166,6 +1198,15 @@
     letter-spacing: 0.06em;
   }
 
+  .admin-table--responsive td.admin-table__numeric {
+    text-align: right;
+  }
+
+  .admin-table--responsive td.admin-table__numeric > * {
+    justify-self: end;
+    text-align: right;
+  }
+
   .admin-inline-form {
     min-width: 0;
     width: 100%;
@@ -1179,6 +1220,411 @@
   }
 
   .admin-row-actions {
+    justify-content: flex-start;
+  }
+}
+
+.admin-rx-preview {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-rx-preview__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-rx-preview__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.admin-rx-preview__header h4,
+.admin-rx-preview__header p,
+.admin-rx-preview__meta small {
+  margin: 0;
+}
+
+.admin-rx-preview__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.admin-rx-preview__meta small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.admin-rx-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.admin-rx-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fcfcfd;
+}
+
+.admin-rx-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-rx-card__head strong,
+.admin-rx-card__head .small {
+  display: block;
+}
+
+.admin-rx-card__image {
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #edf1f7;
+}
+
+.admin-rx-card__document {
+  width: 100%;
+  min-height: 520px;
+  border: 1px solid #edf1f7;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.pharm-chat-shell {
+  display: grid;
+  grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+  min-height: 72vh;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+.pharm-chat-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, #fffafa 0%, #ffffff 100%);
+}
+
+.pharm-chat-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pharm-chat-sidebar__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pharm-chat-sidebar__header h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.pharm-chat-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.pharm-chat-thread {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  color: var(--text);
+  text-decoration: none;
+  background: #ffffff;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.pharm-chat-thread:hover {
+  border-color: rgba(207, 22, 54, 0.2);
+  background: #fff7f8;
+  transform: translateY(-1px);
+  color: var(--text);
+}
+
+.pharm-chat-thread--active {
+  border-color: rgba(207, 22, 54, 0.28);
+  background: rgba(207, 22, 54, 0.06);
+}
+
+.pharm-chat-thread__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: rgba(207, 22, 54, 0.1);
+  color: var(--primary);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.pharm-chat-thread__avatar--large {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+}
+
+.pharm-chat-thread__body {
+  min-width: 0;
+}
+
+.pharm-chat-thread__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pharm-chat-thread__topline strong,
+.pharm-chat-thread__topline span,
+.pharm-chat-thread__body p,
+.pharm-chat-thread__body small {
+  display: block;
+}
+
+.pharm-chat-thread__topline strong {
+  color: var(--text);
+  font-size: 0.94rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pharm-chat-thread__topline span,
+.pharm-chat-thread__body p,
+.pharm-chat-thread__body small {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.pharm-chat-thread__body p,
+.pharm-chat-thread__body small {
+  margin: 0.18rem 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pharm-chat-thread__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.pharm-chat-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background:
+    linear-gradient(180deg, #fffdfd 0%, #ffffff 100%);
+}
+
+.pharm-chat-main__header {
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pharm-chat-main__identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pharm-chat-main__identity h4,
+.pharm-chat-main__identity p {
+  margin: 0;
+}
+
+.pharm-chat-main__identity p {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.pharm-chat-main__empty {
+  display: grid;
+  gap: 22px;
+  align-content: center;
+  min-height: 100%;
+  padding: 34px 28px;
+}
+
+.pharm-chat-main__empty h4,
+.pharm-chat-main__empty p {
+  margin: 0;
+}
+
+.pharm-chat-main__empty p {
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+
+.pharm-chat-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at top left, rgba(207, 22, 54, 0.05), transparent 28%),
+    linear-gradient(180deg, #fffdfd 0%, #ffffff 100%);
+}
+
+.pharm-chat-bubble {
+  align-self: flex-start;
+  max-width: min(78%, 720px);
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px 20px 20px 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(27, 34, 48, 0.05);
+}
+
+.pharm-chat-bubble--self {
+  align-self: flex-end;
+  border-color: rgba(207, 22, 54, 0.12);
+  border-radius: 20px 20px 8px 20px;
+  background: #fff7f8;
+}
+
+.pharm-chat-bubble header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.pharm-chat-bubble header strong {
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.pharm-chat-bubble header span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.pharm-chat-bubble p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.pharm-chat-composer {
+  padding: 18px 24px 24px;
+  border-top: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.pharm-chat-composer__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.pharm-chat-composer textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.pharm-chat-composer--standalone {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: var(--card-shadow);
+}
+
+@media (max-width: 1100px) {
+  .pharm-chat-shell {
+    grid-template-columns: 320px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 991.98px) {
+  .pharm-chat-shell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .pharm-chat-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .pharm-chat-bubble {
+    max-width: 100%;
+  }
+
+  .pharm-chat-composer__row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-rx-preview__header {
+    flex-direction: column;
+  }
+
+  .admin-rx-preview__meta {
     justify-content: flex-start;
   }
 }

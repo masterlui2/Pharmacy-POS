@@ -1,0 +1,47 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@using PharmacyPOS.Helpers
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Recent Audit Events</h4>
+            <p>Centralized role, payment, prescription, receipt, and messaging activity across the back office.</p>
+        </div>
+    </div>
+
+    <div class="admin-table-shell">
+        <table class="admin-table admin-table--responsive">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Module</th>
+                    <th>Action</th>
+                    <th>Actor</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.AuditLogs.Count == 0)
+                {
+                    <tr><td colspan="5" class="admin-table__empty">No audit log entries available yet.</td></tr>
+                }
+                else
+                {
+                    @foreach (var entry in Model.AuditLogs)
+                    {
+                        <tr>
+                            <td data-label="When">@entry.OccurredAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                            <td data-label="Module"><strong>@entry.Module</strong></td>
+                            <td data-label="Action">@entry.Action</td>
+                            <td data-label="Actor">
+                                <strong>@entry.ActorName</strong>
+                                <span class="@AdminViewHelper.StatusClass(entry.ActorRole)">@entry.ActorRole</span>
+                            </td>
+                            <td data-label="Details">@entry.Details</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

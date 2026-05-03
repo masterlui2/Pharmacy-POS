@@ -11,8 +11,11 @@
   const root = page.querySelector("[data-cart-root]");
   const antiForgeryInput = document.querySelector("[data-cart-antiforgery]");
   const placeOrderUrl = page.dataset.placeOrderUrl || "/checkout/place-order";
+  const uploadPrescriptionsUrl =
+    page.dataset.uploadPrescriptionsUrl || "/checkout/upload-prescriptions";
   const deliverySettings = {
     apiKey: page.dataset.mapsApiKey || "",
+    mapId: page.dataset.mapsMapId || "",
     branchName: page.dataset.branchName || "SafeMed Davao Dispatch",
     branchAddress: page.dataset.branchAddress || "Davao City, Philippines",
     branchLatitude: Number.parseFloat(page.dataset.branchLatitude || "7.073056"),
@@ -27,6 +30,7 @@
     return;
   }
 
+  const maxCheckoutStep = 3;
   let draft = stateStore.readDraft();
 
   const normalizeDraftForCurrentCart = () => {
@@ -34,6 +38,9 @@
     if (cart.length > 0 && draft.ui.orderNumber) {
       draft = stateStore.resetDraftForNewOrder();
     }
+
+    draft.step = Math.max(1, Math.min(maxCheckoutStep, draft.step || 1));
+    draft.shipping.option = "Standard";
   };
 
   const syncQueryFeedback = () => {
@@ -129,6 +136,7 @@
     draft.address.deliveryFee = payload.deliveryFee;
     draft.address.coverageStatus = payload.coverageStatus;
     draft.address.coverageLabel = payload.coverageLabel;
+    syncDeliveryCoverage();
     clearMessage();
     persistDraft();
 
@@ -254,7 +262,7 @@
 
     if (isPrescriptionBlocked()) {
       setMessage(
-        "Upload and submit the prescription before proceeding.",
+        "Upload and submit the prescription for pharmacist review before proceeding.",
         "danger",
       );
       return false;
@@ -266,7 +274,7 @@
   const updateDraftField = (path, value) => {
     const [section, key] = path.split(".");
     draft[section][key] = value;
-    if (section === "shipping" || section === "address") {
+    if (section === "address") {
       syncDeliveryCoverage();
     }
     clearMessage();
@@ -288,7 +296,7 @@
       return;
     }
 
-    draft.step = Math.max(1, Math.min(4, nextStep));
+    draft.step = Math.max(1, Math.min(maxCheckoutStep, nextStep));
     clearMessage();
     persistDraft();
     renderPage();
@@ -354,11 +362,17 @@
       latitude: draft.address.latitude,
       longitude: draft.address.longitude,
       distanceKm: draft.address.distanceKm,
-      deliveryOption: draft.shipping.option,
+      deliveryOption: "Standard",
       paymentMethod: draft.payment.method,
       prescriptionStatus: renderer.getPrescriptionStatus(core.readCart(), uploads).code,
       promoCode: core.readPromo()?.code || "",
-      prescriptionFiles: uploads.files,
+      prescriptionFiles: uploads.files
+        .filter((file) => file && typeof file.url === "string" && file.url.trim().length > 0)
+        .map((file) => ({
+          name: file.name || "",
+          url: file.url,
+          contentType: file.contentType || "",
+        })),
       items: core.readCart().map((item) => ({
         productId: item.id,
         name: item.name,
@@ -380,7 +394,7 @@
 
     if (isPrescriptionBlocked()) {
       setMessage(
-        "Prescription items must be uploaded and marked valid before checkout.",
+        "Prescription items must be uploaded and submitted for pharmacist review before checkout.",
         "danger",
       );
       renderPage();
@@ -415,7 +429,7 @@
       draft.ui.busy = false;
       draft.ui.orderNumber = result.orderNumber || "";
       draft.ui.message = result.message || "Order placed successfully.";
-      draft.ui.tone = result.checkoutUrl ? "info" : "success";
+      draft.ui.tone = result.awaitingPrescriptionApproval ? "warning" : result.checkoutUrl ? "info" : "success";
       persistDraft();
 
       if (result.checkoutUrl) {
@@ -425,7 +439,8 @@
 
       clearCheckoutState();
       const separator = core.myOrdersUrl.includes("?") ? "&" : "?";
-      window.location.href = `${core.myOrdersUrl}${separator}order=${encodeURIComponent(result.orderNumber || "")}&payment=placed`;
+      const paymentState = result.awaitingPrescriptionApproval ? "review" : "placed";
+      window.location.href = `${core.myOrdersUrl}${separator}order=${encodeURIComponent(result.orderNumber || "")}&payment=${encodeURIComponent(paymentState)}`;
     } catch {
       draft.ui.busy = false;
       draft.ui.message = "Unable to connect to checkout right now.";
@@ -433,6 +448,28 @@
       persistDraft();
       renderPage();
     }
+  };
+
+  const uploadPrescriptionFiles = async (files) => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("files", file, file.name);
+    });
+
+    const response = await window.fetch(uploadPrescriptionsUrl, {
+      method: "POST",
+      headers: {
+        RequestVerificationToken: antiForgeryInput?.value || "",
+      },
+      body: formData,
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result?.success) {
+      throw new Error(result?.message || "Prescription upload failed.");
+    }
+
+    return Array.isArray(result.files) ? result.files : [];
   };
 
   page.addEventListener("click", (event) => {
@@ -498,7 +535,7 @@
       if (uploads.files.length > 0) {
         uploads.submitted = true;
         core.writeRxUploads(uploads);
-        setMessage("Prescription submitted and marked valid for checkout.", "success");
+        setMessage("Prescription submitted. Wait for pharmacist approval before payment can continue.", "warning");
         renderPage();
       }
       return;
@@ -507,15 +544,6 @@
     const addressType = target.closest("[data-address-type]");
     if (addressType instanceof HTMLElement) {
       draft.address.addressType = addressType.dataset.addressType || "Home";
-      persistDraft();
-      renderPage();
-      return;
-    }
-
-    const shippingOption = target.closest("[data-shipping-option]");
-    if (shippingOption instanceof HTMLElement) {
-      draft.shipping.option = shippingOption.dataset.shippingOption || "Standard";
-      syncDeliveryCoverage();
       persistDraft();
       renderPage();
       return;
@@ -561,20 +589,38 @@
     const target = event.target;
 
     if (target instanceof HTMLInputElement && target.matches("[data-rx-input]")) {
-      const files = Array.from(target.files || [])
-        .filter((file) => file.size <= 10 * 1024 * 1024)
-        .map((file) => file.name);
+      const selectedFiles = Array.from(target.files || []).filter(
+        (file) => file.size <= 10 * 1024 * 1024,
+      );
 
-      if (files.length > 0) {
-        const uploads = core.readRxUploads();
-        core.writeRxUploads({
-          files: [...uploads.files, ...files],
-          submitted: false,
-        });
-        setMessage("Prescription uploaded.", "warning");
+      if (selectedFiles.length === 0) {
+        setMessage("Choose a valid prescription image or PDF under 10MB.", "warning");
         renderPage();
+        return;
       }
 
+      setMessage("Uploading prescription file...", "info");
+      renderPage();
+
+      uploadPrescriptionFiles(selectedFiles)
+        .then((uploadedFiles) => {
+          const uploads = core.readRxUploads();
+          core.writeRxUploads({
+            files: [...uploads.files, ...uploadedFiles],
+            submitted: false,
+          });
+          setMessage("Prescription uploaded.", "warning");
+          renderPage();
+        })
+        .catch((error) => {
+          setMessage(
+            error instanceof Error ? error.message : "Prescription upload failed.",
+            "danger",
+          );
+          renderPage();
+        });
+
+      target.value = "";
       return;
     }
 

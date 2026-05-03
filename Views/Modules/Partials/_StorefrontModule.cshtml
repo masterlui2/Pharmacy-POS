@@ -32,8 +32,8 @@
                 <tr>
                     <th>Product</th>
                     <th>Supplier</th>
-                    <th>Price</th>
-                    <th>Availability</th>
+                    <th class="admin-table__numeric">Price</th>
+                    <th class="admin-table__numeric">Availability</th>
                     <th>Customer Status</th>
                     <th>Actions</th>
                 </tr>
@@ -53,8 +53,8 @@
                                 <span>@medicine.GenericName | @medicine.Category</span>
                             </td>
                             <td data-label="Supplier">@medicine.Supplier</td>
-                            <td data-label="Price">PHP @medicine.Price.ToString("N2")</td>
-                            <td data-label="Availability">@medicine.Stock unit@(medicine.Stock == 1 ? string.Empty : "s")</td>
+                            <td data-label="Price" class="admin-table__numeric">PHP @medicine.Price.ToString("N2")</td>
+                            <td data-label="Availability" class="admin-table__numeric">@medicine.Stock unit@(medicine.Stock == 1 ? string.Empty : "s")</td>
                             <td data-label="Customer Status">
                                 @if (medicine.Stock > 0 && medicine.Stock <= 20)
                                 {

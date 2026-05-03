@@ -1,25 +1,10 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
+using PharmacyPOS.Models.Security;
 
 namespace PharmacyPOS.Controllers;
 
-public abstract class AdminController : BaseController
+public abstract class AdminController : RoleProtectedController
 {
-    public override void OnActionExecuting(ActionExecutingContext context)
-    {
-        base.OnActionExecuting(context);
+    private static readonly IReadOnlyCollection<string> RoleSet = [AppRoles.Admin];
 
-        if (context.Result is not null)
-        {
-            return;
-        }
-
-        var role = HttpContext.Session.GetString("Role");
-        if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
-        {
-            context.Result = RedirectToAction("Index", "Home");
-            return;
-        }
-    }
+    protected override IReadOnlyCollection<string> AllowedRoles => RoleSet;
 }

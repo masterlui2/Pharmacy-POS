@@ -33,15 +33,16 @@
                     <th>Medicine</th>
                     <th>Category</th>
                     <th>Supplier</th>
-                    <th>Price</th>
-                    <th>Stock</th>
+                    <th class="admin-table__numeric">Price</th>
+                    <th class="admin-table__numeric">Stock</th>
+                    <th>Prescription</th>
                     <th>Sale</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Medicines.Count == 0)
                 {
-                    <tr><td colspan="6" class="admin-table__empty">No medicine matched the current filters.</td></tr>
+                    <tr><td colspan="7" class="admin-table__empty">No medicine matched the current filters.</td></tr>
                 }
                 else
                 {
@@ -54,9 +55,14 @@
                             </td>
                             <td data-label="Category">@medicine.Category</td>
                             <td data-label="Supplier">@medicine.Supplier</td>
-                            <td data-label="Price">PHP @medicine.Price.ToString("N2")</td>
-                            <td data-label="Stock">
+                            <td data-label="Price" class="admin-table__numeric">PHP @medicine.Price.ToString("N2")</td>
+                            <td data-label="Stock" class="admin-table__numeric">
                                 <span class="@AdminViewHelper.StatusClass(medicine.Status)">@medicine.Stock @medicine.Status</span>
+                            </td>
+                            <td data-label="Prescription">
+                                <span class="@(medicine.RequiresPrescription ? "admin-badge admin-badge--warning" : "admin-badge admin-badge--success")">
+                                    @(medicine.RequiresPrescription ? "Required" : "Not required")
+                                </span>
                             </td>
                             <td data-label="Sale">
                                 <button type="button"
@@ -68,9 +74,9 @@
                                         data-medicine-caption="@($"{medicine.Code} | {medicine.GenericName}")"
                                         data-medicine-price="@($"PHP {medicine.Price:N2}")"
                                         data-medicine-stock="@medicine.Stock"
+                                        data-medicine-rx="@medicine.RequiresPrescription.ToString().ToLowerInvariant()"
                                         @(medicine.Stock <= 0 ? "disabled" : string.Empty)
                                         aria-label="Start sale"
-                                        data-bs-toggle="tooltip"
                                         title="Start sale">
                                     <i class="bi bi-bag-check"></i>
                                 </button>

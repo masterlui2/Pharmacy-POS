@@ -12,19 +12,19 @@
         <div class="admin-kpi-grid">
             <div class="admin-kpi">
                 <span>Average order value</span>
-                <strong>PHP @Model.AverageOrderValue.ToString("N2")</strong>
+                <strong class="admin-number admin-number--block">PHP @Model.AverageOrderValue.ToString("N2")</strong>
             </div>
             <div class="admin-kpi">
                 <span>Paid orders</span>
-                <strong>@Model.PaidOrders</strong>
+                <strong class="admin-number admin-number--block">@Model.PaidOrders</strong>
             </div>
             <div class="admin-kpi">
                 <span>Pending orders</span>
-                <strong>@Model.PendingOrders</strong>
+                <strong class="admin-number admin-number--block">@Model.PendingOrders</strong>
             </div>
             <div class="admin-kpi">
                 <span>Total medicines</span>
-                <strong>@Model.TotalMedicines</strong>
+                <strong class="admin-number admin-number--block">@Model.TotalMedicines</strong>
             </div>
         </div>
 
@@ -40,7 +40,7 @@
                     <div class="admin-breakdown-item">
                         <div class="admin-breakdown-item__meta">
                             <strong>@item.Label</strong>
-                            <span>PHP @item.Amount.ToString("N2")</span>
+                            <span class="admin-number">PHP @item.Amount.ToString("N2")</span>
                         </div>
                         <div class="admin-progress">
                             <div class="admin-progress__fill" style="width:@item.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></div>
@@ -89,7 +89,7 @@
                             <strong>@product.ProductName</strong>
                             <span>@product.QuantitySold sold</span>
                         </div>
-                        <strong>PHP @product.Revenue.ToString("N2")</strong>
+                        <strong class="admin-number">PHP @product.Revenue.ToString("N2")</strong>
                     </div>
                 }
             </div>

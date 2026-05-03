@@ -4,6 +4,7 @@
     const scope = window.SafeMedCartCore?.accountScope || "guest";
     return `${DRAFT_KEY}:${scope}`;
   };
+  const maxStep = 3;
 
   const getDefaultDraft = () => ({
     step: 1,
@@ -41,13 +42,18 @@
       const parsed = raw ? JSON.parse(raw) : null;
       const normalizedPaymentMethod =
         parsed?.payment?.method === "EWallet" ? "GCash" : parsed?.payment?.method;
+      const parsedStep = Number.parseInt(parsed?.step || 1, 10);
+      const normalizedStep = Number.isFinite(parsedStep)
+        ? Math.max(1, Math.min(maxStep, parsedStep))
+        : 1;
 
       return parsed
         ? {
             ...getDefaultDraft(),
             ...parsed,
+            step: normalizedStep,
             address: { ...getDefaultDraft().address, ...parsed.address },
-            shipping: { ...getDefaultDraft().shipping, ...parsed.shipping },
+            shipping: { ...getDefaultDraft().shipping, option: "Standard" },
             payment: { ...getDefaultDraft().payment, ...parsed.payment, method: normalizedPaymentMethod || getDefaultDraft().payment.method },
             ui: { ...getDefaultDraft().ui, ...parsed.ui },
           }
@@ -70,7 +76,7 @@
     const nextDraft = {
       ...getDefaultDraft(),
       address: { ...getDefaultDraft().address, ...current.address },
-      shipping: { ...getDefaultDraft().shipping, ...current.shipping },
+      shipping: { ...getDefaultDraft().shipping, option: "Standard" },
       payment: { ...getDefaultDraft().payment, ...current.payment },
       ui: { ...getDefaultDraft().ui },
     };

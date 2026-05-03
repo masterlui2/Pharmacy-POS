@@ -1,4 +1,4 @@
-@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+﻿@model PharmacyPOS.Models.Admin.AdminModuleViewModel
 @using PharmacyPOS.Helpers
 @{
     var pageSize = Model.Pagination?.PageSize ?? 10;
@@ -9,12 +9,12 @@
     <div class="admin-panel__header">
         <div>
             <h4>Alert Queue</h4>
-            <p>Search and filter actionable stock issues without leaving the inventory workflow.</p>
+            <p>Actionable stock issues with supplier context, expiry timing, and quick replenishment tools.</p>
         </div>
     </div>
 
     <form method="get" class="admin-filter-grid admin-filter-grid--three">
-        <input name="search" value="@Model.Search" class="form-control" placeholder="Search code, product, category" />
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Search code, product, supplier" />
         <select class="form-select" name="status">
             <option value="">All alerts</option>
             @foreach (var filter in alertFilters)
@@ -33,9 +33,9 @@
                 <tr>
                     <th>Alert</th>
                     <th>Medicine</th>
-                    <th>Category</th>
-                    <th>Stock</th>
-                    <th>Expiry</th>
+                    <th>Supplier</th>
+                    <th>Stock Status</th>
+                    <th>Expiry Window</th>
                     <th>Restock</th>
                 </tr>
             </thead>
@@ -48,15 +48,36 @@
                 {
                     @foreach (var alert in Model.InventoryAlerts)
                     {
+                        var daysToExpiry = alert.DaysUntilExpiry;
+                        var expiryClass = daysToExpiry < 0
+                            ? "admin-badge admin-badge--danger"
+                            : daysToExpiry <= 60
+                                ? "admin-badge admin-badge--warning"
+                                : "admin-badge admin-badge--success";
+                        var expiryLabel = daysToExpiry < 0
+                            ? $"Expired {Math.Abs(daysToExpiry)} day{(Math.Abs(daysToExpiry) == 1 ? string.Empty : "s")} ago"
+                            : daysToExpiry == 0
+                                ? "Expires today"
+                                : $"{daysToExpiry} day{(daysToExpiry == 1 ? string.Empty : "s")} remaining";
+
                         <tr>
-                            <td data-label="Alert"><span class="@AdminViewHelper.StatusClass(alert.Severity)">@alert.Reason</span></td>
+                            <td data-label="Alert"><span class="@AdminViewHelper.StatusClass(alert.Reason)">@alert.Reason</span></td>
                             <td data-label="Medicine">
                                 <strong>@alert.BrandName</strong>
                                 <span>@alert.Code | @alert.GenericName</span>
                             </td>
-                            <td data-label="Category">@alert.Category</td>
-                            <td data-label="Stock">@alert.Stock</td>
-                            <td data-label="Expiry">@alert.ExpiryDate.ToString("yyyy-MM-dd")</td>
+                            <td data-label="Supplier">
+                                <strong>@alert.Supplier</strong>
+                                <span>@alert.Category</span>
+                            </td>
+                            <td data-label="Stock Status">
+                                <strong class="admin-number">@alert.Stock unit@(alert.Stock == 1 ? string.Empty : "s")</strong>
+                                <span class="@AdminViewHelper.StatusClass(alert.Status)">@alert.Status</span>
+                            </td>
+                            <td data-label="Expiry Window">
+                                <strong>@alert.ExpiryDate.ToString("yyyy-MM-dd")</strong>
+                                <span class="@expiryClass">@expiryLabel</span>
+                            </td>
                             <td data-label="Restock">
                                 <form asp-action="Restock" method="post" class="admin-inline-form admin-inline-form--compact">
                                     @Html.AntiForgeryToken()

@@ -1,0 +1,19 @@
+<div class="modal fade" id="prescriptionPreviewModal" tabindex="-1" aria-labelledby="prescriptionPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content admin-modal admin-modal--receipt">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="prescriptionPreviewModalLabel">Prescription Preview</h5>
+                    <small class="text-muted">Review the uploaded prescription before validating the order.</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="admin-receipt-loader" data-prescription-preview-content>
+                    <div class="spinner-border text-danger" role="status" aria-hidden="true"></div>
+                    <span>Loading prescription files...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

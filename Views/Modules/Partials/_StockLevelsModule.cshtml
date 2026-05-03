@@ -1,0 +1,104 @@
+﻿@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@using PharmacyPOS.Helpers
+@{
+    var pageSize = Model.Pagination?.PageSize ?? 10;
+    var today = DateTime.Today;
+}
+
+<section class="admin-panel">
+    <div class="admin-panel__header">
+        <div>
+            <h4>Live Stock Levels</h4>
+            <p>Pharmacist read-only inventory visibility with stock status, supplier context, pricing, and expiry timing.</p>
+        </div>
+    </div>
+
+    <form method="get" class="admin-filter-grid admin-filter-grid--inventory">
+        <input name="search" value="@Model.Search" class="form-control" placeholder="Search code, brand, generic, supplier" />
+        <select name="category" class="form-select">
+            <option value="">All categories</option>
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category" selected="@(Model.CategoryFilter == category)">@category</option>
+            }
+        </select>
+        <select name="status" class="form-select">
+            <option value="">All statuses</option>
+            @foreach (var item in new[] { "In Stock", "Low Stock", "Out of Stock" })
+            {
+                <option value="@item" selected="@(Model.StatusFilter == item)">@item</option>
+            }
+        </select>
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value="@pageSize" />
+        <button class="btn btn-danger" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+    </form>
+
+    <div class="admin-table-shell">
+        <table class="admin-table admin-table--responsive">
+            <thead>
+                <tr>
+                    <th>Medicine</th>
+                    <th>Supplier</th>
+                    <th class="admin-table__numeric">Price</th>
+                    <th>Stock Status</th>
+                    <th>Prescription</th>
+                    <th>Expiry Window</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Medicines.Count == 0)
+                {
+                    <tr><td colspan="6" class="admin-table__empty">No medicine records matched the current filters.</td></tr>
+                }
+                else
+                {
+                    @foreach (var medicine in Model.Medicines)
+                    {
+                        var daysToExpiry = (medicine.ExpiryDate.Date - today).Days;
+                        var expiryClass = daysToExpiry < 0
+                            ? "admin-badge admin-badge--danger"
+                            : daysToExpiry <= 60
+                                ? "admin-badge admin-badge--warning"
+                                : "admin-badge admin-badge--success";
+                        var expiryLabel = daysToExpiry < 0
+                            ? $"Expired {Math.Abs(daysToExpiry)} day{(Math.Abs(daysToExpiry) == 1 ? string.Empty : "s")} ago"
+                            : daysToExpiry == 0
+                                ? "Expires today"
+                                : $"{daysToExpiry} day{(daysToExpiry == 1 ? string.Empty : "s")} remaining";
+
+                        <tr>
+                            <td data-label="Medicine">
+                                <strong>@medicine.BrandName</strong>
+                                <span>@medicine.Code | @medicine.GenericName</span>
+                            </td>
+                            <td data-label="Supplier">
+                                <strong>@medicine.Supplier</strong>
+                                <span>@medicine.Category</span>
+                            </td>
+                            <td data-label="Price" class="admin-table__numeric">PHP @medicine.Price.ToString("N2")</td>
+                            <td data-label="Stock Status">
+                                <strong class="admin-number">@medicine.Stock unit@(medicine.Stock == 1 ? string.Empty : "s")</strong>
+                                <span class="@AdminViewHelper.StatusClass(medicine.Status)">@medicine.Status</span>
+                            </td>
+                            <td data-label="Prescription">
+                                <span class="@(medicine.RequiresPrescription ? "admin-badge admin-badge--warning" : "admin-badge admin-badge--success")">
+                                    @(medicine.RequiresPrescription ? "Required" : "Not required")
+                                </span>
+                            </td>
+                            <td data-label="Expiry Window">
+                                <strong>@medicine.ExpiryDate.ToString("yyyy-MM-dd")</strong>
+                                <span class="@expiryClass">@expiryLabel</span>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Pagination is not null)
+    {
+        <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
+    }
+</section>

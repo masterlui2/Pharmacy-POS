@@ -2,14 +2,14 @@
 @using PharmacyPOS.Helpers
 @{
     var pageSize = Model.Pagination?.PageSize ?? 10;
-    var roleFilters = new[] { "Admin", "Customer" };
+    var roleFilters = new[] { "Admin", "Pharmacist", "Customer" };
 }
 
 <section class="admin-panel">
     <div class="admin-panel__header">
         <div>
-            <h4>Admin Access</h4>
-            <p>Search accounts, filter by role, and update access from the same table workflow used elsewhere.</p>
+            <h4>User Account Access</h4>
+            <p>Search accounts, filter by role, and update admin or pharmacist access from the same table workflow used elsewhere.</p>
         </div>
     </div>
 
@@ -34,8 +34,8 @@
                     <th>User</th>
                     <th>Role</th>
                     <th>Phone</th>
-                    <th>Orders</th>
-                    <th>Lifetime Spend</th>
+                    <th class="admin-table__numeric">Orders</th>
+                    <th class="admin-table__numeric">Lifetime Spend</th>
                     <th>Joined</th>
                     <th>Role Action</th>
                 </tr>
@@ -56,8 +56,8 @@
                             </td>
                             <td data-label="Role"><span class="@AdminViewHelper.StatusClass(user.Role)">@user.Role</span></td>
                             <td data-label="Phone">@user.PhoneNumber</td>
-                            <td data-label="Orders">@user.OrdersCount</td>
-                            <td data-label="Lifetime Spend">PHP @user.LifetimeSpend.ToString("N2")</td>
+                            <td data-label="Orders" class="admin-table__numeric">@user.OrdersCount</td>
+                            <td data-label="Lifetime Spend" class="admin-table__numeric">PHP @user.LifetimeSpend.ToString("N2")</td>
                             <td data-label="Joined">@user.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy")</td>
                             <td data-label="Role Action">
                                 <form asp-action="UpdateAdminRole" method="post" class="admin-inline-form admin-inline-form--compact">
@@ -65,6 +65,7 @@
                                     <input type="hidden" name="AccountId" value="@user.Id" />
                                     <select class="form-select" name="Role" aria-label="Role">
                                         <option value="Customer" selected="@(user.Role == "Customer")">Customer</option>
+                                        <option value="Pharmacist" selected="@(user.Role == "Pharmacist")">Pharmacist</option>
                                         <option value="Admin" selected="@(user.Role == "Admin")">Admin</option>
                                     </select>
                                     <button class="btn btn-outline-danger" type="submit" data-bs-toggle="tooltip" title="Update role">

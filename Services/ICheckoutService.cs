@@ -14,6 +14,8 @@ public interface ICheckoutService
 
     Task<PlaceOrderResult> CreateMobileCheckoutSessionAsync(
         MobileCreateCheckoutSessionRequest request,
+        string firebaseUid,
+        string? verifiedCustomerEmail,
         string? successReturnUrl,
         string? cancelReturnUrl,
         CancellationToken cancellationToken = default);

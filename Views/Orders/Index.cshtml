@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="~/css/orders.css" asp-append-version="true" />
 }
 
-<section class="orders-page" data-orders-page data-clear-cart-on-load="@Model.ShowSuccessBanner.ToString().ToLowerInvariant()">
+<section class="orders-page" data-orders-page data-clear-cart-on-load="@Model.ShowBanner.ToString().ToLowerInvariant()">
     <div class="orders-page__header">
         <div>
             <p class="orders-page__eyebrow">Purchase history</p>
@@ -17,13 +17,24 @@
         <a class="orders-page__shop-link" asp-controller="Home" asp-action="Index">Buy More Medicines</a>
     </div>
 
-    @if (Model.ShowSuccessBanner)
+    @if (TempData["Error"] is string errorMessage)
     {
-        <div class="orders-banner orders-banner--success">
-            <i class="bi bi-check-circle-fill"></i>
+        <div class="orders-banner orders-banner--danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
             <div>
-                <strong>Order @Model.HighlightOrderNumber completed.</strong>
-                <span>Your cart was cleared. You can now start a new medicine order.</span>
+                <strong>Action blocked.</strong>
+                <span>@errorMessage</span>
+            </div>
+        </div>
+    }
+
+    @if (Model.ShowBanner)
+    {
+        <div class="orders-banner orders-banner--@Model.BannerTone">
+            <i class="bi @(Model.BannerTone == "success" ? "bi-check-circle-fill" : "bi-info-circle-fill")"></i>
+            <div>
+                <strong>@Model.BannerTitle</strong>
+                <span>@Model.BannerMessage</span>
             </div>
         </div>
     }
@@ -65,6 +76,10 @@
                         <div class="orders-card__status-group">
                             <span class="orders-badge orders-badge--primary">@order.OrderStatus</span>
                             <span class="orders-badge orders-badge--neutral">@order.PaymentStatus</span>
+                            @if (order.RequiresPrescription)
+                            {
+                                <span class="orders-badge orders-badge--warning">@order.PrescriptionStatus</span>
+                            }
                         </div>
                     </div>
 
@@ -95,6 +110,17 @@
                             </div>
                         }
                     </div>
+
+                    @if (order.ShowContinuePayment)
+                    {
+                        <div class="orders-card__actions">
+                            <form method="post" asp-action="ContinuePayment">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="orderNumber" value="@order.OrderNumber" />
+                                <button type="submit" class="orders-action-btn">@order.ContinuePaymentLabel</button>
+                            </form>
+                        </div>
+                    }
                 </article>
             }
         </div>

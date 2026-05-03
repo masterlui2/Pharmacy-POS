@@ -14,6 +14,8 @@ public class PharmacyOrder
     [Required]
     public string CustomerFullName { get; set; } = string.Empty;
 
+    public string CustomerUid { get; set; } = string.Empty;
+
     public string CustomerEmail { get; set; } = string.Empty;
 
     [Required]

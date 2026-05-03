@@ -1,28 +1,53 @@
-@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+﻿@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@using PharmacyPOS.Helpers
 
 <section class="admin-panel-grid admin-panel-grid--balanced">
     <article class="admin-panel">
         <div class="admin-panel__header">
             <div>
-                <h4>Downloadable Reports</h4>
-                <p>Export the core datasets admins use for reconciliation and stock review.</p>
+                <h4>Report Catalog</h4>
+                <p>Core exports used for reconciliation, replenishment, and branch review.</p>
             </div>
         </div>
-        <div class="admin-report-actions">
-            <a class="admin-list-row" asp-action="ExportSalesCsv">
-                <span>
-                    <strong>Sales Report</strong>
-                    <small>Orders, totals, payment state, and timestamps</small>
-                </span>
-                <b><i class="bi bi-download"></i></b>
-            </a>
-            <a class="admin-list-row" asp-action="ExportInventoryCsv">
-                <span>
-                    <strong>Inventory Report</strong>
-                    <small>Stock, supplier, category, expiry, and price</small>
-                </span>
-                <b><i class="bi bi-download"></i></b>
-            </a>
+        <div class="admin-table-shell">
+            <table class="admin-table admin-table--responsive">
+                <thead>
+                    <tr>
+                        <th>Dataset</th>
+                        <th>Coverage</th>
+                        <th>Format</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td data-label="Dataset">
+                            <strong>Sales Report</strong>
+                            <span>Orders, totals, payment states, and timestamps</span>
+                        </td>
+                        <td data-label="Coverage">Back-office transaction history</td>
+                        <td data-label="Format">CSV</td>
+                        <td data-label="Action">
+                            <a class="btn btn-sm btn-outline-danger" asp-action="ExportSalesCsv">
+                                <i class="bi bi-download"></i> Export
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td data-label="Dataset">
+                            <strong>Inventory Report</strong>
+                            <span>Stock, pricing, suppliers, categories, and expiry dates</span>
+                        </td>
+                        <td data-label="Coverage">Current catalog and replenishment planning</td>
+                        <td data-label="Format">CSV</td>
+                        <td data-label="Action">
+                            <a class="btn btn-sm btn-outline-danger" asp-action="ExportInventoryCsv">
+                                <i class="bi bi-download"></i> Export
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </article>
 
@@ -30,71 +55,121 @@
         <div class="admin-panel__header">
             <div>
                 <h4>Payment Mix</h4>
-                <p>Revenue by payment method in a compact operational breakdown.</p>
+                <p>Revenue contribution by payment method with transaction volume.</p>
             </div>
         </div>
-        <div class="admin-breakdown-list">
-            @if (Model.RevenueByPaymentMethod.Count == 0)
-            {
-                <div class="admin-empty-state">No payment data yet.</div>
-            }
-            else
-            {
-                @foreach (var item in Model.RevenueByPaymentMethod)
-                {
-                    <div class="admin-breakdown-item">
-                        <div class="admin-breakdown-item__meta">
-                            <strong>@item.Label</strong>
-                            <span>PHP @item.Amount.ToString("N2")</span>
-                        </div>
-                        <div class="admin-progress">
-                            <div class="admin-progress__fill" style="width:@item.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                        </div>
-                    </div>
-                }
-            }
+        <div class="admin-table-shell">
+            <table class="admin-table admin-table--responsive">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th class="admin-table__numeric">Orders</th>
+                        <th class="admin-table__numeric">Revenue</th>
+                        <th class="admin-table__numeric">Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.RevenueByPaymentMethod.Count == 0)
+                    {
+                        <tr><td colspan="4" class="admin-table__empty">No payment data recorded yet.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.RevenueByPaymentMethod)
+                        {
+                            <tr>
+                                <td data-label="Method"><strong>@AdminViewHelper.PaymentMethodLabel(item.Label)</strong></td>
+                                <td data-label="Orders" class="admin-table__numeric">@item.OrdersCount</td>
+                                <td data-label="Revenue" class="admin-table__numeric">PHP @item.Amount.ToString("N2")</td>
+                                <td data-label="Share" class="admin-table__numeric">@item.Percentage.ToString("0.##")%</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
         </div>
     </article>
 </section>
 
-<section class="admin-panel">
-    <div class="admin-panel__header">
-        <div>
-            <h4>Top Products</h4>
-            <p>Highest-selling medicines by quantity and revenue.</p>
+<section class="admin-panel-grid admin-panel-grid--balanced">
+    <article class="admin-panel">
+        <div class="admin-panel__header">
+            <div>
+                <h4>Daily Sales Window</h4>
+                <p>Last seven days of order flow for quick operational review.</p>
+            </div>
         </div>
-    </div>
-    <div class="admin-table-shell">
-        <table class="admin-table admin-table--responsive">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Units Sold</th>
-                    <th>Revenue</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.TopProducts.Count == 0)
-                {
-                    <tr><td colspan="3" class="admin-table__empty">No product sales recorded yet.</td></tr>
-                }
-                else
-                {
-                    @foreach (var product in Model.TopProducts)
+        <div class="admin-table-shell">
+            <table class="admin-table admin-table--responsive">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th class="admin-table__numeric">Orders</th>
+                        <th class="admin-table__numeric">Revenue</th>
+                        <th class="admin-table__numeric">Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.DailySales.Count == 0)
                     {
-                        <tr>
-                            <td data-label="Product"><strong>@product.ProductName</strong></td>
-                            <td data-label="Units Sold">@product.QuantitySold</td>
-                            <td data-label="Revenue">PHP @product.Revenue.ToString("N2")</td>
-                        </tr>
+                        <tr><td colspan="4" class="admin-table__empty">No daily sales data is available yet.</td></tr>
                     }
-                }
-            </tbody>
-        </table>
-    </div>
+                    else
+                    {
+                        @foreach (var day in Model.DailySales)
+                        {
+                            <tr>
+                                <td data-label="Day"><strong>@day.Label</strong></td>
+                                <td data-label="Orders" class="admin-table__numeric">@day.Orders</td>
+                                <td data-label="Revenue" class="admin-table__numeric">PHP @day.Revenue.ToString("N2")</td>
+                                <td data-label="Share" class="admin-table__numeric">@day.Percentage.ToString("0.##")%</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </article>
 
-    @if (Model.Pagination is not null)
-    {
-        <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
-    }
+    <article class="admin-panel">
+        <div class="admin-panel__header">
+            <div>
+                <h4>Top Products</h4>
+                <p>Highest-selling medicines by quantity and revenue.</p>
+            </div>
+        </div>
+        <div class="admin-table-shell">
+            <table class="admin-table admin-table--responsive">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th class="admin-table__numeric">Units Sold</th>
+                        <th class="admin-table__numeric">Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.TopProducts.Count == 0)
+                    {
+                        <tr><td colspan="3" class="admin-table__empty">No product sales recorded yet.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var product in Model.TopProducts)
+                        {
+                            <tr>
+                                <td data-label="Product"><strong>@product.ProductName</strong></td>
+                                <td data-label="Units Sold" class="admin-table__numeric">@product.QuantitySold</td>
+                                <td data-label="Revenue" class="admin-table__numeric">PHP @product.Revenue.ToString("N2")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </article>
 </section>
+
+@if (Model.Pagination is not null)
+{
+    <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
+}

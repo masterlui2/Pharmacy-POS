@@ -28,7 +28,7 @@ public class PlaceOrderRequest
 
     public string PromoCode { get; set; } = string.Empty;
 
-    public List<string> PrescriptionFiles { get; set; } = [];
+    public List<PrescriptionFileReference> PrescriptionFiles { get; set; } = [];
 
     public List<CheckoutItemRequest> Items { get; set; } = [];
 }

@@ -1,12 +1,22 @@
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject PharmacyPOS.Services.IPharmacistMessagingService MessagingService
+@using PharmacyPOS.Models.Security
 @{
     var currentController = (ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty).ToLowerInvariant();
     var isLoggedIn = !string.IsNullOrWhiteSpace(Context.Session.GetString("Username"));
+    var currentRole = Context.Session.GetString("Role") ?? string.Empty;
+    var currentEmail = Context.Session.GetString("Email") ?? string.Empty;
     var showCategoryNav = currentController != "auth";
     var title = ViewData["Title"]?.ToString();
     var pageTitle = string.IsNullOrWhiteSpace(title)
         ? "SafeMed Pharmacy"
         : $"{title} | SafeMed Pharmacy";
+    var messagesUrl = AppRoles.IsBackOffice(currentRole)
+        ? Url.Action("Messages", "PharmacistModules")
+        : Url.Action("Index", "CustomerMessages");
+    var messagesUnreadCount = isLoggedIn && AppRoles.Matches(currentRole, AppRoles.Customer)
+        ? await MessagingService.GetUnreadCountForCustomerAsync(currentEmail)
+        : 0;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -63,6 +73,18 @@
                 </a>
 
                 <div class="storefront-actions">
+                    @if (isLoggedIn)
+                    {
+                        <a class="storefront-action-link storefront-message-link" href="@messagesUrl">
+                            <i class="bi bi-chat-dots"></i>
+                            <span>Messages</span>
+                            @if (messagesUnreadCount > 0)
+                            {
+                                <strong>@messagesUnreadCount</strong>
+                            }
+                        </a>
+                    }
+
                     <div class="storefront-login-menu">
                         @if (isLoggedIn)
                         {
@@ -91,9 +113,9 @@
                                         <span>Logout</span>
                                     </button>
                                 </form>
-                                <a class="storefront-login-chat" href="#">
+                                <a class="storefront-login-chat" href="@messagesUrl">
                                     <i class="bi bi-chat-dots"></i>
-                                    <span>Chat with Us</span>
+                                    <span>Open Messages</span>
                                 </a>
                             </div>
                         }
@@ -115,9 +137,9 @@
                                     <a asp-controller="Auth" asp-action="Login"><i class="bi bi-heart"></i><span>Wish List</span></a>
                                     <a asp-controller="Auth" asp-action="Login"><i class="bi bi-box-seam"></i><span>My Orders</span></a>
                                 </div>
-                                <a class="storefront-login-chat" href="#">
+                                <a class="storefront-login-chat" asp-controller="Auth" asp-action="Login">
                                     <i class="bi bi-chat-dots"></i>
-                                    <span>Chat with Us</span>
+                                    <span>Login to Chat</span>
                                 </a>
                             </div>
                         }

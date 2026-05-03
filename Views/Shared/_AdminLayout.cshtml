@@ -1,7 +1,18 @@
+@using PharmacyPOS.Models.Navigation
+@using PharmacyPOS.Models.Security
 @{
     var currentController = (ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty).ToLowerInvariant();
     var currentAction = (ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty).ToLowerInvariant();
-    var username = Context.Session.GetString("Username") ?? "Admin";
+    var username = Context.Session.GetString("Username") ?? "Staff";
+    var role = Context.Session.GetString("Role") ?? string.Empty;
+    var navigationItems = BackOfficeNavigation.GetItemsForRole(role);
+    var groupedNavigation = navigationItems
+        .GroupBy(item => item.Section)
+        .ToList();
+
+    bool IsActive(SidebarNavigationItem item) =>
+        string.Equals(currentController, item.Controller, StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(currentAction, item.Action, StringComparison.OrdinalIgnoreCase);
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -22,57 +33,53 @@
                 <div class="pos-logo">
                     <img src="~/images/logo.png" alt="SafeMed Logo" style="width: 100%; height: 100%; object-fit: contain;" />
                 </div>
-                <span>Admin POS Panel</span>
+                <span>@BackOfficeNavigation.GetPortalTitle(role)</span>
             </div>
 
-            <nav class="pos-nav" aria-label="Admin navigation">
-                <a class="pos-nav-link @(currentController == "dashboard" ? "active" : string.Empty)" asp-controller="Dashboard" asp-action="Index" data-bs-toggle="tooltip" data-bs-placement="right" title="Sales, revenue, orders, and stock overview">
-                    <i class="bi bi-grid-1x2"></i> Dashboard
-                </a>
+            <nav class="pos-nav" aria-label="Back-office navigation">
+                @foreach (var navGroup in groupedNavigation)
+                {
+                    <p class="pos-nav-section">@navGroup.Key</p>
+                    @foreach (var item in navGroup)
+                    {
+                        <a class="pos-nav-link @(IsActive(item) ? "active" : string.Empty)"
+                           asp-controller="@item.Controller"
+                           asp-action="@item.Action"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="right"
+                           title="@item.Tooltip">
+                            <i class="bi @item.Icon"></i> @item.Label
+                        </a>
+                    }
+                }
 
-                <p class="pos-nav-section">Applications</p>
-                <a class="pos-nav-link @(currentController == "medicines" ? "active" : string.Empty)" asp-controller="Medicines" asp-action="Index" data-bs-toggle="tooltip" data-bs-placement="right" title="List, add, edit, and track medicine stock">
-                    <i class="bi bi-capsule"></i> Medicine Inventory
-                </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "pos" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Pos" data-bs-toggle="tooltip" data-bs-placement="right" title="Fast counter checkout and transaction processing">
-                    <i class="bi bi-cart3"></i> POS
-                </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "payment" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Payment" data-bs-toggle="tooltip" data-bs-placement="right" title="Track payment methods, status, and reconciliation">
-                    <i class="bi bi-credit-card-2-front"></i> Payment
-                </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "receipt" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Receipt" data-bs-toggle="tooltip" data-bs-placement="right" title="Find, print, and download order receipts">
-                    <i class="bi bi-receipt-cutoff"></i> Receipt
-                </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "saleshistory" ? "active" : string.Empty)" asp-controller="Modules" asp-action="SalesHistory" data-bs-toggle="tooltip" data-bs-placement="right" title="Filter and review past transactions">
-                    <i class="bi bi-graph-up-arrow"></i> Sales History
-                </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "reports" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Reports" data-bs-toggle="tooltip" data-bs-placement="right" title="Sales, revenue, and inventory analytics">
-                    <i class="bi bi-bar-chart-line"></i> Reports
-                </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "stockalerts" ? "active" : string.Empty)" asp-controller="Modules" asp-action="StockAlerts" data-bs-toggle="tooltip" data-bs-placement="right" title="Low stock and expiring medicine queue">
-                    <i class="bi bi-exclamation-triangle"></i> Stock Alerts
-                </a>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "storefront" ? "active" : string.Empty)" asp-controller="Modules" asp-action="Storefront" data-bs-toggle="tooltip" data-bs-placement="right" title="Manage customer-facing product availability">
-                    <i class="bi bi-shop-window"></i> Storefront
-                </a>
-
-                <p class="pos-nav-section">Access</p>
-                <a class="pos-nav-link @(currentController == "modules" && currentAction == "adminusers" ? "active" : string.Empty)" asp-controller="Modules" asp-action="AdminUsers" data-bs-toggle="tooltip" data-bs-placement="right" title="Manage admin roles and account activity">
-                    <i class="bi bi-person-gear"></i> Admin User
-                </a>
+                <p class="pos-nav-section">Session</p>
+                @if (AppRoles.Matches(role, AppRoles.Pharmacist))
+                {
+                    <a class="pos-nav-link @(currentController == "home" ? "active" : string.Empty)"
+                       asp-controller="Home"
+                       asp-action="Index"
+                       data-bs-toggle="tooltip"
+                       data-bs-placement="right"
+                       title="Open the customer storefront">
+                        <i class="bi bi-shop-window"></i> Storefront
+                    </a>
+                }
                 <form asp-controller="Auth" asp-action="Logout" method="post">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="pos-nav-link pos-nav-button" data-bs-toggle="tooltip" data-bs-placement="right" title="End the current admin session">
+                    <button type="submit" class="pos-nav-link pos-nav-button" data-bs-toggle="tooltip" data-bs-placement="right" title="End the current session">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </button>
                 </form>
             </nav>
 
             <div class="pos-user-footer">
-                <div class="pos-user-footer__avatar"><i class="bi bi-person-badge"></i></div>
+                <div class="pos-user-footer__avatar">
+                    <i class="bi @(AppRoles.Matches(role, AppRoles.Admin) ? "bi-person-badge" : "bi-capsule-pill")"></i>
+                </div>
                 <div>
                     <strong>@username</strong>
-                    <span>Administrator</span>
+                    <span>@BackOfficeNavigation.GetRoleLabel(role)</span>
                 </div>
             </div>
         </aside>

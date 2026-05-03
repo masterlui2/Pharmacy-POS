@@ -11,7 +11,9 @@ namespace PharmacyPOS.Services;
 public class CheckoutService(
     PharmacyPosDbContext dbContext,
     IPayMongoService payMongoService,
-    IOptions<GoogleMapsDeliveryOptions> deliveryOptionsAccessor) : ICheckoutService
+    IFirebaseSyncService firebaseSyncService,
+    IOptions<GoogleMapsDeliveryOptions> deliveryOptionsAccessor,
+    ILogger<CheckoutService> logger) : ICheckoutService
 {
     private readonly GoogleMapsDeliveryOptions deliveryOptions = deliveryOptionsAccessor.Value;
 
@@ -57,12 +59,24 @@ public class CheckoutService(
             };
         }
 
-        if (requiresPrescription && !string.Equals(request.PrescriptionStatus, "Valid", StringComparison.OrdinalIgnoreCase))
+        if (requiresPrescription &&
+            request.PrescriptionFiles.Any(file => file is null || string.IsNullOrWhiteSpace(file.Url)))
         {
             return new PlaceOrderResult
             {
                 Success = false,
-                Message = "Prescription medicines require a validated prescription before checkout."
+                Message = "One or more prescription uploads are incomplete. Upload the files again before checkout."
+            };
+        }
+
+        if (requiresPrescription &&
+            !string.Equals(request.PrescriptionStatus, "PendingReview", StringComparison.OrdinalIgnoreCase) &&
+            !IsPrescriptionValidated(request.PrescriptionStatus))
+        {
+            return new PlaceOrderResult
+            {
+                Success = false,
+                Message = "Submit the prescription for pharmacist review before checkout can continue."
             };
         }
 
@@ -105,7 +119,9 @@ public class CheckoutService(
                 AddressType = request.AddressType,
                 DeliveryOption = shippingProfile.Code,
                 PaymentMethod = paymentMethod,
-                PrescriptionStatus = requiresPrescription ? "Valid" : "NotRequired",
+                PrescriptionStatus = requiresPrescription
+                    ? NormalizePrescriptionStatus(request.PrescriptionStatus)
+                    : "NotRequired",
                 RequiresPrescription = requiresPrescription,
                 EstimatedDeliveryMinMinutes = shippingProfile.MinEtaMinutes,
                 EstimatedDeliveryMaxMinutes = shippingProfile.MaxEtaMinutes,
@@ -137,6 +153,8 @@ public class CheckoutService(
 
     public async Task<PlaceOrderResult> CreateMobileCheckoutSessionAsync(
         MobileCreateCheckoutSessionRequest request,
+        string firebaseUid,
+        string? verifiedCustomerEmail,
         string? successReturnUrl,
         string? cancelReturnUrl,
         CancellationToken cancellationToken = default)
@@ -157,8 +175,25 @@ public class CheckoutService(
         var serviceFee = FromMinorAmount(request.Summary.ServiceFee);
         var total = FromMinorAmount(request.Summary.Total);
         var shippingAmount = deliveryFee + serviceFee;
-        var customerEmail = request.Customer.Email?.Trim() ?? string.Empty;
+        var customerEmail = verifiedCustomerEmail?.Trim()
+            ?? request.ResolveCustomerEmail()?.Trim()
+            ?? string.Empty;
         var deliveryAddress = BuildMobileDeliveryAddress(request.Customer);
+        if (!await IsDatabaseAvailableAsync(cancellationToken))
+        {
+            return await CreateTransientMobileCheckoutSessionAsync(
+                request,
+                firebaseUid,
+                customerEmail,
+                deliveryAddress,
+                paymentMethod,
+                subtotal,
+                shippingAmount,
+                total,
+                successReturnUrl,
+                cancelReturnUrl,
+                cancellationToken);
+        }
 
         var account = string.IsNullOrWhiteSpace(customerEmail)
             ? null
@@ -169,6 +204,7 @@ public class CheckoutService(
         return await PersistOrderAsync(
             new OrderCreationRequest
             {
+                CustomerUid = firebaseUid.Trim(),
                 CustomerEmail = customerEmail,
                 PaymentReference = string.IsNullOrWhiteSpace(request.ReferenceNumber)
                     ? null
@@ -210,6 +246,94 @@ public class CheckoutService(
             cancellationToken);
     }
 
+    private async Task<PlaceOrderResult> CreateTransientMobileCheckoutSessionAsync(
+        MobileCreateCheckoutSessionRequest request,
+        string firebaseUid,
+        string customerEmail,
+        string deliveryAddress,
+        string paymentMethod,
+        decimal subtotal,
+        decimal shippingAmount,
+        decimal total,
+        string? successReturnUrl,
+        string? cancelReturnUrl,
+        CancellationToken cancellationToken)
+    {
+        logger.LogWarning(
+            "SQL Server is unavailable. Creating a transient mobile checkout session for reference {ReferenceNumber} without local order persistence.",
+            request.ReferenceNumber);
+
+        var order = new PharmacyOrder
+        {
+            OrderNumber = GenerateOrderNumber(),
+            CustomerFullName = request.Customer.Name.Trim(),
+            CustomerUid = firebaseUid.Trim(),
+            CustomerEmail = customerEmail,
+            CustomerPhoneNumber = request.Customer.Phone.Trim(),
+            DeliveryAddress = deliveryAddress,
+            Landmark = (request.Customer.Notes ?? string.Empty).Trim(),
+            AddressType = NormalizeAddressType(request.Customer.AddressLabel),
+            DeliveryOption = "Standard",
+            PaymentMethod = paymentMethod,
+            FulfillmentBranch = deliveryOptions.BranchName,
+            PrescriptionStatus = "NotRequired",
+            OrderStatus = "AwaitingPayment",
+            RequiresPrescription = false,
+            EstimatedDeliveryMinMinutes = 45,
+            EstimatedDeliveryMaxMinutes = 75,
+            SubtotalAmount = subtotal,
+            TaxAmount = 0m,
+            ShippingAmount = shippingAmount,
+            DiscountAmount = 0m,
+            TotalAmount = total,
+            PromoCode = string.Empty,
+            PrescriptionFilesJson = "[]",
+            CreatedAtUtc = DateTime.UtcNow,
+            Items = request.LineItems.Select((item, index) => new PharmacyOrderItem
+            {
+                ProductId = BuildMobileProductId(request.ReferenceNumber, index),
+                ProductName = item.Name.Trim(),
+                BrandName = (item.Description ?? string.Empty).Trim(),
+                ImageUrl = string.Empty,
+                UnitPrice = FromMinorAmount(item.Amount),
+                TaxAmount = 0m,
+                Quantity = item.Quantity,
+                RequiresPrescription = false
+            }).ToList()
+        };
+
+        var checkoutSession = await payMongoService.CreateCheckoutSessionAsync(
+            order,
+            order.Items,
+            paymentMethod,
+            successReturnUrl,
+            cancelReturnUrl,
+            cancellationToken);
+
+        if (!checkoutSession.Success)
+        {
+            return new PlaceOrderResult
+            {
+                Success = false,
+                Message = checkoutSession.Message
+            };
+        }
+
+        return new PlaceOrderResult
+        {
+            Success = true,
+            OrderNumber = order.OrderNumber,
+            Message =
+                "Redirecting to PayMongo checkout. SQL Server is unavailable, so this development checkout session will not be stored in the local POS database.",
+            FulfillmentBranch = order.FulfillmentBranch,
+            EstimatedDeliveryMinMinutes = order.EstimatedDeliveryMinMinutes,
+            EstimatedDeliveryMaxMinutes = order.EstimatedDeliveryMaxMinutes,
+            TotalAmount = order.TotalAmount,
+            CheckoutUrl = checkoutSession.CheckoutUrl,
+            PaymentStatus = "RedirectedToGateway"
+        };
+    }
+
     private async Task<PlaceOrderResult> PersistOrderAsync(
         OrderCreationRequest request,
         Account? account,
@@ -217,11 +341,22 @@ public class CheckoutService(
         string? cancelReturnUrl,
         CancellationToken cancellationToken)
     {
+        var requiresApproval = RequiresPharmacistApproval(request.RequiresPrescription, request.PrescriptionStatus);
+        var initialOrderStatus = requiresApproval
+            ? "PendingReview"
+            : "Pending";
+        var initialPaymentStatus = requiresApproval
+            ? "AwaitingApproval"
+            : string.Equals(request.PaymentMethod, "CashOnDelivery", StringComparison.OrdinalIgnoreCase)
+                ? "PendingCollection"
+                : "AwaitingPayment";
+
         var order = new PharmacyOrder
         {
             OrderNumber = GenerateOrderNumber(),
             AccountId = account?.Id,
             CustomerFullName = request.FullName.Trim(),
+            CustomerUid = request.CustomerUid.Trim(),
             CustomerEmail = request.CustomerEmail.Trim(),
             CustomerPhoneNumber = request.PhoneNumber.Trim(),
             DeliveryAddress = request.DeliveryAddress.Trim(),
@@ -231,7 +366,7 @@ public class CheckoutService(
             PaymentMethod = request.PaymentMethod,
             FulfillmentBranch = deliveryOptions.BranchName,
             PrescriptionStatus = request.PrescriptionStatus,
-            OrderStatus = "Pending",
+            OrderStatus = initialOrderStatus,
             RequiresPrescription = request.RequiresPrescription,
             EstimatedDeliveryMinMinutes = request.EstimatedDeliveryMinMinutes,
             EstimatedDeliveryMaxMinutes = request.EstimatedDeliveryMaxMinutes,
@@ -264,9 +399,7 @@ public class CheckoutService(
         {
             PharmacyOrder = order,
             PaymentMethod = request.PaymentMethod,
-            Status = string.Equals(request.PaymentMethod, "CashOnDelivery", StringComparison.OrdinalIgnoreCase)
-                ? "PendingCollection"
-                : "AwaitingPayment",
+            Status = initialPaymentStatus,
             Amount = request.TotalAmount,
             ReferenceNumber = request.PaymentReference ?? GeneratePaymentReference(request.PaymentMethod),
             CreatedAtUtc = DateTime.UtcNow
@@ -289,6 +422,27 @@ public class CheckoutService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (requiresApproval)
+        {
+            await transaction.CommitAsync(cancellationToken);
+            await TrySyncOrderAsync(order, paymentRecord, cancellationToken);
+
+            return new PlaceOrderResult
+            {
+                Success = true,
+                OrderNumber = order.OrderNumber,
+                Message = string.Equals(request.PaymentMethod, "CashOnDelivery", StringComparison.OrdinalIgnoreCase)
+                    ? "Prescription submitted. Wait for pharmacist approval before the order moves forward."
+                    : "Prescription submitted. Wait for pharmacist approval, then complete payment from My Orders.",
+                FulfillmentBranch = order.FulfillmentBranch,
+                EstimatedDeliveryMinMinutes = order.EstimatedDeliveryMinMinutes,
+                EstimatedDeliveryMaxMinutes = order.EstimatedDeliveryMaxMinutes,
+                TotalAmount = order.TotalAmount,
+                PaymentStatus = paymentRecord.Status,
+                AwaitingPrescriptionApproval = true
+            };
+        }
 
         if (!string.Equals(request.PaymentMethod, "CashOnDelivery", StringComparison.OrdinalIgnoreCase))
         {
@@ -316,6 +470,7 @@ public class CheckoutService(
             order.OrderStatus = "AwaitingPayment";
             await dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+            await TrySyncOrderAsync(order, paymentRecord, cancellationToken);
 
             return new PlaceOrderResult
             {
@@ -332,6 +487,7 @@ public class CheckoutService(
         }
 
         await transaction.CommitAsync(cancellationToken);
+        await TrySyncOrderAsync(order, paymentRecord, cancellationToken);
 
         return new PlaceOrderResult
         {
@@ -481,6 +637,39 @@ public class CheckoutService(
             ? rate
             : 0m;
 
+    private static bool IsPrescriptionValidated(string? prescriptionStatus) =>
+        string.Equals(prescriptionStatus, "Approved", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(prescriptionStatus, "Valid", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(prescriptionStatus, "NotRequired", StringComparison.OrdinalIgnoreCase);
+
+    private static bool RequiresPharmacistApproval(bool requiresPrescription, string? prescriptionStatus) =>
+        requiresPrescription && !IsPrescriptionValidated(prescriptionStatus);
+
+    private static string NormalizePrescriptionStatus(string? prescriptionStatus)
+    {
+        if (string.Equals(prescriptionStatus, "Approved", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Approved";
+        }
+
+        if (string.Equals(prescriptionStatus, "Valid", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Valid";
+        }
+
+        if (string.Equals(prescriptionStatus, "PendingReview", StringComparison.OrdinalIgnoreCase))
+        {
+            return "PendingReview";
+        }
+
+        if (string.Equals(prescriptionStatus, "NotRequired", StringComparison.OrdinalIgnoreCase))
+        {
+            return "NotRequired";
+        }
+
+        return "PendingReview";
+    }
+
     private static string NormalizePaymentMethod(string paymentMethod) =>
         paymentMethod.Trim().ToLowerInvariant() switch
         {
@@ -579,6 +768,21 @@ public class CheckoutService(
 
     private static double DegreesToRadians(double degrees) => degrees * (Math.PI / 180);
 
+    private async Task<bool> IsDatabaseAvailableAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await dbContext.Database.CanConnectAsync(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(
+                exception,
+                "SQL Server is unavailable. Falling back to limited development checkout mode.");
+            return false;
+        }
+    }
+
     private static string GenerateOrderNumber() =>
         $"SM-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}";
 
@@ -599,6 +803,24 @@ public class CheckoutService(
     private static readonly string[] AllowedDeliveryOptions = ["Standard", "Express"];
     private static readonly string[] AllowedMobilePaymentMethods = ["gcash", "paymaya", "maya", "card"];
 
+    private async Task TrySyncOrderAsync(
+        PharmacyOrder order,
+        PaymentRecord? payment,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await firebaseSyncService.SyncOrderAsync(order, payment, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Firebase order sync failed for order {OrderNumber}. SQL order creation already succeeded.",
+                order.OrderNumber);
+        }
+    }
+
     private sealed record ShippingProfile(
         string Code,
         int MinEtaMinutes,
@@ -612,6 +834,7 @@ public class CheckoutService(
 
     private sealed record OrderCreationRequest
     {
+        public string CustomerUid { get; init; } = string.Empty;
         public string CustomerEmail { get; init; } = string.Empty;
         public string? PaymentReference { get; init; }
         public string FullName { get; init; } = string.Empty;
@@ -632,7 +855,7 @@ public class CheckoutService(
         public decimal DiscountAmount { get; init; }
         public decimal TotalAmount { get; init; }
         public string PromoCode { get; init; } = string.Empty;
-        public List<string> PrescriptionFiles { get; init; } = [];
+        public List<PrescriptionFileReference> PrescriptionFiles { get; init; } = [];
         public List<OrderItemCreationRequest> Items { get; init; } = [];
     }
 

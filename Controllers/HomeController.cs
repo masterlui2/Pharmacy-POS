@@ -160,9 +160,9 @@ public class HomeController(IMedicineService medicineService) : Controller
         bool requiresPrescription,
         IReadOnlyDictionary<string, Medicine> inventory)
     {
-        var price = inventory.TryGetValue(brandName, out var medicine)
-            ? medicine.Price
-            : fallbackPrice;
+        inventory.TryGetValue(brandName, out var medicine);
+        var price = medicine?.Price ?? fallbackPrice;
+        var resolvedRequiresPrescription = medicine?.RequiresPrescription ?? requiresPrescription;
         var includedTax = Math.Round(price * 0.12m, 2);
 
         return new FeaturedMedicineCardViewModel
@@ -176,7 +176,7 @@ public class HomeController(IMedicineService medicineService) : Controller
             PriceLabel = $"\u20B1{price:N2}",
             UnitPrice = price,
             IncludedTax = includedTax,
-            RequiresPrescription = requiresPrescription
+            RequiresPrescription = resolvedRequiresPrescription
         };
     }
 }

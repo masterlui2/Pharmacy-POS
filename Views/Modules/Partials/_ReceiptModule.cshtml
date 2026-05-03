@@ -24,7 +24,8 @@
                 <tr>
                     <th>Order</th>
                     <th>Customer</th>
-                    <th>Total</th>
+                    <th>Rx Status</th>
+                    <th class="admin-table__numeric">Total</th>
                     <th>Created</th>
                     <th>Actions</th>
                 </tr>
@@ -32,7 +33,7 @@
             <tbody>
                 @if (Model.ReceiptOrders.Count == 0)
                 {
-                    <tr><td colspan="5" class="admin-table__empty">No receipt records matched the current search.</td></tr>
+                    <tr><td colspan="6" class="admin-table__empty">No receipt records matched the current search.</td></tr>
                 }
                 else
                 {
@@ -43,28 +44,50 @@
                                 <strong>@receiptOrder.OrderNumber</strong>
                             </td>
                             <td data-label="Customer">@receiptOrder.CustomerName</td>
-                            <td data-label="Total">PHP @receiptOrder.TotalAmount.ToString("N2")</td>
+                            <td data-label="Rx Status">
+                                <span class="@StatusClass(receiptOrder.RequiresPrescription, receiptOrder.PrescriptionStatus)">
+                                    @(receiptOrder.RequiresPrescription ? receiptOrder.PrescriptionStatus : "NotRequired")
+                                </span>
+                            </td>
+                            <td data-label="Total" class="admin-table__numeric">PHP @receiptOrder.TotalAmount.ToString("N2")</td>
                             <td data-label="Created">@receiptOrder.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
                             <td data-label="Actions">
-                                <div class="admin-row-actions">
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-secondary admin-icon-button"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#receiptPreviewModal"
-                                            data-preview-url="@Url.Action("ReceiptPreview", "Modules", new { orderNumber = receiptOrder.OrderNumber })"
-                                            aria-label="Preview receipt"
-                                            title="Preview receipt">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <a class="btn btn-sm btn-outline-danger admin-icon-button"
-                                       asp-action="DownloadReceipt"
-                                       asp-route-orderNumber="@receiptOrder.OrderNumber"
-                                       aria-label="Download receipt"
-                                       data-bs-toggle="tooltip"
-                                       title="Download receipt">
-                                        <i class="bi bi-download"></i>
-                                    </a>
-                                </div>
+                                @if (!receiptOrder.CanRelease)
+                                {
+                                    <span class="text-danger small">@receiptOrder.BlockingReason</span>
+                                }
+                                else
+                                {
+                                    <div class="admin-row-actions">
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary admin-icon-button"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#receiptPreviewModal"
+                                                data-preview-url="@Url.Action("ReceiptPreview", Model.ModuleController, new { orderNumber = receiptOrder.OrderNumber })"
+                                                aria-label="Preview receipt"
+                                                title="Preview receipt">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <a class="btn btn-sm btn-outline-danger admin-icon-button"
+                                           asp-controller="@Model.ModuleController"
+                                           asp-action="PrintReceipt"
+                                           asp-route-orderNumber="@receiptOrder.OrderNumber"
+                                           aria-label="Print receipt"
+                                           data-bs-toggle="tooltip"
+                                           title="Print receipt">
+                                            <i class="bi bi-printer"></i>
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-danger admin-icon-button"
+                                           asp-controller="@Model.ModuleController"
+                                           asp-action="DownloadReceipt"
+                                           asp-route-orderNumber="@receiptOrder.OrderNumber"
+                                           aria-label="Download receipt"
+                                           data-bs-toggle="tooltip"
+                                           title="Download receipt">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                    </div>
+                                }
                             </td>
                         </tr>
                     }
@@ -80,3 +103,20 @@
 </section>
 
 <partial name="~/Views/Modules/Partials/_ReceiptPreviewModal.cshtml" />
+
+@functions {
+    private static string StatusClass(bool requiresPrescription, string status)
+    {
+        if (!requiresPrescription)
+        {
+            return "admin-badge admin-badge--success";
+        }
+
+        return status.Trim().ToLowerInvariant() switch
+        {
+            "approved" or "valid" => "admin-badge admin-badge--success",
+            "rejected" or "invalid" => "admin-badge admin-badge--danger",
+            _ => "admin-badge admin-badge--warning"
+        };
+    }
+}

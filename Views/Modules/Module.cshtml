@@ -55,7 +55,7 @@
             <article class="admin-stat-card admin-stat-card--@metric.Tone">
                 <div class="admin-stat-card__icon"><i class="bi @metric.Icon"></i></div>
                 <span class="admin-stat-card__label">@metric.Label</span>
-                <strong>@metric.Value</strong>
+                <strong class="admin-number admin-number--block">@metric.Value</strong>
                 <small>@metric.Hint</small>
             </article>
         }
@@ -65,28 +65,40 @@
 @switch (Model.Kind)
 {
     case AdminModuleKind.Pos:
-        <partial name="Partials/_PosModule" model="Model" />
+        <partial name="~/Views/Modules/Partials/_PosModule.cshtml" model="Model" />
         break;
     case AdminModuleKind.Payment:
-        <partial name="Partials/_PaymentModule" model="Model" />
+        <partial name="~/Views/Modules/Partials/_PaymentModule.cshtml" model="Model" />
         break;
     case AdminModuleKind.Receipt:
-        <partial name="Partials/_ReceiptModule" model="Model" />
+        <partial name="~/Views/Modules/Partials/_ReceiptModule.cshtml" model="Model" />
         break;
     case AdminModuleKind.SalesHistory:
-        <partial name="Partials/_SalesHistoryModule" model="Model" />
+        <partial name="~/Views/Modules/Partials/_SalesHistoryModule.cshtml" model="Model" />
         break;
     case AdminModuleKind.Reports:
-        <partial name="Partials/_ReportsModule" model="Model" />
+        <partial name="~/Views/Modules/Partials/_ReportsModule.cshtml" model="Model" />
         break;
     case AdminModuleKind.StockAlerts:
-        <partial name="Partials/_StockAlertsModule" model="Model" />
+        <partial name="~/Views/Modules/Partials/_StockAlertsModule.cshtml" model="Model" />
         break;
     case AdminModuleKind.Storefront:
-        <partial name="Partials/_StorefrontModule" model="Model" />
+        <partial name="~/Views/Modules/Partials/_StorefrontModule.cshtml" model="Model" />
         break;
     case AdminModuleKind.AdminUsers:
-        <partial name="Partials/_AdminUsersModule" model="Model" />
+        <partial name="~/Views/Modules/Partials/_AdminUsersModule.cshtml" model="Model" />
+        break;
+    case AdminModuleKind.PrescriptionValidation:
+        <partial name="~/Views/Modules/Partials/_PrescriptionModule.cshtml" model="Model" />
+        break;
+    case AdminModuleKind.StockLevels:
+        <partial name="~/Views/Modules/Partials/_StockLevelsModule.cshtml" model="Model" />
+        break;
+    case AdminModuleKind.Messages:
+        <partial name="~/Views/Modules/Partials/_MessagesModule.cshtml" model="Model" />
+        break;
+    case AdminModuleKind.AuditLogs:
+        <partial name="~/Views/Modules/Partials/_AuditLogsModule.cshtml" model="Model" />
         break;
 }
 
@@ -113,6 +125,7 @@
 
                 const quantityInput = saleModal.querySelector("input[name='Quantity']");
                 const maxStock = button.getAttribute("data-medicine-stock") || "1";
+                const requiresPrescription = button.getAttribute("data-medicine-rx") === "true";
                 quantityInput.max = maxStock;
                 quantityInput.value = "1";
 
@@ -120,6 +133,17 @@
                 saleModal.querySelector("input[name='CustomerName']").value = "Walk-in Customer";
                 saleModal.querySelector("input[name='PhoneNumber']").value = "";
                 saleModal.querySelector("select[name='PaymentMethod']").value = "Cash";
+
+                const rxAlert = saleModal.querySelector("[data-pos-rx-alert]");
+                const rxField = saleModal.querySelector("[data-pos-rx-field]");
+                const rxCheckbox = saleModal.querySelector("[data-pos-rx-checkbox]");
+                const rxHidden = saleModal.querySelector("[data-pos-rx-hidden]");
+
+                rxCheckbox.checked = false;
+                rxHidden.disabled = requiresPrescription;
+                rxHidden.value = requiresPrescription ? "false" : "true";
+                rxAlert.classList.toggle("d-none", !requiresPrescription);
+                rxField.classList.toggle("d-none", !requiresPrescription);
             });
         });
     </script>
@@ -160,6 +184,47 @@
                     receiptContent.innerHTML = await response.text();
                 } catch {
                     receiptContent.innerHTML = "<div class=\"admin-empty-state\">Receipt preview could not be loaded.</div>";
+                }
+            });
+        });
+    </script>
+}
+
+@if (Model.Kind == AdminModuleKind.PrescriptionValidation)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const previewModal = document.getElementById("prescriptionPreviewModal");
+            if (!previewModal) {
+                return;
+            }
+
+            const previewContent = previewModal.querySelector("[data-prescription-preview-content]");
+            const loadingMarkup = previewContent.innerHTML;
+
+            previewModal.addEventListener("show.bs.modal", async (event) => {
+                const trigger = event.relatedTarget;
+                const previewUrl = trigger?.getAttribute("data-preview-url");
+                if (!previewUrl) {
+                    return;
+                }
+
+                previewContent.innerHTML = loadingMarkup;
+
+                try {
+                    const response = await fetch(previewUrl, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Prescription preview failed.");
+                    }
+
+                    previewContent.innerHTML = await response.text();
+                } catch {
+                    previewContent.innerHTML = "<div class=\"admin-empty-state\">Prescription preview could not be loaded.</div>";
                 }
             });
         });

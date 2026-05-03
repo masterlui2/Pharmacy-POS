@@ -10,8 +10,8 @@
                 <th>Method</th>
                 <th>Payment</th>
                 <th>Status</th>
-                <th>Items</th>
-                <th>Total</th>
+                <th class="admin-table__numeric">Items</th>
+                <th class="admin-table__numeric">Total</th>
                 <th>Created</th>
             </tr>
         </thead>
@@ -30,8 +30,8 @@
                         <td data-label="Method">@AdminViewHelper.PaymentMethodLabel(order.PaymentMethod)</td>
                         <td data-label="Payment"><span class="@AdminViewHelper.StatusClass(order.PaymentStatus)">@order.PaymentStatus</span></td>
                         <td data-label="Status"><span class="@AdminViewHelper.StatusClass(order.OrderStatus)">@order.OrderStatus</span></td>
-                        <td data-label="Items">@order.ItemsCount</td>
-                        <td data-label="Total">PHP @order.TotalAmount.ToString("N2")</td>
+                        <td data-label="Items" class="admin-table__numeric">@order.ItemsCount</td>
+                        <td data-label="Total" class="admin-table__numeric">PHP @order.TotalAmount.ToString("N2")</td>
                         <td data-label="Created">@order.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
                     </tr>
                 }

@@ -88,7 +88,39 @@
     const parsed = readJson(getScopedKey(RX_UPLOADS_KEY), { files: [], submitted: false });
     return {
       files: Array.isArray(parsed?.files)
-        ? parsed.files.filter((name) => typeof name === "string")
+        ? parsed.files
+            .map((file) => {
+              if (typeof file === "string") {
+                if (
+                  file.startsWith("/") ||
+                  file.startsWith("http://") ||
+                  file.startsWith("https://") ||
+                  file.startsWith("data:")
+                ) {
+                  const fileName = file.split("/").pop() || "Prescription file";
+                  return { name: fileName, url: file, contentType: "" };
+                }
+
+                return null;
+              }
+
+              if (
+                file &&
+                typeof file === "object" &&
+                typeof file.name === "string" &&
+                typeof file.url === "string" &&
+                file.url.trim().length > 0
+              ) {
+                return {
+                  name: file.name,
+                  url: file.url,
+                  contentType: typeof file.contentType === "string" ? file.contentType : "",
+                };
+              }
+
+              return null;
+            })
+            .filter(Boolean)
         : [],
       submitted: Boolean(parsed?.submitted),
     };

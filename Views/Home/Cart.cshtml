@@ -8,7 +8,9 @@
 <section class="cart-page"
          data-cart-page
          data-place-order-url="@Url.Action("PlaceOrder", "Checkout")"
+         data-upload-prescriptions-url="@Url.Action("UploadPrescriptions", "Checkout")"
          data-maps-api-key="@deliveryOptions.ApiKey"
+         data-maps-map-id="@deliveryOptions.MapId"
          data-branch-name="@deliveryOptions.BranchName"
          data-branch-address="@deliveryOptions.BranchAddress"
          data-branch-latitude="@deliveryOptions.BranchLatitude"

@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using PharmacyPOS.Models;
 
 namespace PharmacyPOS.Models.Admin;
@@ -12,7 +12,11 @@ public enum AdminModuleKind
     Reports,
     StockAlerts,
     Storefront,
-    AdminUsers
+    AdminUsers,
+    PrescriptionValidation,
+    StockLevels,
+    Messages,
+    AuditLogs
 }
 
 public record AdminModuleViewModel
@@ -21,14 +25,21 @@ public record AdminModuleViewModel
     public string Title { get; init; } = string.Empty;
     public string Eyebrow { get; init; } = "Admin module";
     public string Description { get; init; } = string.Empty;
+    public string ModuleController { get; init; } = "Modules";
+    public string CurrentRole { get; init; } = string.Empty;
     public string? Search { get; init; }
     public string? StatusFilter { get; init; }
     public string? PaymentFilter { get; init; }
     public string? CategoryFilter { get; init; }
     public string? RoleFilter { get; init; }
+    public string? SelectedMessageSubject { get; init; }
     public DateTime? FromDate { get; init; }
     public DateTime? ToDate { get; init; }
     public string? SelectedOrderNumber { get; init; }
+    public int? SelectedThreadId { get; init; }
+    public bool AllowPaymentUpdates { get; init; }
+    public bool AllowReceiptRelease { get; init; } = true;
+    public bool AllowRestock { get; init; } = true;
     public AdminPaginationViewModel? Pagination { get; init; }
     public List<AdminMetricCardViewModel> Metrics { get; init; } = [];
     public List<string> Categories { get; init; } = [];
@@ -42,6 +53,10 @@ public record AdminModuleViewModel
     public List<AdminRevenueBreakdownViewModel> RevenueByPaymentMethod { get; init; } = [];
     public List<AdminDailySalesViewModel> DailySales { get; init; } = [];
     public List<AdminUserRowViewModel> Users { get; init; } = [];
+    public List<PrescriptionQueueItemViewModel> PrescriptionQueue { get; init; } = [];
+    public List<AuditLogEntry> AuditLogs { get; init; } = [];
+    public List<PharmacistMessageThreadViewModel> MessageThreads { get; init; } = [];
+    public PharmacistMessageThreadViewModel? ActiveMessageThread { get; init; }
     public List<AdminModuleActionViewModel> Actions { get; init; } = [];
     public List<string> WorkflowSteps { get; init; } = [];
     public List<string> FlowSteps { get; init; } = [];
@@ -95,6 +110,10 @@ public class AdminPaymentRowViewModel
     public decimal Amount { get; init; }
     public string ReferenceNumber { get; init; } = string.Empty;
     public string Provider { get; init; } = string.Empty;
+    public bool RequiresPrescription { get; init; }
+    public string PrescriptionStatus { get; init; } = string.Empty;
+    public bool CanProceed { get; init; } = true;
+    public string BlockingReason { get; init; } = string.Empty;
     public DateTime CreatedAtUtc { get; init; }
 }
 
@@ -105,6 +124,8 @@ public class AdminSalesOrderRowViewModel
     public string PaymentMethod { get; init; } = string.Empty;
     public string PaymentStatus { get; init; } = string.Empty;
     public string OrderStatus { get; init; } = string.Empty;
+    public bool RequiresPrescription { get; init; }
+    public string PrescriptionStatus { get; init; } = string.Empty;
     public decimal TotalAmount { get; init; }
     public int ItemsCount { get; init; }
     public DateTime CreatedAtUtc { get; init; }
@@ -115,6 +136,10 @@ public class AdminReceiptSummaryViewModel
     public string OrderNumber { get; init; } = string.Empty;
     public string CustomerName { get; init; } = string.Empty;
     public decimal TotalAmount { get; init; }
+    public bool RequiresPrescription { get; init; }
+    public string PrescriptionStatus { get; init; } = string.Empty;
+    public bool CanRelease { get; init; } = true;
+    public string BlockingReason { get; init; } = string.Empty;
     public DateTime CreatedAtUtc { get; init; }
 }
 
@@ -152,8 +177,10 @@ public class AdminInventoryAlertViewModel
     public string BrandName { get; init; } = string.Empty;
     public string GenericName { get; init; } = string.Empty;
     public string Category { get; init; } = string.Empty;
+    public string Supplier { get; init; } = string.Empty;
     public int Stock { get; init; }
     public DateTime ExpiryDate { get; init; }
+    public int DaysUntilExpiry { get; init; }
     public string Status { get; init; } = string.Empty;
     public string Severity { get; init; } = "neutral";
     public string Reason { get; init; } = string.Empty;
@@ -193,6 +220,7 @@ public class CounterSaleRequest
     public string PaymentMethod { get; init; } = "Cash";
     public string CustomerName { get; init; } = "Walk-in Customer";
     public string PhoneNumber { get; init; } = "N/A";
+    public bool PrescriptionValidated { get; init; }
 }
 
 public class PaymentStatusUpdateRequest
@@ -219,3 +247,80 @@ public class AdminRoleUpdateRequest
 
     public string Role { get; init; } = "Customer";
 }
+
+public class PrescriptionQueueItemViewModel
+{
+    public string OrderNumber { get; init; } = string.Empty;
+    public string CustomerName { get; init; } = string.Empty;
+    public string DeliveryAddress { get; init; } = string.Empty;
+    public string PaymentMethod { get; init; } = string.Empty;
+    public string PaymentStatus { get; init; } = string.Empty;
+    public string PrescriptionStatus { get; init; } = string.Empty;
+    public string OrderStatus { get; init; } = string.Empty;
+    public int ItemsCount { get; init; }
+    public int PrescriptionFileCount { get; init; }
+    public bool HasPreviewablePrescription { get; init; }
+    public DateTime CreatedAtUtc { get; init; }
+}
+
+public class PrescriptionStatusUpdateRequest
+{
+    [Required]
+    public string OrderNumber { get; init; } = string.Empty;
+
+    [Required]
+    public string Status { get; init; } = "Approved";
+}
+
+public class PharmacistMessageThreadViewModel
+{
+    public int Id { get; init; }
+    public string Subject { get; init; } = string.Empty;
+    public string CounterpartyName { get; init; } = string.Empty;
+    public string CounterpartyRole { get; init; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; init; }
+    public int UnreadCount { get; init; }
+    public string LastMessagePreview { get; init; } = string.Empty;
+    public List<PharmacistMessageEntryViewModel> Messages { get; init; } = [];
+}
+
+public class PharmacistMessageEntryViewModel
+{
+    public string SenderName { get; init; } = string.Empty;
+    public string SenderRole { get; init; } = string.Empty;
+    public string Body { get; init; } = string.Empty;
+    public DateTime SentAtUtc { get; init; }
+    public bool IsReadByPharmacist { get; init; }
+}
+
+public class PharmacistMessageSendRequest
+{
+    public int? ThreadId { get; init; }
+    public string Subject { get; init; } = string.Empty;
+
+    [Required]
+    public string Body { get; init; } = string.Empty;
+}
+
+public class PrescriptionPreviewViewModel
+{
+    public string OrderNumber { get; init; } = string.Empty;
+    public string CustomerName { get; init; } = string.Empty;
+    public string PrescriptionStatus { get; init; } = string.Empty;
+    public string PaymentStatus { get; init; } = string.Empty;
+    public DateTime CreatedAtUtc { get; init; }
+    public List<PrescriptionAssetViewModel> Files { get; init; } = [];
+}
+
+public class PrescriptionAssetViewModel
+{
+    public string Url { get; init; } = string.Empty;
+    public string Label { get; init; } = string.Empty;
+    public string FileName { get; init; } = string.Empty;
+    public string ContentType { get; init; } = string.Empty;
+    public bool CanOpen { get; init; }
+    public bool IsImage { get; init; }
+    public bool IsPdf { get; init; }
+    public string UnavailableMessage { get; init; } = string.Empty;
+}
+

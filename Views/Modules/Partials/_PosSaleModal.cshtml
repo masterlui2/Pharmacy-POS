@@ -14,6 +14,7 @@
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <input type="hidden" name="MedicineId" value="" />
+                    <input type="hidden" name="PrescriptionValidated" value="false" data-pos-rx-hidden />
 
                     <div class="admin-modal-summary">
                         <div>
@@ -24,6 +25,10 @@
                             <span>Available</span>
                             <strong><span data-pos-stock>0</span> units</strong>
                         </div>
+                    </div>
+
+                    <div class="alert alert-warning d-none" data-pos-rx-alert>
+                        This medicine requires prescription validation before checkout can continue.
                     </div>
 
                     <div class="admin-modal-grid">
@@ -51,6 +56,14 @@
                         <div class="admin-modal-grid__full">
                             <label class="form-label">Phone Number</label>
                             <input class="form-control" name="PhoneNumber" placeholder="Optional contact number" />
+                        </div>
+                        <div class="admin-modal-grid__full d-none" data-pos-rx-field>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="PrescriptionValidated" name="PrescriptionValidated" value="true" data-pos-rx-checkbox />
+                                <label class="form-check-label" for="PrescriptionValidated">
+                                    I validated the customer's prescription before processing this sale.
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -77,6 +77,16 @@
   color: #166534;
 }
 
+.orders-banner--info {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.orders-banner--danger {
+  background: #fff1f2;
+  color: #be123c;
+}
+
 .orders-empty {
   display: flex;
   flex-direction: column;
@@ -243,6 +253,29 @@
 .orders-badge--danger {
   background: #fff1f2;
   color: #b91c1c;
+}
+
+.orders-badge--warning {
+  background: #fff7ed;
+  color: #b45309;
+}
+
+.orders-card__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.orders-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1.05rem;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ef1c25 0%, #ff4f55 100%);
+  color: #fff;
+  font-weight: 800;
 }
 
 .orders-pagination,

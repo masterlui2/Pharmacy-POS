@@ -162,6 +162,22 @@
   font-size: 1.3rem;
 }
 
+.storefront-message-link strong {
+  position: absolute;
+  top: 1px;
+  right: 8px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #ef1c25;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+}
+
 .storefront-login-menu:hover .storefront-action-link,
 .storefront-login-menu:focus-within .storefront-action-link {
   background: #f8fafc;

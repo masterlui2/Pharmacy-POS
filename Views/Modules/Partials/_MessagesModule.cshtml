@@ -1,0 +1,116 @@
+@model PharmacyPOS.Models.Admin.AdminModuleViewModel
+
+<section class="pharm-chat-shell">
+    <aside class="pharm-chat-sidebar">
+        <header class="pharm-chat-sidebar__header">
+            <div>
+                <p class="pharm-chat-sidebar__eyebrow">Pharmacist Inbox</p>
+                <h4>Messages</h4>
+            </div>
+            <a class="btn btn-danger"
+               asp-controller="@Model.ModuleController"
+               asp-action="Messages"
+               asp-route-compose="true">
+                <i class="bi bi-plus-circle"></i> New
+            </a>
+        </header>
+
+        <div class="pharm-chat-list">
+            @if (Model.MessageThreads.Count == 0)
+            {
+                <div class="admin-empty-state">No message threads yet.</div>
+            }
+            else
+            {
+                @foreach (var thread in Model.MessageThreads)
+                {
+                    <a class="pharm-chat-thread @(Model.SelectedThreadId == thread.Id ? "pharm-chat-thread--active" : string.Empty)"
+                       asp-controller="@Model.ModuleController"
+                       asp-action="Messages"
+                       asp-route-threadId="@thread.Id">
+                        <div class="pharm-chat-thread__avatar">
+                            @(thread.CounterpartyName.Length >= 2 ? thread.CounterpartyName[..2].ToUpperInvariant() : thread.CounterpartyName.ToUpperInvariant())
+                        </div>
+                        <div class="pharm-chat-thread__body">
+                            <div class="pharm-chat-thread__topline">
+                                <strong>@thread.Subject</strong>
+                                <span>@thread.UpdatedAtUtc.ToLocalTime().ToString("hh:mm tt")</span>
+                            </div>
+                            <p>@thread.CounterpartyName | @thread.CounterpartyRole</p>
+                            <small>@thread.LastMessagePreview</small>
+                        </div>
+                        @if (thread.UnreadCount > 0)
+                        {
+                            <span class="pharm-chat-thread__badge">@thread.UnreadCount</span>
+                        }
+                    </a>
+                }
+            }
+        </div>
+    </aside>
+
+    <section class="pharm-chat-main">
+        @if (Model.ActiveMessageThread is null)
+        {
+            <div class="pharm-chat-main__empty">
+                <div>
+                    <h4>Start a new conversation</h4>
+                    <p>Use the form below to send a message to admin operations.</p>
+                </div>
+
+                <form method="post" action="@Url.Action("SendMessage", Model.ModuleController)" class="pharm-chat-composer pharm-chat-composer--standalone">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ThreadId" value="" />
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <input class="form-control" name="Subject" value="@Model.SelectedMessageSubject" placeholder="Enter thread subject" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" name="Body" rows="6" placeholder="Type your message to admin operations"></textarea>
+                    </div>
+                    <button class="btn btn-danger" type="submit"><i class="bi bi-send"></i> Send Message</button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <header class="pharm-chat-main__header">
+                <div class="pharm-chat-main__identity">
+                    <div class="pharm-chat-thread__avatar pharm-chat-thread__avatar--large">
+                        @(Model.ActiveMessageThread.CounterpartyName.Length >= 2 ? Model.ActiveMessageThread.CounterpartyName[..2].ToUpperInvariant() : Model.ActiveMessageThread.CounterpartyName.ToUpperInvariant())
+                    </div>
+                    <div>
+                        <h4>@Model.ActiveMessageThread.Subject</h4>
+                        <p>@Model.ActiveMessageThread.CounterpartyName | @Model.ActiveMessageThread.CounterpartyRole</p>
+                    </div>
+                </div>
+            </header>
+
+            <div class="pharm-chat-scroll">
+                @foreach (var message in Model.ActiveMessageThread.Messages)
+                {
+                    <article class="pharm-chat-bubble @(message.SenderRole == "Pharmacist" ? "pharm-chat-bubble--self" : string.Empty)">
+                        <header>
+                            <strong>@message.SenderName</strong>
+                            <span>@message.SentAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</span>
+                        </header>
+                        <p>@message.Body</p>
+                    </article>
+                }
+            </div>
+
+            <form method="post" action="@Url.Action("SendMessage", Model.ModuleController)" class="pharm-chat-composer">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ThreadId" value="@Model.SelectedThreadId" />
+                <div class="pharm-chat-composer__row">
+                    <textarea class="form-control" name="Body" rows="3" placeholder="Type your reply"></textarea>
+                    <button class="btn btn-danger" type="submit">
+                        <i class="bi bi-send"></i>
+                        <span>Send</span>
+                    </button>
+                </div>
+            </form>
+        }
+    </section>
+</section>

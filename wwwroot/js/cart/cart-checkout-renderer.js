@@ -6,12 +6,6 @@
       surcharge: 0,
       detail: "Balanced speed for regular medicine orders within Davao City coverage.",
     },
-    Express: {
-      label: "Express delivery",
-      etaLabel: "20-35 minutes",
-      surcharge: 45,
-      detail: "Priority dispatch for urgent medicine needs within active Davao zones.",
-    },
   };
 
   const paymentLabels = {
@@ -27,7 +21,7 @@
     }
 
     if (uploads.submitted) {
-      return { code: "Valid", label: "Valid", tone: "success" };
+      return { code: "PendingReview", label: "Pending pharmacist review", tone: "warning" };
     }
 
     if (uploads.files.length > 0) {
@@ -70,7 +64,7 @@
                 <div class="cart-rx-upload-card__file">
                   <div class="cart-rx-upload-card__file-meta">
                     <i class="bi bi-image"></i>
-                    <span>${core.escapeHtml(file)}</span>
+                    <span>${core.escapeHtml(file.name || "Prescription file")}</span>
                   </div>
                   <button type="button" data-rx-remove="${index}" aria-label="Remove uploaded file">
                     <i class="bi bi-x-lg"></i>
@@ -101,9 +95,9 @@
           ${filesMarkup}
         </div>
         <div class="cart-rx-upload-card__footer">
-          <p>Submit the uploaded prescription to unlock checkout.</p>
+          <p>Submit the uploaded prescription so the pharmacist can review it before payment.</p>
           <button type="button" class="cart-rx-upload-card__submit" data-rx-validate ${uploads.files.length === 0 ? "disabled" : ""}>
-            Submit All Prescriptions
+            Submit for Review
           </button>
         </div>
       </section>`;
@@ -148,7 +142,7 @@
         <i class="bi bi-person-lock"></i>
         <div>
           <strong>Sign in required</strong>
-          <span>You must be signed in to proceed with address, shipping, payment, and order placement.</span>
+          <span>You must be signed in to proceed with address, payment, and order placement.</span>
         </div>
       </div>`;
     }
@@ -176,7 +170,7 @@
                 : `<span class="cart-status-badge cart-status-badge--${prescription.tone}">${prescription.label}</span>`
             }
           </div>
-          <p class="cart-copy">Upload is only needed for prescription items.</p>
+          <p class="cart-copy">Upload is only needed for prescription items. Pharmacist approval is required before payment.</p>
           ${renderPrescriptionUpload(core, uploads, prescription)}
         </div>
         <a class="cart-page__back-link" href="${core.escapeHtml(core.homeUrl)}">
@@ -301,44 +295,6 @@
       </section>`;
   };
 
-  const renderShippingStep = (ctx) => {
-    const { draft, core, deliverySettings } = ctx;
-    return `
-      <section class="cart-panel">
-        <div class="cart-panel__head">
-          <div>
-            <p class="cart-eyebrow">Step 3</p>
-            <h1>Shipping & Delivery</h1>
-          </div>
-        </div>
-        <div class="shipping-option-grid">
-          ${Object.entries(shippingProfiles)
-            .map(
-              ([key, profile]) => `
-                <button type="button" class="shipping-card ${draft.shipping.option === key ? "shipping-card--active" : ""}" data-shipping-option="${key}">
-                  <div class="shipping-card__top">
-                    <strong>${profile.label}</strong>
-                    <span>${core.currency.format((draft.address.deliveryFee || 0) + profile.surcharge)}</span>
-                  </div>
-                  <p>${profile.detail}</p>
-                  <div class="shipping-card__meta">
-                    <span>${profile.etaLabel}</span>
-                    <span>${core.escapeHtml(deliverySettings.branchName)}</span>
-                  </div>
-                </button>`,
-            )
-            .join("")}
-        </div>
-        <div class="cart-banner cart-banner--info">
-          <i class="bi bi-shop"></i>
-          <div>
-            <strong>Pharmacy fulfillment</strong>
-            <span>${core.escapeHtml(deliverySettings.branchName)} will prepare and process this order.</span>
-          </div>
-        </div>
-      </section>`;
-  };
-
   const renderPaymentStep = (ctx) => {
     const { core, cart, draft, deliveryProfile, totals, promo, prescription } = ctx;
     const finalTotal =
@@ -348,7 +304,7 @@
       <section class="cart-panel">
         <div class="cart-panel__head">
           <div>
-            <p class="cart-eyebrow">Step 4</p>
+            <p class="cart-eyebrow">Step 3</p>
             <h1>Payment</h1>
           </div>
         </div>
@@ -380,15 +336,23 @@
             )
             .join("")}
         </div>
-        ${draft.payment.method === "CashOnDelivery"
-          ? ""
-          : `<div class="cart-banner cart-banner--info">
-               <i class="bi bi-shield-lock-fill"></i>
+        ${prescription.code === "PendingReview"
+          ? `<div class="cart-banner cart-banner--warning">
+               <i class="bi bi-hourglass-split"></i>
                <div>
-                 <strong>Secure PayMongo checkout</strong>
-                 <span>You will be redirected to PayMongo to complete payment safely.</span>
+                 <strong>Waiting for pharmacist approval</strong>
+                 <span>Your order will be submitted for review first. Online payment will only open after the pharmacist approves the prescription.</span>
                </div>
-             </div>`}
+             </div>`
+          : draft.payment.method === "CashOnDelivery"
+            ? ""
+            : `<div class="cart-banner cart-banner--info">
+                 <i class="bi bi-shield-lock-fill"></i>
+                 <div>
+                   <strong>Secure PayMongo checkout</strong>
+                   <span>You will be redirected to PayMongo to complete payment safely.</span>
+                 </div>
+               </div>`}
         <div class="cart-summary-repeat">
           <div class="cart-panel__subhead">
             <h2>Order Summary</h2>
@@ -417,10 +381,16 @@
   };
 
   const renderSidebar = (ctx) => {
-    const { core, draft, totals, prescription, deliverySettings } = ctx;
-    const selectedProfile = shippingProfiles[draft.shipping.option];
+    const { core, draft, totals, prescription } = ctx;
+    const selectedProfile = shippingProfiles.Standard;
     const shippingFee = (draft.address.deliveryFee || 0) + selectedProfile.surcharge;
     const finalTotal = totals.subtotal + totals.taxes + shippingFee - totals.discount;
+    const finalActionLabel =
+      draft.ui.busy
+        ? "Placing Order..."
+        : prescription.code === "PendingReview"
+          ? "Submit Order for Review"
+          : "Place Order";
     const placeOrderBlocked =
       !core.isAuthenticated ||
       prescription.code === "Missing" ||
@@ -444,16 +414,6 @@
           }
           <div class="cart-kv cart-kv--total"><span>Final total</span><strong>${core.currency.format(finalTotal)}</strong></div>
         </div>
-        <div class="cart-panel cart-panel--sidebar">
-          <div class="cart-panel__subhead">
-            <h2>Delivery</h2>
-            <span>${selectedProfile.label}</span>
-          </div>
-          <div class="cart-kv"><span>ETA</span><strong>${selectedProfile.etaLabel}</strong></div>
-          <div class="cart-kv"><span>Branch</span><strong>${core.escapeHtml(deliverySettings.branchName)}</strong></div>
-          <div class="cart-kv"><span>Distance</span><strong>${draft.address.distanceKm ? `${draft.address.distanceKm.toFixed(1)} km` : "Pending"}</strong></div>
-          <div class="cart-kv"><span>Prescription</span><strong>${prescription.label}</strong></div>
-        </div>
         ${
           draft.ui.message
             ? `<div class="cart-banner cart-banner--${draft.ui.tone || "info"}">
@@ -471,10 +431,10 @@
           ${
             !core.isAuthenticated
               ? `<a class="cart-primary-btn cart-primary-btn--link" href="${core.escapeHtml(core.loginUrl)}">Log in to Continue</a>`
-              : draft.step < 4
+              : draft.step < 3
                 ? `<button type="button" class="cart-primary-btn" data-step-next>Next Step</button>`
                 : `<button type="button" class="cart-primary-btn" data-place-order ${draft.ui.busy || placeOrderBlocked ? "disabled" : ""}>
-                     ${draft.ui.busy ? "Placing Order..." : "Place Order"}
+                     ${finalActionLabel}
                    </button>`
           }
         </div>
@@ -498,9 +458,10 @@
     const totals = core.getCartTotals(cart, promo);
     const uploads = core.readRxUploads();
     const prescription = getPrescriptionStatus(cart, uploads);
+    const selectedProfile = shippingProfiles.Standard;
     const deliveryProfile = {
-      ...shippingProfiles[draft.shipping.option],
-      fee: (draft.address.deliveryFee || 0) + shippingProfiles[draft.shipping.option].surcharge,
+      ...selectedProfile,
+      fee: (draft.address.deliveryFee || 0) + selectedProfile.surcharge,
     };
     const context = { ...ctx, uploads, promo, totals, prescription, deliveryProfile };
 
@@ -523,9 +484,7 @@
           ? renderSummaryStep(context)
           : draft.step === 2
             ? renderAddressStep(context)
-            : draft.step === 3
-              ? renderShippingStep(context)
-              : renderPaymentStep(context);
+            : renderPaymentStep(context);
 
     root.innerHTML = `
       <div class="checkout-shell">
@@ -533,8 +492,7 @@
           <div class="cart-step-row">
             ${renderStepPill(1, draft.step, "Summary")}
             ${renderStepPill(2, draft.step, "Address")}
-            ${renderStepPill(3, draft.step, "Shipping")}
-            ${renderStepPill(4, draft.step, "Payment")}
+            ${renderStepPill(3, draft.step, "Payment")}
           </div>
           ${stepMarkup}
         </div>

@@ -1,0 +1,132 @@
+@model PharmacyPOS.Models.Messages.CustomerMessagesViewModel
+@using PharmacyPOS.Models.Security
+@{
+    ViewData["Title"] = "Messages";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/customer-messages.css" asp-append-version="true" />
+}
+
+<section class="customer-chat-page">
+    <header class="customer-chat-page__header">
+        <div>
+            <p class="customer-chat-page__eyebrow">Customer Support</p>
+            <h1>Messages</h1>
+            <p>Talk directly with the pharmacist about prescriptions, order updates, and medicine questions.</p>
+        </div>
+    </header>
+
+    @if (TempData["Success"] is string successMessage)
+    {
+        <div class="customer-chat-banner customer-chat-banner--success">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>
+                <strong>Message sent.</strong>
+                <span>@successMessage</span>
+            </div>
+        </div>
+    }
+
+    @if (TempData["Error"] is string errorMessage)
+    {
+        <div class="customer-chat-banner customer-chat-banner--danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>
+                <strong>Unable to send message.</strong>
+                <span>@errorMessage</span>
+            </div>
+        </div>
+    }
+
+    <div class="customer-chat-shell">
+        <aside class="customer-chat-sidebar">
+            <header class="customer-chat-sidebar__header">
+                <p class="customer-chat-page__eyebrow">Inbox</p>
+                <h2>Pharmacist</h2>
+                <span>@Model.UnreadCount unread</span>
+            </header>
+
+            <div class="customer-chat-thread-list">
+                <article class="customer-chat-thread customer-chat-thread--active">
+                    <div class="customer-chat-thread__avatar">
+                        <i class="bi bi-chat-heart"></i>
+                    </div>
+                    <div class="customer-chat-thread__body">
+                        <div class="customer-chat-thread__topline">
+                            <strong>@Model.SupportName</strong>
+                            <span>@(Model.UpdatedAtUtc?.ToLocalTime().ToString("MMM dd") ?? "Now")</span>
+                        </div>
+                        <p>@Model.SupportSubtitle</p>
+                    </div>
+                    @if (Model.UnreadCount > 0)
+                    {
+                        <span class="customer-chat-thread__badge">@Model.UnreadCount</span>
+                    }
+                </article>
+            </div>
+
+            <div class="customer-chat-sidebar__note">
+                <i class="bi bi-shield-check"></i>
+                <p>Ask about prescriptions, order updates, and pharmacist guidance.</p>
+            </div>
+        </aside>
+
+        <section class="customer-chat-panel">
+            <header class="customer-chat-panel__header">
+                <div class="customer-chat-panel__identity">
+                    <div class="customer-chat-thread__avatar customer-chat-thread__avatar--large">
+                        <i class="bi bi-chat-heart"></i>
+                    </div>
+                    <div>
+                        <h2>@Model.SupportName</h2>
+                        <p>@(Model.HasThread ? "Typically replies in this thread." : "Start a conversation with the pharmacist.")</p>
+                    </div>
+                </div>
+            </header>
+
+            <div class="customer-chat-scroll">
+                @if (Model.Messages.Count == 0)
+                {
+                    <div class="customer-chat-empty">
+                        <i class="bi bi-chat-dots"></i>
+                        <h3>No messages yet</h3>
+                        <p>Send your first message and the pharmacist will reply here.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var message in Model.Messages)
+                    {
+                        <article class="customer-chat-bubble @(message.IsCustomerMessage ? "customer-chat-bubble--self" : string.Empty)">
+                            @if (!message.IsCustomerMessage)
+                            {
+                                <header>
+                                    <strong>@message.SenderName</strong>
+                                </header>
+                            }
+                            <p>@message.Body</p>
+                            <small>
+                                @(message.IsCustomerMessage ? "You" : message.SenderRole) • @message.SentAtUtc.ToLocalTime().ToString("MMM dd, hh:mm tt")
+                            </small>
+                        </article>
+                    }
+                }
+            </div>
+
+            <form method="post" asp-action="Send" class="customer-chat-composer">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Subject" value="@Model.Subject" />
+                <label for="messageBody" class="visually-hidden">Message</label>
+                <textarea id="messageBody" name="Body" rows="4" placeholder="Type your message to the pharmacist..." required></textarea>
+                <div class="customer-chat-composer__row">
+                    <span>Your message will be sent to the pharmacist team.</span>
+                    <button type="submit" class="customer-chat-send">
+                        <i class="bi bi-send-fill"></i>
+                        <span>Send Message</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+</section>

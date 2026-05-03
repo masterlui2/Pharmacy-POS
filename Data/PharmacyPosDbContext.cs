@@ -39,6 +39,7 @@ public class PharmacyPosDbContext(DbContextOptions<PharmacyPosDbContext> options
         {
             entity.Property(order => order.OrderNumber).HasMaxLength(40);
             entity.Property(order => order.CustomerFullName).HasMaxLength(150);
+            entity.Property(order => order.CustomerUid).HasMaxLength(128);
             entity.Property(order => order.CustomerEmail).HasMaxLength(256);
             entity.Property(order => order.CustomerPhoneNumber).HasMaxLength(32);
             entity.Property(order => order.DeliveryAddress).HasMaxLength(500);
