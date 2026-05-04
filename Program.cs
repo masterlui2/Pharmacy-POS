@@ -30,14 +30,16 @@ builder.Services.Configure<GoogleMapsDeliveryOptions>(
     builder.Configuration.GetSection(GoogleMapsDeliveryOptions.SectionName));
 builder.Services.Configure<FirebaseOptions>(
     builder.Configuration.GetSection(FirebaseOptions.SectionName));
-if (string.IsNullOrWhiteSpace(defaultConnection))
-{
-    throw new InvalidOperationException(
-        "ConnectionStrings:DefaultConnection must be configured for this environment.");
-}
+// TEMPORARY: Disabled for Render deployment without SQL Server
+// if (string.IsNullOrWhiteSpace(defaultConnection))
+// {
+//     throw new InvalidOperationException(
+//         "ConnectionStrings:DefaultConnection must be configured for this environment.");
+// }
 
-builder.Services.AddDbContext<PharmacyPosDbContext>(options =>
-    options.UseSqlServer(defaultConnection));
+// TEMPORARY: Disabled for Render deployment without SQL Server
+// builder.Services.AddDbContext<PharmacyPosDbContext>(options =>
+//     options.UseSqlServer(defaultConnection));
 builder.Services.AddHttpClient<IRecaptchaService, GoogleRecaptchaService>();
 builder.Services.AddHttpClient<IPayMongoService, PayMongoService>();
 builder.Services.AddSingleton<FirebaseAppInitializer>();
@@ -55,7 +57,9 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddSingleton<IMedicineService, InMemoryMedicineService>();
-builder.Services.AddScoped<IAccountService, DatabaseAccountService>();
+// TEMPORARY: Disabled for Render deployment without SQL Server
+// builder.Services.AddScoped<IAccountService, DatabaseAccountService>();
+builder.Services.AddSingleton<IAccountService, InMemoryAccountService>();
 
 var app = builder.Build();
 
@@ -88,19 +92,20 @@ else
     startupLogger.LogInformation("Cloud Firestore initialized successfully.");
 }
 
-try
-{
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<PharmacyPosDbContext>();
-    dbContext.Database.Migrate();
-    await DbInitializer.SeedAsync(scope.ServiceProvider);
-}
-catch (Exception exception) when (app.Environment.IsDevelopment())
-{
-    startupLogger.LogError(
-        exception,
-        "Database initialization failed in Development. The app will continue with limited functionality until SQL Server is available.");
-}
+// TEMPORARY: Disabled for Render deployment without SQL Server
+// try
+// {
+//     using var scope = app.Services.CreateScope();
+//     var dbContext = scope.ServiceProvider.GetRequiredService<PharmacyPosDbContext>();
+//     dbContext.Database.Migrate();
+//     await DbInitializer.SeedAsync(scope.ServiceProvider);
+// }
+// catch (Exception exception) when (app.Environment.IsDevelopment())
+// {
+//     startupLogger.LogError(
+//         exception,
+//         "Database initialization failed in Development. The app will continue with limited functionality until SQL Server is available.");
+// }
 
 if (!app.Environment.IsDevelopment())
 {
