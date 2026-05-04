@@ -113,7 +113,9 @@ public sealed class FirebaseAppInitializer
         out string reason)
     {
         projectId = options.ProjectId.Trim();
-        serviceAccountPath = options.ServiceAccountPath.Trim();
+        serviceAccountPath = string.IsNullOrWhiteSpace(options.ServiceAccountPath)
+            ? (Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS") ?? string.Empty).Trim()
+            : options.ServiceAccountPath.Trim();
 
         if (string.IsNullOrWhiteSpace(projectId))
         {
@@ -123,7 +125,8 @@ public sealed class FirebaseAppInitializer
 
         if (string.IsNullOrWhiteSpace(serviceAccountPath))
         {
-            reason = "Set Firebase:ServiceAccountPath before using Firebase-backed features.";
+            reason =
+                "Set Firebase:ServiceAccountPath or GOOGLE_APPLICATION_CREDENTIALS before using Firebase-backed features.";
             return false;
         }
 

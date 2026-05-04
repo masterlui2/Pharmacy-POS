@@ -1,0 +1,15 @@
+.git
+.gitignore
+.codex-build-out
+.dotnet
+.nuget
+bin
+obj
+App_Data
+wwwroot/uploads
+OR/node_modules
+**/*.user
+**/*.suo
+**/*.tmp
+**/*.log
+README.md.bak

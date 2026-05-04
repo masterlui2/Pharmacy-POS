@@ -6,6 +6,7 @@ using PharmacyPOS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 const string FlutterWebCorsPolicy = "FlutterWebCors";
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -29,8 +30,14 @@ builder.Services.Configure<GoogleMapsDeliveryOptions>(
     builder.Configuration.GetSection(GoogleMapsDeliveryOptions.SectionName));
 builder.Services.Configure<FirebaseOptions>(
     builder.Configuration.GetSection(FirebaseOptions.SectionName));
+if (string.IsNullOrWhiteSpace(defaultConnection))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection must be configured for this environment.");
+}
+
 builder.Services.AddDbContext<PharmacyPosDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(defaultConnection));
 builder.Services.AddHttpClient<IRecaptchaService, GoogleRecaptchaService>();
 builder.Services.AddHttpClient<IPayMongoService, PayMongoService>();
 builder.Services.AddSingleton<FirebaseAppInitializer>();
@@ -109,6 +116,7 @@ app.UseSession();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
 
 app.MapControllerRoute(
