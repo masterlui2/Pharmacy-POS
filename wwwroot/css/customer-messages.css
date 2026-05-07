@@ -15,6 +15,7 @@
 .customer-chat-thread__topline strong,
 .customer-chat-thread__topline span,
 .customer-chat-thread__body p,
+.customer-chat-thread__body small,
 .customer-chat-sidebar__note p,
 .customer-chat-panel__header h2,
 .customer-chat-panel__header p,
@@ -118,6 +119,8 @@
   border-radius: 18px;
   background: #fff;
   border: 1px solid transparent;
+  color: inherit;
+  text-decoration: none;
 }
 
 .customer-chat-thread--active {
@@ -183,6 +186,11 @@
   line-height: 1.4;
 }
 
+.customer-chat-thread__body small {
+  color: #7b8796;
+  font-size: 0.76rem;
+}
+
 .customer-chat-thread__badge {
   min-width: 20px;
   height: 20px;
@@ -212,6 +220,26 @@
   line-height: 1.5;
 }
 
+.customer-chat-sidebar__empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  padding: 1rem 0.4rem;
+  text-align: center;
+}
+
+.customer-chat-sidebar__empty i {
+  color: #ef1c25;
+  font-size: 1.2rem;
+}
+
+.customer-chat-sidebar__empty p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
 .customer-chat-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -238,6 +266,64 @@
   font-size: 0.86rem;
 }
 
+.customer-chat-order-summary {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #edf2f7;
+  background: linear-gradient(180deg, #fffaf8 0%, #ffffff 100%);
+}
+
+.customer-chat-order-summary__meta {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.customer-chat-order-summary__meta strong,
+.customer-chat-order-summary__meta span {
+  margin: 0;
+}
+
+.customer-chat-order-summary__meta strong {
+  color: #10233c;
+  font-size: 0.94rem;
+}
+
+.customer-chat-order-summary__meta span {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.customer-chat-order-summary__badges,
+.customer-chat-order-items {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.customer-chat-order-summary__badges span,
+.customer-chat-order-items span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.customer-chat-order-summary__badges span {
+  background: #fff;
+  border: 1px solid #f1d7dc;
+  color: #9f1239;
+  font-weight: 700;
+}
+
+.customer-chat-order-items span {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
 .customer-chat-scroll {
   display: flex;
   flex-direction: column;
@@ -262,6 +348,11 @@
   align-content: center;
   min-height: 100%;
   text-align: center;
+}
+
+.customer-chat-empty--panel {
+  min-height: 100%;
+  padding: 2rem;
 }
 
 .customer-chat-empty i {
@@ -384,5 +475,9 @@
 
   .customer-chat-panel {
     min-height: 68vh;
+  }
+
+  .customer-chat-order-summary {
+    padding-inline: 1rem;
   }
 }

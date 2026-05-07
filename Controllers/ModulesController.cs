@@ -1501,9 +1501,8 @@ public class ModulesController(
         try
         {
             await firebaseSyncService.UpdateOrderStatusAsync(
-                order.OrderNumber,
-                order.OrderStatus,
-                paymentStatus,
+                order,
+                order.Payment,
                 cancellationToken);
         }
         catch (Exception exception)

@@ -4,6 +4,7 @@
 @{
     var currentController = (ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty).ToLowerInvariant();
     var isLoggedIn = !string.IsNullOrWhiteSpace(Context.Session.GetString("Username"));
+    var currentUsername = Context.Session.GetString("Username") ?? string.Empty;
     var currentRole = Context.Session.GetString("Role") ?? string.Empty;
     var currentEmail = Context.Session.GetString("Email") ?? string.Empty;
     var showCategoryNav = currentController != "auth";
@@ -59,6 +60,15 @@
 
         <header class="storefront-header">
             <div class="storefront-container storefront-header-inner">
+                <button class="storefront-nav-toggle"
+                        type="button"
+                        data-storefront-nav-toggle
+                        aria-controls="storefront-mobile-panel"
+                        aria-expanded="false"
+                        aria-label="Open menu">
+                    <i class="bi bi-list"></i>
+                </button>
+
                 <div class="storefront-search-wrap">
                     <button class="storefront-search-trigger" type="button" aria-label="Search">
                         <i class="bi bi-search"></i>
@@ -88,17 +98,17 @@
                     <div class="storefront-login-menu">
                         @if (isLoggedIn)
                         {
-                            <a class="storefront-action-link" href="#" aria-label="My account menu">
+                            <a class="storefront-action-link" href="@messagesUrl" aria-label="My account">
                                 <i class="bi bi-person"></i>
-                                <span>@Context.Session.GetString("Username")</span>
+                                <span>@currentUsername</span>
                             </a>
                             <div class="storefront-login-dropdown storefront-login-dropdown--account">
                                 <div class="storefront-login-user">
-                                    <strong>@Context.Session.GetString("Username")</strong>
-                                    <span>@Context.Session.GetString("Email")</span>
+                                    <strong>@currentUsername</strong>
+                                    <span>@currentEmail</span>
                                 </div>
                                 <div class="storefront-login-links">
-                                    <a href="#"><i class="bi bi-person"></i><span>My Account</span></a>
+                                    <a href="@messagesUrl"><i class="bi bi-person"></i><span>My Account</span></a>
                                     <a asp-controller="Home" asp-action="Wishlist">
                                         <i class="bi bi-heart"></i>
                                         <span>Wish List</span>
@@ -153,6 +163,93 @@
                 </div>
             </div>
         </header>
+
+        <div class="storefront-mobile-panel" id="storefront-mobile-panel" data-storefront-nav-panel aria-hidden="true">
+            <div class="storefront-mobile-panel__backdrop" data-storefront-nav-close></div>
+            <aside class="storefront-mobile-drawer" data-storefront-nav-drawer aria-label="Storefront navigation">
+                <div class="storefront-mobile-drawer__header">
+                    <div class="storefront-mobile-drawer__brand">
+                        <img src="~/images/logo.png" alt="SafeMed Pharmacy" />
+                        <div>
+                            <strong>SafeMed Pharmacy</strong>
+                            <span>@(isLoggedIn ? $"Signed in as {currentUsername}" : "Order medicines and daily essentials.")</span>
+                        </div>
+                    </div>
+                    <button type="button" class="storefront-mobile-drawer__close" data-storefront-nav-close aria-label="Close menu">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="storefront-mobile-drawer__body">
+                    <section class="storefront-mobile-drawer__section">
+                        <p>Quick links</p>
+                        <nav class="storefront-mobile-links" aria-label="Quick links">
+                            <a asp-controller="Home" asp-action="Index"><span>Browse Products</span></a>
+                            <a asp-controller="Home" asp-action="Cart">
+                                <span>Cart</span>
+                                <strong data-cart-count>0</strong>
+                            </a>
+                            <a asp-controller="Orders" asp-action="Index"><span>My Orders</span></a>
+                            <a asp-controller="Home" asp-action="Wishlist">
+                                <span>Wish List</span>
+                                <strong data-wishlist-count>0</strong>
+                            </a>
+                        </nav>
+                    </section>
+
+                    <section class="storefront-mobile-drawer__section">
+                        <p>Browse</p>
+                        <nav class="storefront-mobile-links storefront-mobile-links--secondary" aria-label="Browse">
+                            <a asp-controller="Home" asp-action="Index"><span>Our Products</span></a>
+                            <a href="#"><span>Medical Conditions</span></a>
+                            <a href="#"><span>Latest Promos</span></a>
+                            <a href="#"><span>About Us</span></a>
+                        </nav>
+                    </section>
+
+                    <section class="storefront-mobile-drawer__section">
+                        <p>Account</p>
+                        @if (isLoggedIn)
+                        {
+                            <nav class="storefront-mobile-links" aria-label="Account">
+                                <a href="@messagesUrl">
+                                    <span>Messages</span>
+                                    @if (messagesUnreadCount > 0)
+                                    {
+                                        <strong>@messagesUnreadCount</strong>
+                                    }
+                                </a>
+                                <a href="@messagesUrl"><span>Customer Support</span></a>
+                            </nav>
+                            <form asp-controller="Auth" asp-action="Logout" method="post" class="storefront-mobile-logout-form">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="storefront-mobile-logout">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <nav class="storefront-mobile-links" aria-label="Account">
+                                <a asp-controller="Auth" asp-action="Login"><span>Login</span></a>
+                                <a asp-controller="Auth" asp-action="Register"><span>Create Account</span></a>
+                                <a asp-controller="Auth" asp-action="Login"><span>Login to Message</span></a>
+                            </nav>
+                        }
+                    </section>
+
+                    <section class="storefront-mobile-drawer__section">
+                        <p>Service</p>
+                        <nav class="storefront-mobile-links storefront-mobile-links--secondary" aria-label="Service">
+                            <a href="#"><span>Download the app</span></a>
+                            <a href="#"><span>Our Stores</span></a>
+                            <a href="#"><span>Store Locator</span></a>
+                        </nav>
+                    </section>
+                </div>
+            </aside>
+        </div>
 
         @if (showCategoryNav)
         {

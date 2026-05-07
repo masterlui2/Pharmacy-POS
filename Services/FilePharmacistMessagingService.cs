@@ -1,4 +1,5 @@
 using System.Text.Json;
+using PharmacyPOS.Models;
 using PharmacyPOS.Models.Admin;
 using PharmacyPOS.Models.Security;
 
@@ -23,6 +24,33 @@ public sealed class FilePharmacistMessagingService(
         {
             var threads = await ReadAllInternalAsync(cancellationToken);
             return threads
+                .Where(IsOrderThread)
+                .OrderByDescending(thread => thread.UpdatedAtUtc)
+                .ToList();
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    public async Task<IReadOnlyList<PharmacistMessageThread>> GetCustomerThreadsAsync(
+        string customerEmail,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(customerEmail))
+        {
+            return [];
+        }
+
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            var normalizedEmail = customerEmail.Trim();
+            var threads = await ReadAllInternalAsync(cancellationToken);
+            return threads
+                .Where(IsOrderThread)
+                .Where(thread => string.Equals(thread.CustomerEmail, normalizedEmail, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(thread => thread.UpdatedAtUtc)
                 .ToList();
         }
@@ -38,7 +66,7 @@ public sealed class FilePharmacistMessagingService(
         try
         {
             var threads = await ReadAllInternalAsync(cancellationToken);
-            return threads.FirstOrDefault(thread => thread.Id == threadId);
+            return threads.FirstOrDefault(thread => thread.Id == threadId && IsOrderThread(thread));
         }
         finally
         {
@@ -46,9 +74,11 @@ public sealed class FilePharmacistMessagingService(
         }
     }
 
-    public async Task<PharmacistMessageThread?> GetCustomerThreadAsync(string customerEmail, CancellationToken cancellationToken = default)
+    public async Task<PharmacistMessageThread?> GetThreadByOrderAsync(
+        string orderNumber,
+        CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(customerEmail))
+        if (string.IsNullOrWhiteSpace(orderNumber))
         {
             return null;
         }
@@ -56,11 +86,11 @@ public sealed class FilePharmacistMessagingService(
         await gate.WaitAsync(cancellationToken);
         try
         {
+            var normalizedOrderNumber = orderNumber.Trim();
             var threads = await ReadAllInternalAsync(cancellationToken);
-            return threads
-                .Where(thread => string.Equals(thread.CustomerEmail, customerEmail.Trim(), StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(thread => thread.UpdatedAtUtc)
-                .FirstOrDefault();
+            return threads.FirstOrDefault(thread =>
+                IsOrderThread(thread) &&
+                string.Equals(thread.OrderNumber, normalizedOrderNumber, StringComparison.OrdinalIgnoreCase));
         }
         finally
         {
@@ -68,57 +98,38 @@ public sealed class FilePharmacistMessagingService(
         }
     }
 
-    public async Task<int> SendMessageAsync(
-        int? threadId,
-        string subject,
-        string senderName,
-        string senderRole,
-        string body,
-        CancellationToken cancellationToken = default)
+    public async Task<int> EnsureOrderThreadAsync(PharmacyOrder order, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(order.OrderNumber))
+        {
+            throw new InvalidOperationException("Order number is required before creating a chat thread.");
+        }
+
         await gate.WaitAsync(cancellationToken);
         try
         {
             var threads = await ReadAllInternalAsync(cancellationToken);
-            PharmacistMessageThread thread;
-            if (threadId.HasValue)
+            var normalizedOrderNumber = order.OrderNumber.Trim();
+            var thread = threads.FirstOrDefault(candidate =>
+                string.Equals(candidate.OrderNumber, normalizedOrderNumber, StringComparison.OrdinalIgnoreCase) ||
+                (candidate.OrderId.HasValue && candidate.OrderId.Value == order.Id));
+
+            if (thread is null)
             {
-                thread = threads.FirstOrDefault(candidate => candidate.Id == threadId.Value)
-                    ?? throw new InvalidOperationException("Message thread was not found.");
-            }
-            else
-            {
-                var nextThreadId = threads.Count == 0 ? 1 : threads.Max(candidate => candidate.Id) + 1;
                 thread = new PharmacistMessageThread
                 {
-                    Id = nextThreadId,
-                    Subject = subject.Trim(),
-                    CounterpartyName = "Admin Operations",
-                    CounterpartyRole = AppRoles.Admin,
-                    UpdatedAtUtc = DateTime.UtcNow
+                    Id = threads.Count == 0 ? 1 : threads.Max(candidate => candidate.Id) + 1
                 };
                 threads.Add(thread);
             }
 
-            var nextMessageId = thread.Messages.Count == 0 ? 1 : thread.Messages.Max(entry => entry.Id) + 1;
-            thread.Messages.Add(new PharmacistMessageEntry
-            {
-                Id = nextMessageId,
-                SenderName = senderName.Trim(),
-                SenderRole = senderRole.Trim(),
-                Body = body.Trim(),
-                SentAtUtc = DateTime.UtcNow,
-                IsReadByPharmacist = AppRoles.Matches(senderRole, AppRoles.Pharmacist),
-                IsReadByCustomer = !HasCustomerParticipant(thread) || AppRoles.Matches(senderRole, AppRoles.Customer)
-            });
-            thread.UpdatedAtUtc = DateTime.UtcNow;
-
+            SyncThreadWithOrder(thread, order);
             await WriteAllInternalAsync(threads, cancellationToken);
             return thread.Id;
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Failed to send pharmacist message.");
+            logger.LogError(exception, "Failed to create or update the order chat thread for {OrderNumber}.", order.OrderNumber);
             throw;
         }
         finally
@@ -127,74 +138,47 @@ public sealed class FilePharmacistMessagingService(
         }
     }
 
-    public async Task<int> SendCustomerMessageAsync(
-        string customerName,
-        string customerEmail,
-        string customerPhone,
-        string subject,
+    public async Task SendMessageAsync(
+        int threadId,
+        string senderName,
+        string senderRole,
         string body,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(customerEmail))
+        if (string.IsNullOrWhiteSpace(body))
         {
-            throw new InvalidOperationException("Customer email is required to send a support message.");
+            throw new InvalidOperationException("Message body is required.");
         }
 
         await gate.WaitAsync(cancellationToken);
         try
         {
             var threads = await ReadAllInternalAsync(cancellationToken);
-            var normalizedEmail = customerEmail.Trim();
-            var thread = threads
-                .Where(candidate => string.Equals(candidate.CustomerEmail, normalizedEmail, StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(candidate => candidate.UpdatedAtUtc)
-                .FirstOrDefault();
+            var thread = threads.FirstOrDefault(candidate => candidate.Id == threadId && IsOrderThread(candidate))
+                ?? throw new InvalidOperationException("Message thread was not found.");
 
-            if (thread is null)
-            {
-                var nextThreadId = threads.Count == 0 ? 1 : threads.Max(candidate => candidate.Id) + 1;
-                thread = new PharmacistMessageThread
-                {
-                    Id = nextThreadId,
-                    Subject = string.IsNullOrWhiteSpace(subject) ? "Pharmacist Support" : subject.Trim(),
-                    CounterpartyName = "SafeMed Pharmacist",
-                    CounterpartyRole = AppRoles.Pharmacist,
-                    CustomerName = customerName.Trim(),
-                    CustomerEmail = normalizedEmail,
-                    CustomerPhone = customerPhone.Trim(),
-                    UpdatedAtUtc = DateTime.UtcNow
-                };
-                threads.Add(thread);
-            }
-            else
-            {
-                thread.CustomerName = string.IsNullOrWhiteSpace(customerName) ? thread.CustomerName : customerName.Trim();
-                thread.CustomerPhone = string.IsNullOrWhiteSpace(customerPhone) ? thread.CustomerPhone : customerPhone.Trim();
-                if (string.IsNullOrWhiteSpace(thread.Subject))
-                {
-                    thread.Subject = string.IsNullOrWhiteSpace(subject) ? "Pharmacist Support" : subject.Trim();
-                }
-            }
-
+            var normalizedRole = senderRole.Trim();
+            var isCustomer = AppRoles.Matches(normalizedRole, AppRoles.Customer);
+            var isPharmacist = AppRoles.Matches(normalizedRole, AppRoles.Pharmacist);
             var nextMessageId = thread.Messages.Count == 0 ? 1 : thread.Messages.Max(entry => entry.Id) + 1;
+
             thread.Messages.Add(new PharmacistMessageEntry
             {
                 Id = nextMessageId,
-                SenderName = customerName.Trim(),
-                SenderRole = AppRoles.Customer,
+                SenderName = string.IsNullOrWhiteSpace(senderName) ? "SafeMed User" : senderName.Trim(),
+                SenderRole = normalizedRole,
                 Body = body.Trim(),
                 SentAtUtc = DateTime.UtcNow,
-                IsReadByPharmacist = false,
-                IsReadByCustomer = true
+                IsReadByPharmacist = isPharmacist,
+                IsReadByCustomer = isCustomer
             });
             thread.UpdatedAtUtc = DateTime.UtcNow;
 
             await WriteAllInternalAsync(threads, cancellationToken);
-            return thread.Id;
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Failed to send customer support message.");
+            logger.LogError(exception, "Failed to send the order chat message for thread {ThreadId}.", threadId);
             throw;
         }
         finally
@@ -209,7 +193,7 @@ public sealed class FilePharmacistMessagingService(
         try
         {
             var threads = await ReadAllInternalAsync(cancellationToken);
-            var thread = threads.FirstOrDefault(candidate => candidate.Id == threadId);
+            var thread = threads.FirstOrDefault(candidate => candidate.Id == threadId && IsOrderThread(candidate));
             if (thread is null)
             {
                 return;
@@ -234,7 +218,7 @@ public sealed class FilePharmacistMessagingService(
         try
         {
             var threads = await ReadAllInternalAsync(cancellationToken);
-            var thread = threads.FirstOrDefault(candidate => candidate.Id == threadId);
+            var thread = threads.FirstOrDefault(candidate => candidate.Id == threadId && IsOrderThread(candidate));
             if (thread is null)
             {
                 return;
@@ -263,9 +247,11 @@ public sealed class FilePharmacistMessagingService(
         await gate.WaitAsync(cancellationToken);
         try
         {
+            var normalizedEmail = customerEmail.Trim();
             var threads = await ReadAllInternalAsync(cancellationToken);
             return threads
-                .Where(thread => string.Equals(thread.CustomerEmail, customerEmail.Trim(), StringComparison.OrdinalIgnoreCase))
+                .Where(IsOrderThread)
+                .Where(thread => string.Equals(thread.CustomerEmail, normalizedEmail, StringComparison.OrdinalIgnoreCase))
                 .SelectMany(thread => thread.Messages)
                 .Count(message => !message.IsReadByCustomer && !AppRoles.Matches(message.SenderRole, AppRoles.Customer));
         }
@@ -279,15 +265,7 @@ public sealed class FilePharmacistMessagingService(
     {
         EnsureStorage();
         var json = await File.ReadAllTextAsync(filePath, cancellationToken);
-        var threads = JsonSerializer.Deserialize<List<PharmacistMessageThread>>(json, JsonOptions);
-        if (threads is not null && threads.Count > 0)
-        {
-            return threads;
-        }
-
-        var seededThreads = CreateSeedThreads();
-        await WriteAllInternalAsync(seededThreads, cancellationToken);
-        return seededThreads;
+        return JsonSerializer.Deserialize<List<PharmacistMessageThread>>(json, JsonOptions) ?? [];
     }
 
     private async Task WriteAllInternalAsync(List<PharmacistMessageThread> threads, CancellationToken cancellationToken)
@@ -307,31 +285,42 @@ public sealed class FilePharmacistMessagingService(
         }
     }
 
-    private static List<PharmacistMessageThread> CreateSeedThreads() =>
-    [
-        new()
-        {
-            Id = 1,
-            Subject = "Prescription turnaround reminders",
-            CounterpartyName = "Admin Operations",
-            CounterpartyRole = AppRoles.Admin,
-            UpdatedAtUtc = DateTime.UtcNow.AddMinutes(-20),
-            Messages =
-            [
-                new PharmacistMessageEntry
-                {
-                    Id = 1,
-                    SenderName = "Admin Operations",
-                    SenderRole = AppRoles.Admin,
-                    Body = "Please prioritize prescription orders that have been pending for more than 30 minutes.",
-                    SentAtUtc = DateTime.UtcNow.AddMinutes(-20),
-                    IsReadByPharmacist = false,
-                    IsReadByCustomer = true
-                }
-            ]
-        }
-    ];
+    private static void SyncThreadWithOrder(PharmacistMessageThread thread, PharmacyOrder order)
+    {
+        var createdAtUtc = order.CreatedAtUtc == default ? DateTime.UtcNow : order.CreatedAtUtc;
 
-    private static bool HasCustomerParticipant(PharmacistMessageThread thread) =>
+        thread.OrderId = order.Id;
+        thread.OrderNumber = order.OrderNumber.Trim();
+        thread.OrderReference = ResolveOrderReference(order);
+        thread.OrderStatus = string.IsNullOrWhiteSpace(order.OrderStatus)
+            ? FirstNonEmpty(thread.OrderStatus, "Pending")
+            : order.OrderStatus.Trim();
+        thread.PaymentStatus = string.IsNullOrWhiteSpace(order.Payment?.Status)
+            ? FirstNonEmpty(thread.PaymentStatus, "Pending")
+            : order.Payment.Status.Trim();
+        thread.PrescriptionStatus = string.IsNullOrWhiteSpace(order.PrescriptionStatus)
+            ? thread.PrescriptionStatus
+            : order.PrescriptionStatus.Trim();
+        thread.RequiresPrescription = order.RequiresPrescription;
+        thread.Subject = $"Order {thread.OrderNumber}";
+        thread.CounterpartyName = "SafeMed Pharmacist";
+        thread.CounterpartyRole = AppRoles.Pharmacist;
+        thread.CustomerName = FirstNonEmpty(order.CustomerFullName, thread.CustomerName);
+        thread.CustomerEmail = FirstNonEmpty(order.CustomerEmail, thread.CustomerEmail);
+        thread.CustomerPhone = FirstNonEmpty(order.CustomerPhoneNumber, thread.CustomerPhone);
+        thread.CreatedAtUtc = thread.CreatedAtUtc == default ? createdAtUtc : thread.CreatedAtUtc;
+        thread.UpdatedAtUtc = thread.UpdatedAtUtc == default ? createdAtUtc : thread.UpdatedAtUtc;
+    }
+
+    private static string ResolveOrderReference(PharmacyOrder order) =>
+        !string.IsNullOrWhiteSpace(order.Payment?.ReferenceNumber)
+            ? order.Payment.ReferenceNumber.Trim()
+            : order.OrderNumber.Trim();
+
+    private static string FirstNonEmpty(params string?[] values) =>
+        values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim() ?? string.Empty;
+
+    private static bool IsOrderThread(PharmacistMessageThread thread) =>
+        !string.IsNullOrWhiteSpace(thread.OrderNumber) &&
         !string.IsNullOrWhiteSpace(thread.CustomerEmail);
 }

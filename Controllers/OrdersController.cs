@@ -178,9 +178,7 @@ public class OrdersController(
         order.OrderStatus = "AwaitingPayment";
         await dbContext.SaveChangesAsync(cancellationToken);
         await TrySyncOrderStatusAsync(
-            order.OrderNumber,
-            order.OrderStatus,
-            order.Payment.Status,
+            order,
             cancellationToken);
 
         return Redirect(checkoutSession.CheckoutUrl);
@@ -220,9 +218,7 @@ public class OrdersController(
         {
             await dbContext.SaveChangesAsync(cancellationToken);
             await TrySyncOrderStatusAsync(
-                targetOrder.OrderNumber,
-                targetOrder.OrderStatus,
-                targetOrder.Payment?.Status ?? previousPaymentStatus,
+                targetOrder,
                 cancellationToken);
 
             if (!string.Equals(previousPaymentStatus, targetOrder.Payment?.Status, StringComparison.OrdinalIgnoreCase))
@@ -238,17 +234,14 @@ public class OrdersController(
     }
 
     private async Task TrySyncOrderStatusAsync(
-        string orderNumber,
-        string orderStatus,
-        string paymentStatus,
+        PharmacyPOS.Models.PharmacyOrder order,
         CancellationToken cancellationToken)
     {
         try
         {
             await firebaseSyncService.UpdateOrderStatusAsync(
-                orderNumber,
-                orderStatus,
-                paymentStatus,
+                order,
+                order.Payment,
                 cancellationToken);
         }
         catch (Exception exception)
@@ -256,7 +249,7 @@ public class OrdersController(
             logger.LogError(
                 exception,
                 "Firebase order status sync failed for order {OrderNumber}.",
-                orderNumber);
+                order.OrderNumber);
         }
     }
 

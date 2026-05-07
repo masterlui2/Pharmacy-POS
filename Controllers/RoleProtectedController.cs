@@ -31,6 +31,8 @@ public abstract class RoleProtectedController : BaseController
 
     protected string CurrentUsername => HttpContext.Session.GetString("Username") ?? "Staff";
 
+    protected string CurrentEmail => HttpContext.Session.GetString("Email") ?? string.Empty;
+
     protected IActionResult ResolveRoleRedirect(string? role) =>
         AppRoles.Matches(role, AppRoles.Admin)
             ? RedirectToAction("Index", "Dashboard")

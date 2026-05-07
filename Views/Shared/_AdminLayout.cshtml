@@ -5,6 +5,8 @@
     var currentAction = (ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty).ToLowerInvariant();
     var username = Context.Session.GetString("Username") ?? "Staff";
     var role = Context.Session.GetString("Role") ?? string.Empty;
+    var portalTitle = BackOfficeNavigation.GetPortalTitle(role);
+    var roleLabel = BackOfficeNavigation.GetRoleLabel(role);
     var navigationItems = BackOfficeNavigation.GetItemsForRole(role);
     var groupedNavigation = navigationItems
         .GroupBy(item => item.Section)
@@ -22,18 +24,23 @@
     <title>@ViewData["Title"] - SafeMed Pharmacy</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link rel="stylesheet" href="~/css/admin-dashboard.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/admin-pages.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/pages.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/PharmacyPOS.styles.css" asp-append-version="true" />
 </head>
-<body>
+<body class="admin-shell-body">
     <div class="pos-layout">
-        <aside class="pos-sidebar">
+        <aside class="pos-sidebar" id="admin-sidebar" data-admin-sidebar>
             <div class="pos-brand">
-                <div class="pos-logo">
-                    <img src="~/images/logo.png" alt="SafeMed Logo" style="width: 100%; height: 100%; object-fit: contain;" />
+                <div class="pos-brand__top">
+                    <div class="pos-logo">
+                        <img src="~/images/logo.png" alt="SafeMed Logo" />
+                    </div>
+                    <button type="button" class="pos-sidebar-close" data-admin-sidebar-close aria-label="Close navigation">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
-                <span>@BackOfficeNavigation.GetPortalTitle(role)</span>
+                <span>@portalTitle</span>
             </div>
 
             <nav class="pos-nav" aria-label="Back-office navigation">
@@ -79,22 +86,41 @@
                 </div>
                 <div>
                     <strong>@username</strong>
-                    <span>@BackOfficeNavigation.GetRoleLabel(role)</span>
+                    <span>@roleLabel</span>
                 </div>
             </div>
         </aside>
 
-        <main class="pos-main">
-            @RenderBody()
-        </main>
+        <div class="pos-sidebar-backdrop" data-admin-sidebar-close></div>
+
+        <div class="pos-content-shell">
+            <header class="pos-mobile-bar">
+                <button type="button"
+                        class="pos-mobile-toggle"
+                        data-admin-sidebar-toggle
+                        aria-controls="admin-sidebar"
+                        aria-expanded="false"
+                        aria-label="Open navigation">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="pos-mobile-brand">
+                    <img src="~/images/logo.png" alt="SafeMed Logo" />
+                    <div>
+                        <strong>@portalTitle</strong>
+                        <span>@username</span>
+                    </div>
+                </div>
+            </header>
+
+            <main class="pos-main">
+                @RenderBody()
+            </main>
+        </div>
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((element) => {
-            new bootstrap.Tooltip(element);
-        });
-    </script>
+    <script src="~/js/admin/layout.js" asp-append-version="true"></script>
+    <script src="~/js/admin/modules.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

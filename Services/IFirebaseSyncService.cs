@@ -7,9 +7,8 @@ public interface IFirebaseSyncService
     Task SyncOrderAsync(PharmacyOrder order, PaymentRecord? payment, CancellationToken cancellationToken);
 
     Task UpdateOrderStatusAsync(
-        string orderNumber,
-        string status,
-        string paymentStatus,
+        PharmacyOrder order,
+        PaymentRecord? payment,
         CancellationToken cancellationToken);
 
     Task CreateNotificationAsync(

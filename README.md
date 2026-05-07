@@ -33,6 +33,9 @@ Set these in Render before the first successful production deploy:
 ConnectionStrings__DefaultConnection=<your SQL Server connection string>
 Firebase__ProjectId=<your Firebase project id>
 Firebase__ServiceAccountPath=/etc/secrets/firebase-service-account.json
+Firebase__PharmacyName=<display name shown in order chat metadata>
+Firebase__DefaultPharmacistUid=<stable fallback pharmacist id for new orders>
+Firebase__DefaultPharmacistName=<display name shown before a pharmacist replies>
 GoogleRecaptcha__SiteKey=<your recaptcha site key>
 GoogleRecaptcha__SecretKey=<your recaptcha secret key>
 GoogleMapsDelivery__ApiKey=<your Google Maps API key>
@@ -68,3 +71,5 @@ Firebase__ServiceAccountPath=/etc/secrets/firebase-service-account.json
 - `appsettings.Production.json` intentionally clears local-machine settings so production does not try to use your local `SQLEXPRESS` instance or `C:\secure\...` paths.
 - The container listens on port `10000`, which matches Render's default web service port.
 - The app now exposes a health endpoint at `/healthz`.
+- Pharmacist replies are written to `orders/{orderId}/messages`, and the parent `orders/{orderId}` document is updated with `pharmacyName`, `pharmacistUid`, `pharmacistName`, `referenceNumber`, `orderReference`, `status`, and timestamps.
+- No custom Firestore composite indexes are required for the current pharmacist chat implementation. It reads each order's `messages` subcollection ordered by `createdAt`.

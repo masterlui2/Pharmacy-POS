@@ -8,7 +8,7 @@
     currency: "PHP",
   });
 
-  const bagCount = document.querySelector("[data-cart-count]");
+  const bagCounts = document.querySelectorAll("[data-cart-count]");
   const cartModal = document.querySelector("[data-cart-modal]");
   const antiForgeryToken =
     document.querySelector("[data-app-antiforgery]")?.value || "";
@@ -150,12 +150,14 @@
   };
 
   const syncBagCount = (cart = readCart()) => {
-    if (!bagCount) {
+    if (!bagCounts.length) {
       return;
     }
 
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    bagCount.textContent = String(totalItems);
+    bagCounts.forEach((bagCount) => {
+      bagCount.textContent = String(totalItems);
+    });
   };
 
   const parseProduct = (card) => ({

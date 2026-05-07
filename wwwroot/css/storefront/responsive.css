@@ -5,16 +5,82 @@
 }
 
 @media (max-width: 992px) {
-  .storefront-header-inner {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    padding: 1rem 0;
+  body.storefront-nav-open {
+    overflow: hidden;
   }
 
-  .storefront-search-wrap,
-  .storefront-actions {
+  .storefront-utility-bar,
+  .storefront-category-nav {
+    display: none;
+  }
+
+  .storefront-mobile-panel {
+    display: block;
+    position: relative;
+    z-index: 40;
+  }
+
+  body.storefront-nav-open .storefront-mobile-panel__backdrop {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  body.storefront-nav-open .storefront-mobile-drawer {
+    transform: translateX(0);
+  }
+
+  .storefront-header-inner {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "toggle logo actions"
+      "search search search";
+    padding: 1rem 0 1.1rem;
+    gap: 1rem 0.75rem;
+    justify-items: stretch;
+  }
+
+  .storefront-nav-toggle {
+    display: inline-flex;
+    grid-area: toggle;
+  }
+
+  .storefront-logo {
+    grid-area: logo;
+    justify-self: center;
+  }
+
+  .storefront-logo img {
+    max-width: min(170px, 100%);
+  }
+
+  .storefront-search-wrap {
+    grid-area: search;
     width: 100%;
-    justify-content: center;
+  }
+
+  .storefront-search-box {
+    max-width: none;
+  }
+
+  .storefront-actions {
+    grid-area: actions;
+    width: auto;
+    justify-content: flex-end;
+    gap: 0.45rem;
+  }
+
+  .storefront-message-link,
+  .storefront-login-menu {
+    display: none;
+  }
+
+  .storefront-bag-link {
+    min-width: auto;
+    padding-right: 0.2rem;
+  }
+
+  .storefront-bag-link span {
+    display: none;
   }
 
   .storefront-login-dropdown {
@@ -56,25 +122,40 @@
     width: min(100vw - 20px, 100%);
   }
 
-  .storefront-utility-inner,
   .listing-topbar,
   .medicine-browser-meta {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .storefront-utility-links,
   .listing-controls {
     justify-content: flex-start;
   }
 
+  .storefront-header-inner {
+    gap: 0.85rem 0.5rem;
+  }
+
+  .storefront-logo img {
+    max-width: 138px;
+  }
+
   .storefront-search-wrap {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .storefront-login-dropdown {
     width: min(320px, calc(100vw - 24px));
     right: -36px;
+  }
+
+  .storefront-mobile-drawer {
+    width: min(100vw - 16px, 360px);
+  }
+
+  .storefront-mobile-drawer__header,
+  .storefront-mobile-drawer__body {
+    padding-inline: 16px;
   }
 
   .products-grid {

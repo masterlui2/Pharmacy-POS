@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PharmacyPOS.Data;
+using PharmacyPOS.Helpers;
 using PharmacyPOS.Models;
 using PharmacyPOS.Models.Admin;
 using PharmacyPOS.Models.Checkout;
@@ -15,12 +16,14 @@ public sealed class PharmacistModulesController(
     PharmacyPosDbContext dbContext,
     IMedicineService medicineService,
     IFirebaseSyncService firebaseSyncService,
+    IFirebaseOrderChatService firebaseOrderChatService,
     IPharmacistMessagingService messagingService,
     IAuditLogService auditLogService,
     IWebHostEnvironment environment,
     ILogger<PharmacistModulesController> logger) : PharmacistOnlyController
 {
     private const int DefaultPageSize = 10;
+    private const int MessageThreadLimit = 50;
     private static readonly int[] AllowedPageSizes = [10, 25, 50];
 
     public IActionResult Index() => RedirectToAction(nameof(Prescriptions));
@@ -200,6 +203,7 @@ public sealed class PharmacistModulesController(
         ApplyPrescriptionWorkflow(order, normalizedStatus);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        await TryUpdatePharmacistAssignmentAsync(order, order.Payment, documentId: null, cancellationToken);
         await TrySyncOrderStatusAsync(order, order.Payment?.Status ?? "AwaitingPayment", cancellationToken);
 
         if (!string.Equals(previousStatus, normalizedStatus, StringComparison.OrdinalIgnoreCase) &&
@@ -565,6 +569,7 @@ public sealed class PharmacistModulesController(
 
         if (payment.PharmacyOrder is not null)
         {
+            await TryUpdatePharmacistAssignmentAsync(payment.PharmacyOrder, payment, documentId: null, cancellationToken);
             await TrySyncOrderStatusAsync(payment.PharmacyOrder, payment.Status, cancellationToken);
 
             if (!string.IsNullOrWhiteSpace(payment.PharmacyOrder.CustomerUid))
@@ -853,27 +858,53 @@ public sealed class PharmacistModulesController(
         return View("~/Views/Modules/Module.cshtml", model);
     }
 
-    public async Task<IActionResult> Messages(int? threadId, bool compose = false, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Messages(int? threadId, CancellationToken cancellationToken = default)
     {
         var threads = await messagingService.GetThreadsAsync(cancellationToken);
-        var selectedThreadId = compose ? null : threadId ?? threads.FirstOrDefault()?.Id;
+        var orderNumbers = threads
+            .Select(thread => thread.OrderNumber)
+            .Where(orderNumber => !string.IsNullOrWhiteSpace(orderNumber))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (orderNumbers.Count > 0)
+        {
+            var orders = await dbContext.Orders
+                .AsNoTracking()
+                .Include(order => order.Payment)
+                .Where(order => orderNumbers.Contains(order.OrderNumber))
+                .ToListAsync(cancellationToken);
+
+            foreach (var order in orders)
+            {
+                await messagingService.EnsureOrderThreadAsync(order, cancellationToken);
+            }
+
+            threads = await messagingService.GetThreadsAsync(cancellationToken);
+        }
+
+        var selectedThreadId = threadId ?? threads.FirstOrDefault()?.Id;
+
         if (selectedThreadId.HasValue)
         {
             await messagingService.MarkThreadAsReadAsync(selectedThreadId.Value, cancellationToken);
             threads = await messagingService.GetThreadsAsync(cancellationToken);
         }
 
-        var threadViewModels = threads.Select(BuildThreadViewModel).ToList();
+        var threadViewModels = threads
+            .Take(MessageThreadLimit)
+            .Select(BuildThreadViewModel)
+            .OrderByDescending(thread => thread.UpdatedAtUtc)
+            .ToList();
         var activeThread = threadViewModels.FirstOrDefault(thread => thread.Id == selectedThreadId);
 
         var model = CreateModule(
             AdminModuleKind.Messages,
             "Messages",
-            "Inbox, thread history, unread status, and outbound pharmacist coordination messages.")
+            "Customer order chats stored locally in the POS and grouped by order.")
             with
             {
                 SelectedThreadId = selectedThreadId,
-                SelectedMessageSubject = activeThread?.Subject,
                 MessageThreads = threadViewModels,
                 ActiveMessageThread = activeThread,
                 WorkflowSteps = [],
@@ -893,30 +924,48 @@ public sealed class PharmacistModulesController(
             return RedirectToAction(nameof(Messages), new { threadId = request.ThreadId });
         }
 
-        if (!request.ThreadId.HasValue && string.IsNullOrWhiteSpace(request.Subject))
+        if (!request.ThreadId.HasValue)
         {
-            TempData["Error"] = "Subject is required when starting a new thread.";
+            TempData["Error"] = "Select an order thread before sending a reply.";
             return RedirectToAction(nameof(Messages));
         }
 
-        var threadId = await messagingService.SendMessageAsync(
-            request.ThreadId,
-            request.Subject,
-            CurrentUsername,
-            CurrentRole,
-            request.Body,
-            cancellationToken);
+        var thread = await messagingService.GetThreadAsync(request.ThreadId.Value, cancellationToken);
+        if (thread is null)
+        {
+            TempData["Error"] = "Order chat thread was not found.";
+            return RedirectToAction(nameof(Messages));
+        }
+
+        try
+        {
+            await messagingService.SendMessageAsync(
+                thread.Id,
+                string.IsNullOrWhiteSpace(CurrentUsername) ? "Pharmacist" : CurrentUsername.Trim(),
+                AppRoles.Pharmacist,
+                request.Body,
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Failed to send pharmacist reply for order {OrderNumber}.",
+                thread.OrderNumber);
+            TempData["Error"] = "The pharmacist reply could not be sent.";
+            return RedirectToAction(nameof(Messages), new { threadId = request.ThreadId });
+        }
 
         await auditLogService.WriteAsync(
             "Pharmacist Messages",
-            "Send Message",
+            "Send Reply",
             CurrentUsername,
             CurrentRole,
-            $"Sent a pharmacist message in thread {threadId}.",
+            $"Sent a pharmacist reply for order {thread.OrderNumber}.",
             cancellationToken);
 
-        TempData["Success"] = "Message sent.";
-        return RedirectToAction(nameof(Messages), new { threadId });
+        TempData["Success"] = $"Reply sent for order {thread.OrderNumber}.";
+        return RedirectToAction(nameof(Messages), new { threadId = request.ThreadId });
     }
 
     private static bool IsPrescriptionValidated(string? prescriptionStatus) =>
@@ -981,32 +1030,107 @@ public sealed class PharmacistModulesController(
             .FirstOrDefaultAsync(entry => entry.OrderNumber == orderNumber, cancellationToken);
     }
 
-    private static PharmacistMessageThreadViewModel BuildThreadViewModel(PharmacistMessageThread thread) =>
-        new()
+    private static PharmacistMessageThreadViewModel BuildThreadViewModel(
+        PharmacistMessageThread thread)
+    {
+        var orderedMessages = thread.Messages
+            .OrderBy(message => message.SentAtUtc)
+            .ToList();
+        var lastMessage = orderedMessages.LastOrDefault();
+        var needsReply = lastMessage is not null &&
+            AppRoles.Matches(lastMessage.SenderRole, AppRoles.Customer);
+
+        return new PharmacistMessageThreadViewModel
         {
             Id = thread.Id,
-            Subject = thread.Subject,
-            CounterpartyName = !string.IsNullOrWhiteSpace(thread.CustomerName)
-                ? thread.CustomerName
-                : thread.CounterpartyName,
-            CounterpartyRole = !string.IsNullOrWhiteSpace(thread.CustomerEmail)
-                ? AppRoles.Customer
-                : thread.CounterpartyRole,
-            UpdatedAtUtc = thread.UpdatedAtUtc,
-            UnreadCount = thread.Messages.Count(message => !message.IsReadByPharmacist && !AppRoles.Matches(message.SenderRole, AppRoles.Pharmacist)),
-            LastMessagePreview = thread.Messages.OrderByDescending(message => message.SentAtUtc).FirstOrDefault()?.Body ?? string.Empty,
-            Messages = thread.Messages
-                .OrderBy(message => message.SentAtUtc)
+            OrderNumber = thread.OrderNumber,
+            OrderReference = string.IsNullOrWhiteSpace(thread.OrderReference) ? thread.OrderNumber : thread.OrderReference,
+            CustomerName = thread.CustomerName,
+            CustomerUid = thread.CustomerEmail,
+            OrderStatus = thread.OrderStatus,
+            PaymentStatus = thread.PaymentStatus,
+            PrescriptionStatus = thread.PrescriptionStatus,
+            RequiresPrescription = thread.RequiresPrescription,
+            CreatedAtUtc = thread.CreatedAtUtc == default ? thread.UpdatedAtUtc : thread.CreatedAtUtc,
+            UpdatedAtUtc = lastMessage?.SentAtUtc ?? thread.UpdatedAtUtc,
+            MessageCount = orderedMessages.Count,
+            NeedsReply = needsReply,
+            LastMessagePreview = lastMessage?.Body ?? "No messages yet.",
+            Messages = orderedMessages
                 .Select(message => new PharmacistMessageEntryViewModel
                 {
+                    SenderUid = string.Empty,
                     SenderName = message.SenderName,
                     SenderRole = message.SenderRole,
+                    RecipientRole = AppRoles.Matches(message.SenderRole, AppRoles.Customer)
+                        ? AppRoles.Pharmacist
+                        : AppRoles.Customer,
                     Body = message.Body,
-                    SentAtUtc = message.SentAtUtc,
-                    IsReadByPharmacist = message.IsReadByPharmacist
+                    SentAtUtc = message.SentAtUtc
                 })
                 .ToList()
         };
+    }
+
+    private async Task TryUpdatePharmacistAssignmentAsync(
+        PharmacyOrder order,
+        PaymentRecord? payment,
+        string? documentId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(order.CustomerUid))
+        {
+            return;
+        }
+
+        try
+        {
+            await firebaseOrderChatService.UpdatePharmacistAssignmentAsync(
+                order,
+                payment,
+                ResolveCurrentPharmacistIdentity(order),
+                documentId,
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Failed to update Firestore pharmacist assignment for order {OrderNumber}.",
+                order.OrderNumber);
+        }
+    }
+
+    private FirebasePharmacistIdentity ResolveCurrentPharmacistIdentity(PharmacyOrder order) =>
+        new()
+        {
+            Uid = string.IsNullOrWhiteSpace(CurrentEmail)
+                ? ResolveFallbackStaffUid(CurrentUsername)
+                : CurrentEmail.Trim().ToLowerInvariant(),
+            Name = string.IsNullOrWhiteSpace(CurrentUsername)
+                ? "Pharmacist"
+                : CurrentUsername.Trim(),
+            PharmacyName = string.IsNullOrWhiteSpace(order.FulfillmentBranch)
+                ? "SafeMed Pharmacy"
+                : order.FulfillmentBranch.Trim()
+        };
+
+
+    private static string ResolveFallbackStaffUid(string staffName)
+    {
+        if (string.IsNullOrWhiteSpace(staffName))
+        {
+            return "pharmacist";
+        }
+
+        var slugCharacters = staffName
+            .Trim()
+            .ToLowerInvariant()
+            .Select(character => char.IsLetterOrDigit(character) ? character : '-')
+            .ToArray();
+        var slug = new string(slugCharacters).Trim('-');
+        return string.IsNullOrWhiteSpace(slug) ? "pharmacist" : $"pharmacist-{slug}";
+    }
 
     private static List<PrescriptionAssetViewModel> BuildPrescriptionAssets(string? json, IWebHostEnvironment environment)
     {
@@ -1376,9 +1500,8 @@ public sealed class PharmacistModulesController(
         try
         {
             await firebaseSyncService.UpdateOrderStatusAsync(
-                order.OrderNumber,
-                order.OrderStatus,
-                paymentStatus,
+                order,
+                order.Payment,
                 cancellationToken);
         }
         catch (Exception exception)

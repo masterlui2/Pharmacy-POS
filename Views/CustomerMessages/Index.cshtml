@@ -1,5 +1,4 @@
 @model PharmacyPOS.Models.Messages.CustomerMessagesViewModel
-@using PharmacyPOS.Models.Security
 @{
     ViewData["Title"] = "Messages";
 }
@@ -13,7 +12,7 @@
         <div>
             <p class="customer-chat-page__eyebrow">Customer Support</p>
             <h1>Messages</h1>
-            <p>Talk directly with the pharmacist about prescriptions, order updates, and medicine questions.</p>
+            <p>Choose an order and talk directly with the pharmacist about that purchase, prescription review, or delivery update.</p>
         </div>
     </header>
 
@@ -42,91 +41,139 @@
     <div class="customer-chat-shell">
         <aside class="customer-chat-sidebar">
             <header class="customer-chat-sidebar__header">
-                <p class="customer-chat-page__eyebrow">Inbox</p>
-                <h2>Pharmacist</h2>
-                <span>@Model.UnreadCount unread</span>
+                <p class="customer-chat-page__eyebrow">Your Orders</p>
+                <h2>Chat Threads</h2>
+                <span>@Model.UnreadCount unread replies</span>
             </header>
 
             <div class="customer-chat-thread-list">
-                <article class="customer-chat-thread customer-chat-thread--active">
-                    <div class="customer-chat-thread__avatar">
-                        <i class="bi bi-chat-heart"></i>
-                    </div>
-                    <div class="customer-chat-thread__body">
-                        <div class="customer-chat-thread__topline">
-                            <strong>@Model.SupportName</strong>
-                            <span>@(Model.UpdatedAtUtc?.ToLocalTime().ToString("MMM dd") ?? "Now")</span>
-                        </div>
-                        <p>@Model.SupportSubtitle</p>
-                    </div>
-                    @if (Model.UnreadCount > 0)
-                    {
-                        <span class="customer-chat-thread__badge">@Model.UnreadCount</span>
-                    }
-                </article>
-            </div>
-
-            <div class="customer-chat-sidebar__note">
-                <i class="bi bi-shield-check"></i>
-                <p>Ask about prescriptions, order updates, and pharmacist guidance.</p>
-            </div>
-        </aside>
-
-        <section class="customer-chat-panel">
-            <header class="customer-chat-panel__header">
-                <div class="customer-chat-panel__identity">
-                    <div class="customer-chat-thread__avatar customer-chat-thread__avatar--large">
-                        <i class="bi bi-chat-heart"></i>
-                    </div>
-                    <div>
-                        <h2>@Model.SupportName</h2>
-                        <p>@(Model.HasThread ? "Typically replies in this thread." : "Start a conversation with the pharmacist.")</p>
-                    </div>
-                </div>
-            </header>
-
-            <div class="customer-chat-scroll">
-                @if (Model.Messages.Count == 0)
+                @if (!Model.HasOrders)
                 {
-                    <div class="customer-chat-empty">
-                        <i class="bi bi-chat-dots"></i>
-                        <h3>No messages yet</h3>
-                        <p>Send your first message and the pharmacist will reply here.</p>
+                    <div class="customer-chat-sidebar__empty">
+                        <i class="bi bi-bag-x"></i>
+                        <p>No orders yet. Place an order first to open a pharmacist chat thread.</p>
                     </div>
                 }
                 else
                 {
-                    @foreach (var message in Model.Messages)
+                    @foreach (var thread in Model.OrderThreads)
                     {
-                        <article class="customer-chat-bubble @(message.IsCustomerMessage ? "customer-chat-bubble--self" : string.Empty)">
-                            @if (!message.IsCustomerMessage)
+                        <a class="customer-chat-thread @(thread.OrderNumber == Model.SelectedOrderNumber ? "customer-chat-thread--active" : string.Empty)"
+                           asp-action="Index"
+                           asp-route-orderNumber="@thread.OrderNumber">
+                            <div class="customer-chat-thread__avatar">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <div class="customer-chat-thread__body">
+                                <div class="customer-chat-thread__topline">
+                                    <strong>@thread.OrderNumber</strong>
+                                    <span>@thread.UpdatedAtUtc.ToLocalTime().ToString("MMM dd")</span>
+                                </div>
+                                <p>@thread.ItemSummary</p>
+                                <small>@thread.OrderStatus | @thread.PaymentStatus</small>
+                            </div>
+                            @if (thread.UnreadCount > 0)
                             {
-                                <header>
-                                    <strong>@message.SenderName</strong>
-                                </header>
+                                <span class="customer-chat-thread__badge">@thread.UnreadCount</span>
                             }
-                            <p>@message.Body</p>
-                            <small>
-                                @(message.IsCustomerMessage ? "You" : message.SenderRole) • @message.SentAtUtc.ToLocalTime().ToString("MMM dd, hh:mm tt")
-                            </small>
-                        </article>
+                        </a>
                     }
                 }
             </div>
 
-            <form method="post" asp-action="Send" class="customer-chat-composer">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="Subject" value="@Model.Subject" />
-                <label for="messageBody" class="visually-hidden">Message</label>
-                <textarea id="messageBody" name="Body" rows="4" placeholder="Type your message to the pharmacist..." required></textarea>
-                <div class="customer-chat-composer__row">
-                    <span>Your message will be sent to the pharmacist team.</span>
-                    <button type="submit" class="customer-chat-send">
-                        <i class="bi bi-send-fill"></i>
-                        <span>Send Message</span>
-                    </button>
+            <div class="customer-chat-sidebar__note">
+                <i class="bi bi-shield-check"></i>
+                <p>Each chat is linked to one order so the pharmacist can see exactly what you bought.</p>
+            </div>
+        </aside>
+
+        <section class="customer-chat-panel">
+            @if (Model.ActiveThread is null)
+            {
+                <div class="customer-chat-empty customer-chat-empty--panel">
+                    <i class="bi bi-chat-dots"></i>
+                    <h3>No order selected</h3>
+                    <p>Select an order from the left to open its pharmacist chat.</p>
                 </div>
-            </form>
+            }
+            else
+            {
+                <header class="customer-chat-panel__header">
+                    <div class="customer-chat-panel__identity">
+                        <div class="customer-chat-thread__avatar customer-chat-thread__avatar--large">
+                            <i class="bi bi-chat-heart"></i>
+                        </div>
+                        <div>
+                            <h2>@Model.SupportName</h2>
+                            <p>Order @Model.ActiveThread.OrderNumber | Ref @Model.ActiveThread.OrderReference</p>
+                        </div>
+                    </div>
+                </header>
+
+                <section class="customer-chat-order-summary">
+                    <div class="customer-chat-order-summary__meta">
+                        <strong>@Model.ActiveThread.ItemSummary</strong>
+                        <span>@Model.ActiveThread.ItemsCount item@(Model.ActiveThread.ItemsCount == 1 ? string.Empty : "s") | PHP @Model.ActiveThread.TotalAmount.ToString("N2")</span>
+                    </div>
+                    <div class="customer-chat-order-summary__badges">
+                        <span>@Model.ActiveThread.OrderStatus</span>
+                        <span>@Model.ActiveThread.PaymentStatus</span>
+                        @if (Model.ActiveThread.RequiresPrescription)
+                        {
+                            <span>Rx: @Model.ActiveThread.PrescriptionStatus</span>
+                        }
+                    </div>
+                    <div class="customer-chat-order-items">
+                        @foreach (var item in Model.ActiveThread.Items)
+                        {
+                            <span>@item.ProductName x@item.Quantity</span>
+                        }
+                    </div>
+                </section>
+
+                <div class="customer-chat-scroll">
+                    @if (Model.ActiveThread.Messages.Count == 0)
+                    {
+                        <div class="customer-chat-empty">
+                            <i class="bi bi-chat-dots"></i>
+                            <h3>No messages yet</h3>
+                            <p>Send your first message for this order and the pharmacist will reply here.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var message in Model.ActiveThread.Messages)
+                        {
+                            <article class="customer-chat-bubble @(message.IsCustomerMessage ? "customer-chat-bubble--self" : string.Empty)">
+                                @if (!message.IsCustomerMessage)
+                                {
+                                    <header>
+                                        <strong>@message.SenderName</strong>
+                                    </header>
+                                }
+                                <p>@message.Body</p>
+                                <small>
+                                    @(message.IsCustomerMessage ? "You" : message.SenderRole) | @message.SentAtUtc.ToLocalTime().ToString("MMM dd, hh:mm tt")
+                                </small>
+                            </article>
+                        }
+                    }
+                </div>
+
+                <form method="post" asp-action="Send" class="customer-chat-composer">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="OrderNumber" value="@Model.ActiveThread.OrderNumber" />
+                    <label for="messageBody" class="visually-hidden">Message</label>
+                    <textarea id="messageBody" name="Body" rows="4" placeholder="Type your message to the pharmacist about this order..." required></textarea>
+                    <div class="customer-chat-composer__row">
+                        <span>Your message will stay linked to order @Model.ActiveThread.OrderNumber.</span>
+                        <button type="submit" class="customer-chat-send">
+                            <i class="bi bi-send-fill"></i>
+                            <span>Send Message</span>
+                        </button>
+                    </div>
+                </form>
+            }
         </section>
     </div>
 </section>

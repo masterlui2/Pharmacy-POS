@@ -1,0 +1,38 @@
+.homepage-promo-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  padding: 0.5rem 0 1.5rem;
+}
+
+.homepage-promo-card {
+  display: block;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid #dbe3ea;
+  background: #fff;
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.06);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.homepage-promo-card img {
+  width: 100%;
+  display: block;
+  height: auto;
+}
+
+.homepage-promo-card:hover,
+.homepage-promo-card:focus-visible {
+  transform: translateY(-4px);
+  border-color: #ef1c25;
+  box-shadow: 0 24px 40px rgba(239, 28, 37, 0.14);
+}
+
+@media (max-width: 1100px) {
+  .homepage-promo-panels {
+    grid-template-columns: 1fr;
+  }
+}

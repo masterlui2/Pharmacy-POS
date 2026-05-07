@@ -275,28 +275,37 @@ public class PrescriptionStatusUpdateRequest
 public class PharmacistMessageThreadViewModel
 {
     public int Id { get; init; }
-    public string Subject { get; init; } = string.Empty;
-    public string CounterpartyName { get; init; } = string.Empty;
-    public string CounterpartyRole { get; init; } = string.Empty;
+    public string OrderNumber { get; init; } = string.Empty;
+    public string OrderReference { get; init; } = string.Empty;
+    public string CustomerName { get; init; } = string.Empty;
+    public string CustomerUid { get; init; } = string.Empty;
+    public string OrderStatus { get; init; } = string.Empty;
+    public string PaymentStatus { get; init; } = string.Empty;
+    public string PrescriptionStatus { get; init; } = string.Empty;
+    public bool RequiresPrescription { get; init; }
+    public DateTime CreatedAtUtc { get; init; }
     public DateTime UpdatedAtUtc { get; init; }
-    public int UnreadCount { get; init; }
+    public int MessageCount { get; init; }
+    public bool NeedsReply { get; init; }
     public string LastMessagePreview { get; init; } = string.Empty;
     public List<PharmacistMessageEntryViewModel> Messages { get; init; } = [];
 }
 
 public class PharmacistMessageEntryViewModel
 {
+    public string SenderUid { get; init; } = string.Empty;
     public string SenderName { get; init; } = string.Empty;
     public string SenderRole { get; init; } = string.Empty;
+    public string RecipientRole { get; init; } = string.Empty;
     public string Body { get; init; } = string.Empty;
-    public DateTime SentAtUtc { get; init; }
-    public bool IsReadByPharmacist { get; init; }
+    public DateTime? SentAtUtc { get; init; }
+    public bool IsCustomerMessage => string.Equals(SenderRole, "customer", StringComparison.OrdinalIgnoreCase);
+    public bool IsSystemMessage => string.Equals(SenderRole, "system", StringComparison.OrdinalIgnoreCase);
 }
 
 public class PharmacistMessageSendRequest
 {
     public int? ThreadId { get; init; }
-    public string Subject { get; init; } = string.Empty;
 
     [Required]
     public string Body { get; init; } = string.Empty;
