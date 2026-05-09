@@ -12,6 +12,7 @@ public class CheckoutService(
     PharmacyPosDbContext dbContext,
     IPayMongoService payMongoService,
     IFirebaseSyncService firebaseSyncService,
+    IFirebaseCustomerUidResolver firebaseCustomerUidResolver,
     IOptions<GoogleMapsDeliveryOptions> deliveryOptionsAccessor,
     ILogger<CheckoutService> logger) : ICheckoutService
 {
@@ -106,10 +107,15 @@ public class CheckoutService(
             : await dbContext.Accounts.FirstOrDefaultAsync(
                 candidate => candidate.Email == customerEmail,
                 cancellationToken);
+        var customerUid = await ResolveAndStoreAccountFirebaseUidAsync(
+            account,
+            customerEmail,
+            cancellationToken);
 
         return await PersistOrderAsync(
             new OrderCreationRequest
             {
+                CustomerUid = customerUid,
                 CustomerEmail = customerEmail,
                 PaymentReference = null,
                 FullName = request.FullName,
@@ -200,6 +206,7 @@ public class CheckoutService(
             : await dbContext.Accounts.FirstOrDefaultAsync(
                 candidate => candidate.Email == customerEmail,
                 cancellationToken);
+        await EnsureAccountFirebaseUidAsync(account, firebaseUid, cancellationToken);
 
         return await PersistOrderAsync(
             new OrderCreationRequest
@@ -356,7 +363,7 @@ public class CheckoutService(
             OrderNumber = GenerateOrderNumber(),
             AccountId = account?.Id,
             CustomerFullName = request.FullName.Trim(),
-            CustomerUid = request.CustomerUid.Trim(),
+            CustomerUid = ResolveCustomerUid(request.CustomerUid, account),
             CustomerEmail = request.CustomerEmail.Trim(),
             CustomerPhoneNumber = request.PhoneNumber.Trim(),
             DeliveryAddress = request.DeliveryAddress.Trim(),
@@ -715,6 +722,49 @@ public class CheckoutService(
 
     private static decimal FromMinorAmount(long amount) => amount / 100m;
 
+    private async Task EnsureAccountFirebaseUidAsync(
+        Account? account,
+        string firebaseUid,
+        CancellationToken cancellationToken)
+    {
+        if (account is null || string.IsNullOrWhiteSpace(firebaseUid))
+        {
+            return;
+        }
+
+        var normalizedFirebaseUid = firebaseUid.Trim();
+        if (string.Equals(account.FirebaseUid, normalizedFirebaseUid, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        account.FirebaseUid = normalizedFirebaseUid;
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<string> ResolveAndStoreAccountFirebaseUidAsync(
+        Account? account,
+        string customerEmail,
+        CancellationToken cancellationToken)
+    {
+        var customerUid = await firebaseCustomerUidResolver.ResolveCustomerUidAsync(
+            account,
+            customerEmail,
+            cancellationToken);
+        if (account is not null &&
+            !string.IsNullOrWhiteSpace(customerUid) &&
+            !string.Equals(account.FirebaseUid, customerUid, StringComparison.Ordinal))
+        {
+            account.FirebaseUid = customerUid;
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return customerUid;
+    }
+
+    private static string ResolveCustomerUid(string requestCustomerUid, Account? account) =>
+        FirstNonEmpty(requestCustomerUid, account?.FirebaseUid);
+
     private ShippingProfile GetShippingProfile(string deliveryOption) =>
         string.Equals(deliveryOption, "Express", StringComparison.OrdinalIgnoreCase)
             ? new ShippingProfile("Express", 20, 35, 45m)
@@ -802,6 +852,9 @@ public class CheckoutService(
     private static readonly string[] AllowedPaymentMethods = ["CashOnDelivery", "GCash", "EWallet", "Card", "PayMaya", "Maya"];
     private static readonly string[] AllowedDeliveryOptions = ["Standard", "Express"];
     private static readonly string[] AllowedMobilePaymentMethods = ["gcash", "paymaya", "maya", "card"];
+
+    private static string FirstNonEmpty(params string?[] values) =>
+        values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim() ?? string.Empty;
 
     private async Task TrySyncOrderAsync(
         PharmacyOrder order,

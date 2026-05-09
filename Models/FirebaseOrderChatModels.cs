@@ -31,3 +31,18 @@ public sealed class FirebaseOrderChatMessage
 
     public DateTime? CreatedAtUtc { get; init; }
 }
+
+public sealed class FirebaseOrderChatMessageWriteRequest
+{
+    public string SenderId { get; init; } = string.Empty;
+
+    public string SenderRole { get; init; } = string.Empty;
+
+    public string SenderName { get; init; } = string.Empty;
+
+    public string RecipientRole { get; init; } = string.Empty;
+
+    public string Text { get; init; } = string.Empty;
+
+    public FirebasePharmacistIdentity? Pharmacist { get; init; }
+}

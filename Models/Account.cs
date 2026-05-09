@@ -27,6 +27,8 @@ public class Account
     [Required]
     public string Role { get; set; } = "Customer";
 
+    public string FirebaseUid { get; set; } = string.Empty;
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public List<CustomerAddress> CustomerAddresses { get; set; } = [];

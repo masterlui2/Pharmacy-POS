@@ -1313,7 +1313,8 @@
 .pharm-chat-shell {
   display: grid;
   grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
-  min-height: 72vh;
+  height: clamp(560px, calc(100vh - 245px), 760px);
+  min-height: 0;
   border: 1px solid var(--line);
   border-radius: 28px;
   background: var(--surface);
@@ -1324,6 +1325,7 @@
 .pharm-chat-sidebar {
   display: flex;
   flex-direction: column;
+  min-height: 0;
   min-width: 0;
   border-right: 1px solid var(--line);
   background:
@@ -1355,11 +1357,84 @@
   font-weight: 800;
 }
 
+.pharm-chat-sidebar__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d9dee8;
+  border-radius: 10px;
+  color: var(--muted);
+  background: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pharm-chat-search {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.pharm-chat-search__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid #e1e6ef;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.pharm-chat-search__row i {
+  color: var(--muted);
+  padding-left: 6px;
+  font-size: 0.95rem;
+}
+
+.pharm-chat-search__row .form-control {
+  min-height: 36px;
+  padding: 0 4px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  font-size: 0.86rem;
+}
+
+.pharm-chat-search__row .form-control:focus {
+  box-shadow: none;
+}
+
+.pharm-chat-search__row .btn {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.pharm-chat-search__clear {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pharm-chat-search__clear:hover {
+  color: var(--primary);
+}
+
 .pharm-chat-list {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;
   padding: 16px;
   overflow-y: auto;
 }
@@ -1469,12 +1544,18 @@
 .pharm-chat-main {
   display: flex;
   flex-direction: column;
+  min-height: 0;
   min-width: 0;
+  overflow: hidden;
   background:
     linear-gradient(180deg, #fffdfd 0%, #ffffff 100%);
 }
 
 .pharm-chat-main__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   padding: 22px 24px 18px;
   border-bottom: 1px solid var(--line);
 }
@@ -1518,6 +1599,7 @@
   flex: 1;
   flex-direction: column;
   gap: 16px;
+  min-height: 0;
   padding: 24px;
   overflow-y: auto;
   background:
@@ -1584,6 +1666,7 @@
 
 .pharm-chat-composer textarea {
   min-height: 86px;
+  max-height: 150px;
   resize: vertical;
 }
 
@@ -1595,6 +1678,45 @@
   box-shadow: var(--card-shadow);
 }
 
+.pharm-chat-pagination {
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.pharm-chat-pagination .admin-pagination {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
+
+.pharm-chat-pagination .admin-pagination__summary,
+.pharm-chat-pagination .admin-pagination__limit {
+  justify-content: space-between;
+}
+
+.pharm-chat-pagination .admin-pagination__nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.pharm-chat-pagination .admin-pagination__button,
+.pharm-chat-pagination .admin-pagination__page {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+}
+
+.pharm-chat-pagination .admin-pagination__button {
+  flex: 1;
+}
+
 @media (max-width: 1100px) {
   .pharm-chat-shell {
     grid-template-columns: 320px minmax(0, 1fr);
@@ -1604,12 +1726,23 @@
 @media (max-width: 991.98px) {
   .pharm-chat-shell {
     grid-template-columns: 1fr;
+    height: auto;
     min-height: auto;
   }
 
   .pharm-chat-sidebar {
     border-right: 0;
     border-bottom: 1px solid var(--line);
+    max-height: 520px;
+  }
+
+  .pharm-chat-main {
+    min-height: 620px;
+  }
+
+  .pharm-chat-main__header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .pharm-chat-bubble {

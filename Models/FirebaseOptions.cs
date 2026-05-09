@@ -13,4 +13,6 @@ public class FirebaseOptions
     public string DefaultPharmacistUid { get; set; } = string.Empty;
 
     public string DefaultPharmacistName { get; set; } = string.Empty;
+
+    public Dictionary<string, string> CustomerUidByEmail { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }

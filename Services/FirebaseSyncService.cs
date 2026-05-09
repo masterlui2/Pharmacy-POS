@@ -29,7 +29,9 @@ public class FirebaseSyncService(
         var data = BuildOrderDocument(
             order,
             payment,
-            ResolvePharmacistIdentity(order, pharmacist: null),
+            ResolvePharmacyName(order),
+            pharmacist: null,
+            includeBlankPharmacist: true,
             includeLastMessageAt: false);
 
         await document.SetAsync(data, SetOptions.MergeAll, cancellationToken);
@@ -59,18 +61,13 @@ public class FirebaseSyncService(
             documentIdOverride: null,
             cancellationToken);
         var document = firestoreDb.Collection("orders").Document(documentId);
-        var orderReference = FirebaseOrderContract.ResolveOrderReference(order, payment);
-        var data = new Dictionary<string, object?>
-        {
-            ["orderNumber"] = order.OrderNumber,
-            ["referenceNumber"] = orderReference,
-            ["reference_number"] = orderReference,
-            ["orderReference"] = orderReference,
-            ["status"] = order.OrderStatus,
-            ["orderStatus"] = order.OrderStatus,
-            ["paymentStatus"] = payment?.Status ?? "Pending",
-            ["updatedAt"] = FieldValue.ServerTimestamp
-        };
+        var data = BuildOrderDocument(
+            order,
+            payment,
+            ResolvePharmacyName(order),
+            pharmacist: null,
+            includeBlankPharmacist: false,
+            includeLastMessageAt: false);
 
         await document.SetAsync(data, SetOptions.MergeAll, cancellationToken);
     }
@@ -167,57 +164,43 @@ public class FirebaseSyncService(
         FirebasePharmacistIdentity pharmacist,
         string body,
         string? documentId,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(order.OrderNumber))
-        {
-            throw new InvalidOperationException("Order number is required before sending a pharmacist reply.");
-        }
-
-        if (string.IsNullOrWhiteSpace(body))
-        {
-            throw new InvalidOperationException("Message body is required before sending a pharmacist reply.");
-        }
-
-        var firestoreDb = GetRequiredFirestore(order.OrderNumber);
-        var pharmacistIdentity = ResolvePharmacistIdentity(order, pharmacist);
-        var resolvedDocumentId = await ResolveOrderDocumentIdAsync(
-            firestoreDb,
+        CancellationToken cancellationToken) =>
+        await SendOrderMessageAsyncInternal(
             order,
             payment,
+            new FirebaseOrderChatMessageWriteRequest
+            {
+                SenderId = pharmacist.Uid,
+                SenderRole = "pharmacist",
+                SenderName = pharmacist.Name,
+                RecipientRole = "customer",
+                Text = body,
+                Pharmacist = pharmacist
+            },
             documentId,
             cancellationToken);
-        var orderReference = FirebaseOrderContract.ResolveOrderReference(order, payment);
-        var orderDocument = firestoreDb.Collection("orders").Document(resolvedDocumentId);
-        var messageDocument = orderDocument.Collection("messages").Document();
-        var batch = firestoreDb.StartBatch();
 
-        batch.Set(
-            messageDocument,
-            new Dictionary<string, object?>
+    public async Task SendCustomerMessageAsync(
+        PharmacyOrder order,
+        PaymentRecord? payment,
+        string senderUid,
+        string senderName,
+        string body,
+        string? documentId,
+        CancellationToken cancellationToken) =>
+        await SendOrderMessageAsyncInternal(
+            order,
+            payment,
+            new FirebaseOrderChatMessageWriteRequest
             {
-                ["type"] = "text",
-                ["text"] = body.Trim(),
-                ["orderId"] = resolvedDocumentId,
-                ["orderReference"] = orderReference,
-                ["senderUid"] = pharmacistIdentity.Uid,
-                ["senderRole"] = "pharmacist",
-                ["senderName"] = pharmacistIdentity.Name,
-                ["recipientRole"] = "customer",
-                ["createdAt"] = FieldValue.ServerTimestamp
-            });
-
-        batch.Set(
-            orderDocument,
-            BuildOrderDocument(
-                order,
-                payment,
-                pharmacistIdentity,
-                includeLastMessageAt: true),
-            SetOptions.MergeAll);
-
-        await batch.CommitAsync(cancellationToken);
-    }
+                SenderId = senderUid,
+                SenderRole = "customer",
+                SenderName = senderName,
+                RecipientRole = "pharmacist",
+                Text = body
+            },
+            documentId,
+            cancellationToken);
 
     public async Task UpdatePharmacistAssignmentAsync(
         PharmacyOrder order,
@@ -232,6 +215,7 @@ public class FirebaseSyncService(
         }
 
         var firestoreDb = GetRequiredFirestore(order.OrderNumber);
+        var pharmacistIdentity = ResolvePharmacistIdentity(order, pharmacist);
         var resolvedDocumentId = await ResolveOrderDocumentIdAsync(
             firestoreDb,
             order,
@@ -244,7 +228,9 @@ public class FirebaseSyncService(
             BuildOrderDocument(
                 order,
                 payment,
-                ResolvePharmacistIdentity(order, pharmacist),
+                pharmacistIdentity.PharmacyName,
+                pharmacistIdentity,
+                includeBlankPharmacist: true,
                 includeLastMessageAt: false),
             SetOptions.MergeAll,
             cancellationToken);
@@ -300,7 +286,9 @@ public class FirebaseSyncService(
     private Dictionary<string, object?> BuildOrderDocument(
         PharmacyOrder order,
         PaymentRecord? payment,
-        FirebasePharmacistIdentity pharmacist,
+        string pharmacyName,
+        FirebasePharmacistIdentity? pharmacist,
+        bool includeBlankPharmacist,
         bool includeLastMessageAt)
     {
         var orderReference = FirebaseOrderContract.ResolveOrderReference(order, payment);
@@ -319,25 +307,18 @@ public class FirebaseSyncService(
             ["orderStatus"] = order.OrderStatus,
             ["paymentStatus"] = payment?.Status ?? "Pending",
             ["paymentMethod"] = order.PaymentMethod,
-            ["pharmacyName"] = pharmacist.PharmacyName,
+            ["pharmacyName"] = pharmacyName,
             ["pharmacy"] = new Dictionary<string, object?>
             {
-                ["name"] = pharmacist.PharmacyName
-            },
-            ["pharmacistUid"] = pharmacist.Uid,
-            ["pharmacistName"] = pharmacist.Name,
-            ["pharmacist"] = new Dictionary<string, object?>
-            {
-                ["uid"] = pharmacist.Uid,
-                ["name"] = pharmacist.Name
+                ["name"] = pharmacyName
             },
             ["requiresPrescription"] = order.RequiresPrescription,
             ["prescriptionRequired"] = order.RequiresPrescription,
-            ["totalAmount"] = order.TotalAmount,
-            ["subtotalAmount"] = order.SubtotalAmount,
-            ["taxAmount"] = order.TaxAmount,
-            ["shippingAmount"] = order.ShippingAmount,
-            ["discountAmount"] = order.DiscountAmount,
+            ["totalAmount"] = ToFirestoreNumber(order.TotalAmount),
+            ["subtotalAmount"] = ToFirestoreNumber(order.SubtotalAmount),
+            ["taxAmount"] = ToFirestoreNumber(order.TaxAmount),
+            ["shippingAmount"] = ToFirestoreNumber(order.ShippingAmount),
+            ["discountAmount"] = ToFirestoreNumber(order.DiscountAmount),
             ["deliveryAddress"] = order.DeliveryAddress,
             ["deliveryOption"] = order.DeliveryOption,
             ["fulfillmentBranch"] = order.FulfillmentBranch,
@@ -353,13 +334,26 @@ public class FirebaseSyncService(
                     ["brandName"] = item.BrandName,
                     ["imageUrl"] = item.ImageUrl,
                     ["quantity"] = item.Quantity,
-                    ["unitPrice"] = item.UnitPrice,
-                    ["taxAmount"] = item.TaxAmount,
+                    ["unitPrice"] = ToFirestoreNumber(item.UnitPrice),
+                    ["taxAmount"] = ToFirestoreNumber(item.TaxAmount),
                     ["requiresPrescription"] = item.RequiresPrescription,
-                    ["lineTotal"] = item.UnitPrice * item.Quantity
+                    ["lineTotal"] = ToFirestoreNumber(item.UnitPrice * item.Quantity)
                 })
                 .ToList()
         };
+
+        if (pharmacist is not null || includeBlankPharmacist)
+        {
+            var pharmacistUid = pharmacist?.Uid?.Trim() ?? string.Empty;
+            var pharmacistName = pharmacist?.Name?.Trim() ?? string.Empty;
+            data["pharmacistUid"] = pharmacistUid;
+            data["pharmacistName"] = pharmacistName;
+            data["pharmacist"] = new Dictionary<string, object?>
+            {
+                ["uid"] = pharmacistUid,
+                ["name"] = pharmacistName
+            };
+        }
 
         if (includeLastMessageAt)
         {
@@ -375,17 +369,13 @@ public class FirebaseSyncService(
     {
         var pharmacyName = FirstNonEmpty(
             pharmacist?.PharmacyName,
-            firebaseOptions.PharmacyName,
-            order.FulfillmentBranch,
-            "SafeMed Pharmacy");
+            ResolvePharmacyName(order));
         var pharmacistName = FirstNonEmpty(
             pharmacist?.Name,
-            firebaseOptions.DefaultPharmacistName,
-            $"{pharmacyName} Pharmacist");
+            firebaseOptions.DefaultPharmacistName);
         var pharmacistUid = FirstNonEmpty(
             pharmacist?.Uid,
-            firebaseOptions.DefaultPharmacistUid,
-            Slugify(pharmacistName, "pharmacist"));
+            firebaseOptions.DefaultPharmacistUid);
 
         return new FirebasePharmacistIdentity
         {
@@ -393,6 +383,88 @@ public class FirebaseSyncService(
             Name = pharmacistName,
             PharmacyName = pharmacyName
         };
+    }
+
+    private string ResolvePharmacyName(PharmacyOrder order) =>
+        FirstNonEmpty(
+            firebaseOptions.PharmacyName,
+            order.FulfillmentBranch,
+            "SafeMed Pharmacy");
+
+    private async Task SendOrderMessageAsyncInternal(
+        PharmacyOrder order,
+        PaymentRecord? payment,
+        FirebaseOrderChatMessageWriteRequest request,
+        string? documentId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(order.OrderNumber))
+        {
+            throw new InvalidOperationException("Order number is required before sending an order message.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Text))
+        {
+            throw new InvalidOperationException("Message body is required before sending an order message.");
+        }
+
+        var firestoreDb = GetRequiredFirestore(order.OrderNumber);
+        var resolvedDocumentId = await ResolveOrderDocumentIdAsync(
+            firestoreDb,
+            order,
+            payment,
+            documentId,
+            cancellationToken);
+        var orderReference = FirebaseOrderContract.ResolveOrderReference(order, payment);
+        var orderDocument = firestoreDb.Collection("orders").Document(resolvedDocumentId);
+        var messageDocument = orderDocument.Collection("messages").Document();
+        var batch = firestoreDb.StartBatch();
+        var senderId = request.SenderId.Trim();
+        var senderRole = request.SenderRole.Trim().ToLowerInvariant();
+        var senderName = request.SenderName.Trim();
+        var recipientRole = request.RecipientRole.Trim().ToLowerInvariant();
+
+        batch.Set(
+            messageDocument,
+            new Dictionary<string, object?>
+            {
+                ["type"] = "text",
+                ["text"] = request.Text.Trim(),
+                ["orderId"] = resolvedDocumentId,
+                ["orderReference"] = orderReference,
+                ["senderId"] = senderId,
+                ["senderUid"] = senderId,
+                ["senderRole"] = senderRole,
+                ["senderName"] = senderName,
+                ["recipientRole"] = recipientRole,
+                ["createdAt"] = FieldValue.ServerTimestamp
+            });
+
+        Dictionary<string, object?> orderData;
+        if (string.Equals(senderRole, "pharmacist", StringComparison.OrdinalIgnoreCase))
+        {
+            var pharmacistIdentity = ResolvePharmacistIdentity(order, request.Pharmacist);
+            orderData = BuildOrderDocument(
+                order,
+                payment,
+                pharmacistIdentity.PharmacyName,
+                pharmacistIdentity,
+                includeBlankPharmacist: true,
+                includeLastMessageAt: true);
+        }
+        else
+        {
+            orderData = BuildOrderDocument(
+                order,
+                payment,
+                ResolvePharmacyName(order),
+                pharmacist: null,
+                includeBlankPharmacist: false,
+                includeLastMessageAt: true);
+        }
+
+        batch.Set(orderDocument, orderData, SetOptions.MergeAll);
+        await batch.CommitAsync(cancellationToken);
     }
 
     private async Task<string> ResolveOrderDocumentIdAsync(
@@ -450,7 +522,7 @@ public class FirebaseSyncService(
             Text = ReadString(snapshot, "text", "body", "message", "content") ?? string.Empty,
             OrderId = ReadString(snapshot, "orderId", "order_id") ?? string.Empty,
             OrderReference = ReadString(snapshot, "orderReference", "referenceNumber", "reference_number") ?? string.Empty,
-            SenderUid = ReadString(snapshot, "senderUid", "sender.uid") ?? string.Empty,
+            SenderUid = ReadString(snapshot, "senderId", "senderUid", "sender.uid") ?? string.Empty,
             SenderRole = ReadString(snapshot, "senderRole") ?? string.Empty,
             SenderName = ReadString(snapshot, "senderName", "sender.name") ?? string.Empty,
             RecipientRole = ReadString(snapshot, "recipientRole") ?? string.Empty,
@@ -500,26 +572,6 @@ public class FirebaseSyncService(
     private static string FirstNonEmpty(params string?[] values) =>
         values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim() ?? string.Empty;
 
-    private static string Slugify(string value, string fallback)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return fallback;
-        }
-
-        var slugCharacters = value
-            .Trim()
-            .ToLowerInvariant()
-            .Select(character => char.IsLetterOrDigit(character) ? character : '-')
-            .ToArray();
-
-        var slug = new string(slugCharacters);
-        while (slug.Contains("--", StringComparison.Ordinal))
-        {
-            slug = slug.Replace("--", "-", StringComparison.Ordinal);
-        }
-
-        slug = slug.Trim('-');
-        return string.IsNullOrWhiteSpace(slug) ? fallback : slug;
-    }
+    private static double ToFirestoreNumber(decimal value) =>
+        decimal.ToDouble(Math.Round(value, 2, MidpointRounding.AwayFromZero));
 }

@@ -28,11 +28,12 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FlutterWebCorsPolicy, policy =>
     {
-        policy.WithOrigins("http://localhost:63608")
+        policy.WithOrigins("http://localhost:58861")
             .WithMethods("POST", "OPTIONS")
             .AllowAnyHeader();
     });
@@ -61,8 +62,11 @@ builder.Services.AddSingleton<IFirebaseSyncService>(serviceProvider =>
     serviceProvider.GetRequiredService<FirebaseSyncService>());
 builder.Services.AddSingleton<IFirebaseOrderChatService>(serviceProvider =>
     serviceProvider.GetRequiredService<FirebaseSyncService>());
+builder.Services.AddSingleton<IFirebaseCustomerUidResolver, FirebaseCustomerUidResolver>();
+builder.Services.AddHostedService<FirebaseOrderBackfillService>();
 builder.Services.AddSingleton<IAuditLogService, FileAuditLogService>();
-builder.Services.AddSingleton<IPharmacistMessagingService, FilePharmacistMessagingService>();
+builder.Services.AddSingleton<FilePharmacistMessagingService>();
+builder.Services.AddScoped<IPharmacistMessagingService, FirestoreBackedPharmacistMessagingService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddDistributedMemoryCache();

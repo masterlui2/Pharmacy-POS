@@ -24,6 +24,7 @@ public class PharmacyPosDbContext(DbContextOptions<PharmacyPosDbContext> options
             entity.Property(account => account.PhoneNumber).HasMaxLength(32);
             entity.Property(account => account.PasswordHash).HasMaxLength(512);
             entity.Property(account => account.Role).HasMaxLength(32);
+            entity.Property(account => account.FirebaseUid).HasMaxLength(128);
         });
 
         modelBuilder.Entity<CustomerAddress>(entity =>

@@ -8,6 +8,15 @@ public interface IFirebaseOrderChatService
         IEnumerable<string> orderIds,
         CancellationToken cancellationToken);
 
+    Task SendCustomerMessageAsync(
+        PharmacyOrder order,
+        PaymentRecord? payment,
+        string senderUid,
+        string senderName,
+        string body,
+        string? documentId,
+        CancellationToken cancellationToken);
+
     Task SendPharmacistReplyAsync(
         PharmacyOrder order,
         PaymentRecord? payment,

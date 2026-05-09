@@ -7,3 +7,4 @@ appsettings.*.local.json
 *.bak
 App_Data/
 wwwroot/uploads/
+firebase-debug.log

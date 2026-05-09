@@ -1,0 +1,94 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function orderPath(orderId) {
+      return /databases/$(database)/documents/orders/$(orderId);
+    }
+
+    function isCustomerOrder(orderId) {
+      return signedIn()
+        && exists(orderPath(orderId))
+        && get(orderPath(orderId)).data.customerUid == request.auth.uid;
+    }
+
+    function isCurrentCustomerSender() {
+      return request.resource.data.get('senderId', '') == request.auth.uid
+        || request.resource.data.get('senderUid', '') == request.auth.uid;
+    }
+
+    function isValidCustomerMessage(orderId) {
+      return isCustomerOrder(orderId)
+        && isCurrentCustomerSender()
+        && request.resource.data.senderRole == 'customer'
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.createdAt == request.time
+        && (!request.resource.data.keys().hasAny(['orderId'])
+          || request.resource.data.orderId == orderId)
+        && (!request.resource.data.keys().hasAny(['type'])
+          || request.resource.data.type == 'text')
+        && (!request.resource.data.keys().hasAny(['recipientRole'])
+          || request.resource.data.recipientRole == 'pharmacist')
+        && (!request.resource.data.keys().hasAny(['senderName'])
+          || request.resource.data.senderName is string);
+    }
+
+    function isCustomerOrderMetadataUpdate() {
+      return signedIn()
+        && resource.data.customerUid == request.auth.uid
+        && request.resource.data.customerUid == resource.data.customerUid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['lastMessageAt', 'updatedAt'])
+        && (!request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['lastMessageAt'])
+          || request.resource.data.lastMessageAt == request.time)
+        && (!request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['updatedAt'])
+          || request.resource.data.updatedAt == request.time);
+    }
+
+    match /users/{uid} {
+      allow read, create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    match /orders/{orderId} {
+      allow get, list: if signedIn() && resource.data.customerUid == request.auth.uid;
+      allow update: if isCustomerOrderMetadataUpdate();
+      allow create, delete: if false;
+
+      match /messages/{messageId} {
+        allow get, list: if isCustomerOrder(orderId);
+        allow create: if isValidCustomerMessage(orderId);
+        allow update, delete: if false;
+      }
+    }
+
+    match /medicines/{medicineId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /prescriptions/{prescriptionId} {
+      allow read: if signedIn() && resource.data.customerUid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.customerUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read, update: if signedIn() && resource.data.customerUid == request.auth.uid;
+      allow create, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

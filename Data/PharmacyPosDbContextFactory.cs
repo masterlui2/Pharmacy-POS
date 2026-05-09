@@ -12,6 +12,8 @@ public class PharmacyPosDbContextFactory : IDesignTimeDbContextFactory<PharmacyP
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false)
             .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
+            .AddJsonFile("appsettings.Local.json", optional: true)
+            .AddJsonFile($"appsettings.{environmentName}.local.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
 

@@ -1,4 +1,9 @@
 @model PharmacyPOS.Models.Admin.AdminModuleViewModel
+@{
+    var pagination = Model.Pagination;
+    var totalThreads = pagination?.TotalItems ?? Model.MessageThreads.Count;
+    var hasSearch = !string.IsNullOrWhiteSpace(Model.Search);
+}
 
 <section class="pharm-chat-shell">
     <aside class="pharm-chat-sidebar">
@@ -7,13 +12,44 @@
                 <p class="pharm-chat-sidebar__eyebrow">Customer Inbox</p>
                 <h4>Order Chats</h4>
             </div>
-            <span class="btn btn-outline-secondary disabled">@Model.MessageThreads.Count order@(Model.MessageThreads.Count == 1 ? string.Empty : "s")</span>
+            <span class="pharm-chat-sidebar__count">@totalThreads order@(totalThreads == 1 ? string.Empty : "s")</span>
         </header>
+
+        <form method="get"
+              asp-controller="@Model.ModuleController"
+              asp-action="Messages"
+              class="pharm-chat-search"
+              role="search">
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="pageSize" value="@(pagination?.PageSize ?? 10)" />
+            <label class="visually-hidden" for="message-thread-search">Search order chats</label>
+            <div class="pharm-chat-search__row">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input id="message-thread-search"
+                       class="form-control"
+                       type="search"
+                       name="search"
+                       value="@Model.Search"
+                       placeholder="Search customer, order, status..." />
+                <button class="btn btn-danger" type="submit">Search</button>
+            </div>
+            @if (hasSearch)
+            {
+                <a class="pharm-chat-search__clear"
+                   asp-controller="@Model.ModuleController"
+                   asp-action="Messages"
+                   asp-route-pageSize="@(pagination?.PageSize ?? 10)">
+                    Clear search
+                </a>
+            }
+        </form>
 
         <div class="pharm-chat-list">
             @if (Model.MessageThreads.Count == 0)
             {
-                <div class="admin-empty-state">No customer order chats have started yet.</div>
+                <div class="admin-empty-state">
+                    @(hasSearch ? "No order chats match your search." : "No customer order chats have started yet.")
+                </div>
             }
             else
             {
@@ -22,7 +58,10 @@
                     <a class="pharm-chat-thread @(Model.SelectedThreadId == thread.Id ? "pharm-chat-thread--active" : string.Empty)"
                        asp-controller="@Model.ModuleController"
                        asp-action="Messages"
-                       asp-route-threadId="@thread.Id">
+                       asp-route-threadId="@thread.Id"
+                       asp-route-search="@Model.Search"
+                       asp-route-page="@(pagination?.CurrentPage ?? 1)"
+                       asp-route-pageSize="@(pagination?.PageSize ?? 10)">
                         <div class="pharm-chat-thread__avatar">
                             @(thread.CustomerName.Length >= 2 ? thread.CustomerName[..2].ToUpperInvariant() : thread.CustomerName.ToUpperInvariant())
                         </div>
@@ -42,6 +81,13 @@
                 }
             }
         </div>
+
+        @if (pagination is not null)
+        {
+            <div class="pharm-chat-pagination">
+                <partial name="~/Views/Shared/_AdminPagination.cshtml" model="pagination" />
+            </div>
+        }
     </aside>
 
     <section class="pharm-chat-main">

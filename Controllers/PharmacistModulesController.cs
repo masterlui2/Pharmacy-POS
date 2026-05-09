@@ -23,7 +23,6 @@ public sealed class PharmacistModulesController(
     ILogger<PharmacistModulesController> logger) : PharmacistOnlyController
 {
     private const int DefaultPageSize = 10;
-    private const int MessageThreadLimit = 50;
     private static readonly int[] AllowedPageSizes = [10, 25, 50];
 
     public IActionResult Index() => RedirectToAction(nameof(Prescriptions));
@@ -858,54 +857,66 @@ public sealed class PharmacistModulesController(
         return View("~/Views/Modules/Module.cshtml", model);
     }
 
-    public async Task<IActionResult> Messages(int? threadId, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Messages(
+        int? threadId,
+        string? search,
+        int page = 1,
+        int pageSize = DefaultPageSize,
+        CancellationToken cancellationToken = default)
     {
+        var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
         var threads = await messagingService.GetThreadsAsync(cancellationToken);
-        var orderNumbers = threads
-            .Select(thread => thread.OrderNumber)
-            .Where(orderNumber => !string.IsNullOrWhiteSpace(orderNumber))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        if (orderNumbers.Count > 0)
-        {
-            var orders = await dbContext.Orders
-                .AsNoTracking()
-                .Include(order => order.Payment)
-                .Where(order => orderNumbers.Contains(order.OrderNumber))
-                .ToListAsync(cancellationToken);
-
-            foreach (var order in orders)
-            {
-                await messagingService.EnsureOrderThreadAsync(order, cancellationToken);
-            }
-
-            threads = await messagingService.GetThreadsAsync(cancellationToken);
-        }
-
-        var selectedThreadId = threadId ?? threads.FirstOrDefault()?.Id;
+        var allThreadViewModels = BuildMessageThreadViewModels(threads);
+        var filteredThreadViewModels = FilterMessageThreads(allThreadViewModels, normalizedSearch);
+        var pagination = BuildPagination(
+            nameof(Messages),
+            page,
+            pageSize,
+            filteredThreadViewModels.Count,
+            ("search", normalizedSearch));
+        var pagedThreadViewModels = Paginate(
+            filteredThreadViewModels,
+            pagination.CurrentPage,
+            pagination.PageSize);
+        var selectedThreadId = ResolveSelectedMessageThreadId(
+            threadId,
+            filteredThreadViewModels,
+            pagedThreadViewModels);
 
         if (selectedThreadId.HasValue)
         {
             await messagingService.MarkThreadAsReadAsync(selectedThreadId.Value, cancellationToken);
             threads = await messagingService.GetThreadsAsync(cancellationToken);
+            allThreadViewModels = BuildMessageThreadViewModels(threads);
+            filteredThreadViewModels = FilterMessageThreads(allThreadViewModels, normalizedSearch);
+            pagination = BuildPagination(
+                nameof(Messages),
+                page,
+                pageSize,
+                filteredThreadViewModels.Count,
+                ("search", normalizedSearch));
+            pagedThreadViewModels = Paginate(
+                filteredThreadViewModels,
+                pagination.CurrentPage,
+                pagination.PageSize);
+            selectedThreadId = ResolveSelectedMessageThreadId(
+                selectedThreadId,
+                filteredThreadViewModels,
+                pagedThreadViewModels);
         }
 
-        var threadViewModels = threads
-            .Take(MessageThreadLimit)
-            .Select(BuildThreadViewModel)
-            .OrderByDescending(thread => thread.UpdatedAtUtc)
-            .ToList();
-        var activeThread = threadViewModels.FirstOrDefault(thread => thread.Id == selectedThreadId);
+        var activeThread = filteredThreadViewModels.FirstOrDefault(thread => thread.Id == selectedThreadId);
 
         var model = CreateModule(
             AdminModuleKind.Messages,
             "Messages",
-            "Customer order chats stored locally in the POS and grouped by order.")
+            "Customer order chats grouped by order and synchronized with Firestore for the mobile app.")
             with
             {
+                Search = normalizedSearch,
                 SelectedThreadId = selectedThreadId,
-                MessageThreads = threadViewModels,
+                Pagination = pagination,
+                MessageThreads = pagedThreadViewModels,
                 ActiveMessageThread = activeThread,
                 WorkflowSteps = [],
                 Actions = []
@@ -1046,7 +1057,7 @@ public sealed class PharmacistModulesController(
             OrderNumber = thread.OrderNumber,
             OrderReference = string.IsNullOrWhiteSpace(thread.OrderReference) ? thread.OrderNumber : thread.OrderReference,
             CustomerName = thread.CustomerName,
-            CustomerUid = thread.CustomerEmail,
+            CustomerUid = thread.CustomerUid,
             OrderStatus = thread.OrderStatus,
             PaymentStatus = thread.PaymentStatus,
             PrescriptionStatus = thread.PrescriptionStatus,
@@ -1071,6 +1082,54 @@ public sealed class PharmacistModulesController(
                 .ToList()
         };
     }
+
+    private static List<PharmacistMessageThreadViewModel> BuildMessageThreadViewModels(
+        IEnumerable<PharmacistMessageThread> threads) =>
+        threads
+            .Select(BuildThreadViewModel)
+            .OrderByDescending(thread => thread.UpdatedAtUtc)
+            .ToList();
+
+    private static List<PharmacistMessageThreadViewModel> FilterMessageThreads(
+        IReadOnlyList<PharmacistMessageThreadViewModel> threads,
+        string? search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            return threads.ToList();
+        }
+
+        var normalizedSearch = search.Trim();
+        return threads
+            .Where(thread =>
+                ContainsIgnoreCase(thread.OrderNumber, normalizedSearch) ||
+                ContainsIgnoreCase(thread.OrderReference, normalizedSearch) ||
+                ContainsIgnoreCase(thread.CustomerName, normalizedSearch) ||
+                ContainsIgnoreCase(thread.CustomerUid, normalizedSearch) ||
+                ContainsIgnoreCase(thread.OrderStatus, normalizedSearch) ||
+                ContainsIgnoreCase(thread.PaymentStatus, normalizedSearch) ||
+                ContainsIgnoreCase(thread.PrescriptionStatus, normalizedSearch) ||
+                ContainsIgnoreCase(thread.LastMessagePreview, normalizedSearch))
+            .ToList();
+    }
+
+    private static int? ResolveSelectedMessageThreadId(
+        int? requestedThreadId,
+        IReadOnlyList<PharmacistMessageThreadViewModel> filteredThreads,
+        IReadOnlyList<PharmacistMessageThreadViewModel> pagedThreads)
+    {
+        if (requestedThreadId.HasValue &&
+            filteredThreads.Any(thread => thread.Id == requestedThreadId.Value))
+        {
+            return requestedThreadId;
+        }
+
+        return pagedThreads.FirstOrDefault()?.Id ?? filteredThreads.FirstOrDefault()?.Id;
+    }
+
+    private static bool ContainsIgnoreCase(string? value, string search) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        value.Contains(search, StringComparison.OrdinalIgnoreCase);
 
     private async Task TryUpdatePharmacistAssignmentAsync(
         PharmacyOrder order,
