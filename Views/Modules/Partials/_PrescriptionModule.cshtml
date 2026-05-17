@@ -79,7 +79,7 @@
                                 <span class="@AdminViewHelper.StatusClass(order.PaymentStatus)">@order.PaymentStatus</span>
                             </td>
                             <td data-label="Prescription">
-                                <span class="@AdminViewHelper.StatusClass(order.PrescriptionStatus)">@order.PrescriptionStatus</span>
+                                <span class="@AdminViewHelper.PrescriptionStatusClass(order.PrescriptionStatus)">@order.PrescriptionStatus</span>
                             </td>
                             <td data-label="Items" class="admin-table__numeric">@order.ItemsCount</td>
                             <td data-label="Created">@order.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>

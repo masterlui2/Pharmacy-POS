@@ -123,18 +123,43 @@ public sealed class FirestoreBackedPharmacistMessagingService(
             var customerUid = FirstNonEmpty(order.CustomerUid, thread.CustomerUid);
             if (string.IsNullOrWhiteSpace(customerUid))
             {
-                throw new InvalidOperationException(
-                    $"Order {order.OrderNumber} is not linked to a Firebase customer UID.");
+                logger.LogWarning(
+                    "Sending customer message for order {OrderNumber} to local chat storage because the order is not linked to a Firebase customer UID.",
+                    order.OrderNumber);
+                await localMessagingService.SendMessageAsync(
+                    threadId,
+                    senderName,
+                    senderRole,
+                    body,
+                    cancellationToken);
+                return;
             }
 
-            await firebaseOrderChatService.SendCustomerMessageAsync(
-                order,
-                order.Payment,
-                customerUid,
-                FirstNonEmpty(senderName, order.CustomerFullName, "Customer"),
-                body,
-                documentId: null,
-                cancellationToken);
+            try
+            {
+                await firebaseOrderChatService.SendCustomerMessageAsync(
+                    order,
+                    order.Payment,
+                    customerUid,
+                    FirstNonEmpty(senderName, order.CustomerFullName, "Customer"),
+                    body,
+                    documentId: null,
+                    cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogWarning(
+                    exception,
+                    "Firestore customer message send failed for order {OrderNumber}; using local chat storage.",
+                    order.OrderNumber);
+                await localMessagingService.SendMessageAsync(
+                    threadId,
+                    senderName,
+                    senderRole,
+                    body,
+                    cancellationToken);
+                return;
+            }
         }
         else
         {
@@ -235,9 +260,20 @@ public sealed class FirestoreBackedPharmacistMessagingService(
             .Distinct(StringComparer.Ordinal)
             .ToList();
         IReadOnlyDictionary<string, IReadOnlyList<FirebaseOrderChatMessage>> messagesByDocumentId =
-            allDocumentIds.Count == 0
-                ? new Dictionary<string, IReadOnlyList<FirebaseOrderChatMessage>>(StringComparer.Ordinal)
-                : await firebaseOrderChatService.GetMessagesByOrderAsync(allDocumentIds, cancellationToken);
+            new Dictionary<string, IReadOnlyList<FirebaseOrderChatMessage>>(StringComparer.Ordinal);
+        if (allDocumentIds.Count > 0)
+        {
+            try
+            {
+                messagesByDocumentId = await firebaseOrderChatService.GetMessagesByOrderAsync(allDocumentIds, cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogWarning(
+                    exception,
+                    "Firestore chat synchronization is unavailable; continuing with local message threads.");
+            }
+        }
 
         foreach (var order in normalizedOrders)
         {

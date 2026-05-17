@@ -11,7 +11,8 @@ namespace PharmacyPOS.Controllers;
 
 public sealed class CustomerMessagesController(
     PharmacyPosDbContext dbContext,
-    IPharmacistMessagingService messagingService) : BaseController
+    IPharmacistMessagingService messagingService,
+    ILogger<CustomerMessagesController> logger) : BaseController
 {
     [HttpGet]
     public async Task<IActionResult> Index(string? orderNumber, CancellationToken cancellationToken = default)
@@ -85,13 +86,25 @@ public sealed class CustomerMessagesController(
             return RedirectToAction(nameof(Index));
         }
 
-        var threadId = await messagingService.EnsureOrderThreadAsync(order, cancellationToken);
-        await messagingService.SendMessageAsync(
-            threadId,
-            string.IsNullOrWhiteSpace(customerName) ? "Customer" : customerName.Trim(),
-            AppRoles.Customer,
-            request.Body,
-            cancellationToken);
+        try
+        {
+            var threadId = await messagingService.EnsureOrderThreadAsync(order, cancellationToken);
+            await messagingService.SendMessageAsync(
+                threadId,
+                string.IsNullOrWhiteSpace(customerName) ? "Customer" : customerName.Trim(),
+                AppRoles.Customer,
+                request.Body,
+                cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogError(
+                exception,
+                "Failed to send customer chat message for order {OrderNumber}.",
+                order.OrderNumber);
+            TempData["Error"] = "The message could not be sent right now. Please try again.";
+            return RedirectToAction(nameof(Index), new { orderNumber = order.OrderNumber });
+        }
 
         TempData["Success"] = $"Message sent for order {order.OrderNumber}.";
         return RedirectToAction(nameof(Index), new { orderNumber = order.OrderNumber });

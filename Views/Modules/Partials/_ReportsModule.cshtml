@@ -1,6 +1,24 @@
 ﻿@model PharmacyPOS.Models.Admin.AdminModuleViewModel
 @using PharmacyPOS.Helpers
 
+<section class="admin-report-summary" aria-label="General reports revenue summary">
+    <div>
+        <span>General Reports</span>
+        <strong>PHP @Model.TotalRevenue.ToString("N2")</strong>
+        <small>Total revenue from @Model.TotalOrders.ToString("N0") transaction@(Model.TotalOrders == 1 ? string.Empty : "s")</small>
+    </div>
+    <div>
+        <span>This Month</span>
+        <strong>PHP @Model.MonthlyRevenue.ToString("N2")</strong>
+        <small>Revenue for the current calendar month</small>
+    </div>
+    <div>
+        <span>Paid Revenue</span>
+        <strong>PHP @Model.PaidRevenue.ToString("N2")</strong>
+        <small>Collected payment total</small>
+    </div>
+</section>
+
 <section class="admin-panel-grid admin-panel-grid--balanced">
     <article class="admin-panel">
         <div class="admin-panel__header">

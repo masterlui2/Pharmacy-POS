@@ -1,5 +1,6 @@
 @using PharmacyPOS.Models.Navigation
 @using PharmacyPOS.Models.Security
+@using PharmacyPOS.Helpers
 @{
     var currentController = (ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty).ToLowerInvariant();
     var currentAction = (ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty).ToLowerInvariant();
@@ -86,7 +87,7 @@
                 </div>
                 <div>
                     <strong>@username</strong>
-                    <span>@roleLabel</span>
+                    <span class="@AdminViewHelper.RoleClass(role)">@roleLabel</span>
                 </div>
             </div>
         </aside>

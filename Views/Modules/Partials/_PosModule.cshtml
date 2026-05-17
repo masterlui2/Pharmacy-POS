@@ -60,7 +60,7 @@
                                 <span class="@AdminViewHelper.StatusClass(medicine.Status)">@medicine.Stock @medicine.Status</span>
                             </td>
                             <td data-label="Prescription">
-                                <span class="@(medicine.RequiresPrescription ? "admin-badge admin-badge--warning" : "admin-badge admin-badge--success")">
+                                <span class="@AdminViewHelper.PrescriptionRequirementClass(medicine.RequiresPrescription)">
                                     @(medicine.RequiresPrescription ? "Required" : "Not required")
                                 </span>
                             </td>

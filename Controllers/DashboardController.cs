@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PharmacyPOS.Data;
 using PharmacyPOS.Models.Admin;
+using PharmacyPOS.Models.Security;
 using PharmacyPOS.Services;
 
 namespace PharmacyPOS.Controllers;
@@ -109,6 +110,8 @@ public class DashboardController(
                 CustomerName = order.CustomerFullName,
                 OrderStatus = order.OrderStatus,
                 PaymentStatus = order.Payment != null ? order.Payment.Status : "Pending",
+                PerformedByName = order.PerformedByName != "" ? order.PerformedByName : order.CustomerFullName,
+                PerformedByRole = order.PerformedByRole != "" ? order.PerformedByRole : AppRoles.Customer,
                 TotalAmount = order.TotalAmount,
                 CreatedAtUtc = order.CreatedAtUtc,
             })

@@ -70,7 +70,7 @@
                             <td data-label="Customer">@payment.CustomerName</td>
                             <td data-label="Method">@AdminViewHelper.PaymentMethodLabel(payment.PaymentMethod)</td>
                             <td data-label="Rx Status">
-                                <span class="@AdminViewHelper.StatusClass(payment.PrescriptionStatus)">
+                                <span class="@AdminViewHelper.PrescriptionStatusClass(payment.RequiresPrescription ? payment.PrescriptionStatus : "NotRequired")">
                                     @(payment.RequiresPrescription ? payment.PrescriptionStatus : "NotRequired")
                                 </span>
                             </td>
@@ -97,19 +97,18 @@
                                 }
                                 else
                                 {
-                                    <form method="post" action="@Url.Action("UpdatePaymentStatus", Model.ModuleController)" class="admin-inline-form admin-inline-form--compact">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="PaymentId" value="@payment.PaymentId" />
-                                        <select class="form-select" name="Status" aria-label="Payment status">
-                                            @foreach (var updateStatus in updateStatuses)
-                                            {
-                                                <option value="@updateStatus" selected="@(payment.Status == updateStatus)">@updateStatus</option>
-                                            }
-                                        </select>
-                                        <button class="btn btn-outline-danger" type="submit" data-bs-toggle="tooltip" title="Update payment status">
-                                            <i class="bi bi-save"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger admin-icon-button"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#paymentStatusModal"
+                                            data-payment-id="@payment.PaymentId"
+                                            data-payment-order="@payment.OrderNumber"
+                                            data-payment-customer="@payment.CustomerName"
+                                            data-payment-status="@payment.Status"
+                                            aria-label="Update payment status"
+                                            title="Update payment status">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
                                 }
                             </td>
                         </tr>
@@ -124,3 +123,36 @@
         <partial name="~/Views/Shared/_AdminPagination.cshtml" model="Model.Pagination" />
     }
 </section>
+
+<div class="modal fade" id="paymentStatusModal" tabindex="-1" aria-labelledby="paymentStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content admin-modal">
+            <form method="post" action="@Url.Action("UpdatePaymentStatus", Model.ModuleController)">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="paymentStatusModalLabel">Update Payment Status</h5>
+                        <p class="admin-modal__caption" data-payment-status-caption>Select the new status for this payment.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="PaymentId" data-payment-status-id />
+                    <label class="form-label" for="paymentStatusSelect">Status</label>
+                    <select class="form-select" id="paymentStatusSelect" name="Status" data-payment-status-select>
+                        @foreach (var updateStatus in updateStatuses)
+                        {
+                            <option value="@updateStatus">@updateStatus</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger" type="submit">
+                        <i class="bi bi-save"></i> Save Status
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

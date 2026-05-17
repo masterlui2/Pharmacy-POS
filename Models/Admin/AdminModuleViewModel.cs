@@ -48,6 +48,10 @@ public record AdminModuleViewModel
     public List<AdminSalesOrderRowViewModel> Orders { get; init; } = [];
     public List<AdminReceiptSummaryViewModel> ReceiptOrders { get; init; } = [];
     public AdminReceiptViewModel? Receipt { get; init; }
+    public decimal TotalRevenue { get; init; }
+    public decimal MonthlyRevenue { get; init; }
+    public decimal PaidRevenue { get; init; }
+    public int TotalOrders { get; init; }
     public List<AdminInventoryAlertViewModel> InventoryAlerts { get; init; } = [];
     public List<AdminTopProductViewModel> TopProducts { get; init; } = [];
     public List<AdminRevenueBreakdownViewModel> RevenueByPaymentMethod { get; init; } = [];
@@ -107,6 +111,8 @@ public class AdminPaymentRowViewModel
     public string PaymentMethod { get; init; } = string.Empty;
     public string Status { get; init; } = string.Empty;
     public string OrderStatus { get; init; } = string.Empty;
+    public string PerformedByName { get; init; } = string.Empty;
+    public string PerformedByRole { get; init; } = string.Empty;
     public decimal Amount { get; init; }
     public string ReferenceNumber { get; init; } = string.Empty;
     public string Provider { get; init; } = string.Empty;
@@ -124,6 +130,8 @@ public class AdminSalesOrderRowViewModel
     public string PaymentMethod { get; init; } = string.Empty;
     public string PaymentStatus { get; init; } = string.Empty;
     public string OrderStatus { get; init; } = string.Empty;
+    public string PerformedByName { get; init; } = string.Empty;
+    public string PerformedByRole { get; init; } = string.Empty;
     public bool RequiresPrescription { get; init; }
     public string PrescriptionStatus { get; init; } = string.Empty;
     public decimal TotalAmount { get; init; }
@@ -136,6 +144,8 @@ public class AdminReceiptSummaryViewModel
     public string OrderNumber { get; init; } = string.Empty;
     public string CustomerName { get; init; } = string.Empty;
     public decimal TotalAmount { get; init; }
+    public string PerformedByName { get; init; } = string.Empty;
+    public string PerformedByRole { get; init; } = string.Empty;
     public bool RequiresPrescription { get; init; }
     public string PrescriptionStatus { get; init; } = string.Empty;
     public bool CanRelease { get; init; } = true;

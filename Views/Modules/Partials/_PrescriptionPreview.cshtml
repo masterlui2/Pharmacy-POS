@@ -9,7 +9,7 @@
             <p>@Model.CustomerName</p>
         </div>
         <div class="admin-rx-preview__meta">
-            <span class="@AdminViewHelper.StatusClass(Model.PrescriptionStatus)">@Model.PrescriptionStatus</span>
+            <span class="@AdminViewHelper.PrescriptionStatusClass(Model.PrescriptionStatus)">@Model.PrescriptionStatus</span>
             <span class="@AdminViewHelper.StatusClass(Model.PaymentStatus)">@Model.PaymentStatus</span>
             <small>@Model.CreatedAtUtc.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</small>
         </div>

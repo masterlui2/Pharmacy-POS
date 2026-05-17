@@ -230,33 +230,30 @@
 }
 
 .orders-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 28px;
-  padding: 0 0.7rem;
-  border-radius: 999px;
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   font-size: 0.78rem;
   font-weight: 800;
+  line-height: 1.35;
 }
 
 .orders-badge--primary {
-  background: #fee2e2;
   color: #b91c1c;
 }
 
 .orders-badge--neutral {
-  background: #e2e8f0;
   color: #334155;
 }
 
 .orders-badge--danger {
-  background: #fff1f2;
   color: #b91c1c;
 }
 
 .orders-badge--warning {
-  background: #fff7ed;
   color: #b45309;
 }
 

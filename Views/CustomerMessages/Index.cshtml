@@ -12,7 +12,7 @@
         <div>
             <p class="customer-chat-page__eyebrow">Customer Support</p>
             <h1>Messages</h1>
-            <p>Choose an order and talk directly with the pharmacist about that purchase, prescription review, or delivery update.</p>
+            <p>Talk directly with the pharmacist about an order, prescription check, or delivery update.</p>
         </div>
     </header>
 
@@ -42,8 +42,8 @@
         <aside class="customer-chat-sidebar">
             <header class="customer-chat-sidebar__header">
                 <p class="customer-chat-page__eyebrow">Your Orders</p>
-                <h2>Chat Threads</h2>
-                <span>@Model.UnreadCount unread replies</span>
+                <h2>Conversations</h2>
+                <span>@Model.UnreadCount unread repl@(Model.UnreadCount == 1 ? "y" : "ies")</span>
             </header>
 
             <div class="customer-chat-thread-list">
@@ -58,6 +58,10 @@
                 {
                     @foreach (var thread in Model.OrderThreads)
                     {
+                        var preview = string.IsNullOrWhiteSpace(thread.LastMessagePreview)
+                            ? thread.ItemSummary
+                            : thread.LastMessagePreview;
+
                         <a class="customer-chat-thread @(thread.OrderNumber == Model.SelectedOrderNumber ? "customer-chat-thread--active" : string.Empty)"
                            asp-action="Index"
                            asp-route-orderNumber="@thread.OrderNumber">
@@ -69,8 +73,12 @@
                                     <strong>@thread.OrderNumber</strong>
                                     <span>@thread.UpdatedAtUtc.ToLocalTime().ToString("MMM dd")</span>
                                 </div>
-                                <p>@thread.ItemSummary</p>
-                                <small>@thread.OrderStatus | @thread.PaymentStatus</small>
+                                <p>@preview</p>
+                                <div class="customer-chat-thread__meta">
+                                    <small>@thread.ItemsCount item@(thread.ItemsCount == 1 ? string.Empty : "s")</small>
+                                    <small>@thread.OrderStatus</small>
+                                    <small>@thread.PaymentStatus</small>
+                                </div>
                             </div>
                             @if (thread.UnreadCount > 0)
                             {
@@ -105,8 +113,12 @@
                         </div>
                         <div>
                             <h2>@Model.SupportName</h2>
-                            <p>Order @Model.ActiveThread.OrderNumber | Ref @Model.ActiveThread.OrderReference</p>
+                            <p>@Model.SupportSubtitle</p>
                         </div>
+                    </div>
+                    <div class="customer-chat-panel__context">
+                        <span class="customer-chat-chip customer-chat-chip--strong">@Model.ActiveThread.OrderNumber</span>
+                        <span class="customer-chat-chip">Ref @Model.ActiveThread.OrderReference</span>
                     </div>
                 </header>
 
@@ -163,14 +175,17 @@
                 <form method="post" asp-action="Send" class="customer-chat-composer">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="OrderNumber" value="@Model.ActiveThread.OrderNumber" />
-                    <label for="messageBody" class="visually-hidden">Message</label>
-                    <textarea id="messageBody" name="Body" rows="4" placeholder="Type your message to the pharmacist about this order..." required></textarea>
-                    <div class="customer-chat-composer__row">
-                        <span>Your message will stay linked to order @Model.ActiveThread.OrderNumber.</span>
+                    <div class="customer-chat-composer__field">
+                        <label for="messageBody" class="visually-hidden">Message</label>
+                        <textarea id="messageBody" name="Body" rows="2" placeholder="Write a message about this order..." required></textarea>
                         <button type="submit" class="customer-chat-send">
                             <i class="bi bi-send-fill"></i>
-                            <span>Send Message</span>
+                            <span>Send</span>
                         </button>
+                    </div>
+                    <div class="customer-chat-composer__row">
+                        <span>Linked to order @Model.ActiveThread.OrderNumber.</span>
+                        <span>Replies from the pharmacist will appear here.</span>
                     </div>
                 </form>
             }

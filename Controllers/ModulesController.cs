@@ -132,6 +132,8 @@ public class ModulesController(
             TotalAmount = total,
             PromoCode = string.Empty,
             PrescriptionFilesJson = "[]",
+            PerformedByName = CurrentUsername,
+            PerformedByRole = AppRoles.Admin,
             CreatedAtUtc = DateTime.UtcNow,
             Items =
             [
@@ -244,6 +246,8 @@ public class ModulesController(
                 PaymentMethod = order.PaymentMethod,
                 Status = order.Payment != null ? order.Payment.Status : "AwaitingPayment",
                 OrderStatus = order.OrderStatus,
+                PerformedByName = order.PerformedByName != "" ? order.PerformedByName : order.CustomerFullName,
+                PerformedByRole = order.PerformedByRole != "" ? order.PerformedByRole : AppRoles.Customer,
                 Amount = order.Payment != null && order.Payment.Amount > 0 ? order.Payment.Amount : order.TotalAmount,
                 ReferenceNumber = order.Payment != null && !string.IsNullOrWhiteSpace(order.Payment.ReferenceNumber)
                     ? order.Payment.ReferenceNumber
@@ -428,6 +432,8 @@ public class ModulesController(
                 OrderNumber = order.OrderNumber,
                 CustomerName = order.CustomerFullName,
                 TotalAmount = order.TotalAmount,
+                PerformedByName = order.PerformedByName != "" ? order.PerformedByName : order.CustomerFullName,
+                PerformedByRole = order.PerformedByRole != "" ? order.PerformedByRole : AppRoles.Customer,
                 RequiresPrescription = order.RequiresPrescription,
                 PrescriptionStatus = order.PrescriptionStatus,
                 CanRelease = true,
@@ -754,6 +760,10 @@ public class ModulesController(
                 DailySales = dailySales,
                 TopProducts = Paginate(topProducts, pagination.CurrentPage, pagination.PageSize),
                 Pagination = pagination,
+                TotalRevenue = totalRevenue,
+                MonthlyRevenue = monthlyRevenue,
+                PaidRevenue = paidRevenue,
+                TotalOrders = totalOrders,
                 Actions =
                 [
                     ActionLink("Export Sales", "Modules", nameof(ExportSalesCsv), "bi-download", "primary", "Download sales report as CSV"),
@@ -1149,13 +1159,15 @@ public class ModulesController(
             .Take(1000)
             .ToListAsync(cancellationToken);
         var builder = new StringBuilder();
-        builder.AppendLine("OrderNumber,Customer,PaymentMethod,PaymentStatus,OrderStatus,Items,Subtotal,Tax,Delivery,Discount,Total,CreatedAt");
+        builder.AppendLine("OrderNumber,Customer,PerformedBy,PerformedByRole,PaymentMethod,PaymentStatus,OrderStatus,Items,Subtotal,Tax,Delivery,Discount,Total,CreatedAt");
 
         foreach (var order in orders)
         {
             builder.AppendLine(string.Join(",",
                 Csv(order.OrderNumber),
                 Csv(order.CustomerFullName),
+                Csv(ResolvePerformedByName(order)),
+                Csv(ResolvePerformedByRole(order)),
                 Csv(order.PaymentMethod),
                 Csv(order.Payment?.Status ?? "Pending"),
                 Csv(order.OrderStatus),
@@ -1204,12 +1216,31 @@ public class ModulesController(
             PaymentMethod = order.PaymentMethod,
             PaymentStatus = order.Payment?.Status ?? "Pending",
             OrderStatus = order.OrderStatus,
+            PerformedByName = ResolvePerformedByName(order),
+            PerformedByRole = ResolvePerformedByRole(order),
             RequiresPrescription = order.RequiresPrescription,
             PrescriptionStatus = order.PrescriptionStatus,
             TotalAmount = order.TotalAmount,
             ItemsCount = order.Items.Sum(item => item.Quantity),
             CreatedAtUtc = order.CreatedAtUtc
         };
+
+    private static string ResolvePerformedByName(PharmacyOrder order)
+    {
+        if (!string.IsNullOrWhiteSpace(order.PerformedByName))
+        {
+            return order.PerformedByName;
+        }
+
+        return string.IsNullOrWhiteSpace(order.CustomerFullName)
+            ? "Customer"
+            : order.CustomerFullName;
+    }
+
+    private static string ResolvePerformedByRole(PharmacyOrder order) =>
+        string.IsNullOrWhiteSpace(order.PerformedByRole)
+            ? AppRoles.Customer
+            : order.PerformedByRole;
 
     private static AdminReceiptViewModel BuildReceipt(PharmacyOrder order) =>
         new()

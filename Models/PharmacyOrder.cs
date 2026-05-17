@@ -64,6 +64,10 @@ public class PharmacyOrder
 
     public string PrescriptionFilesJson { get; set; } = "[]";
 
+    public string PerformedByName { get; set; } = string.Empty;
+
+    public string PerformedByRole { get; set; } = string.Empty;
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public Account? Account { get; set; }

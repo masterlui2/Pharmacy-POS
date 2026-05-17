@@ -5,6 +5,7 @@ using PharmacyPOS.Data;
 using PharmacyPOS.Models;
 using PharmacyPOS.Models.Checkout;
 using PharmacyPOS.Models.PayMongoApi;
+using PharmacyPOS.Models.Security;
 
 namespace PharmacyPOS.Services;
 
@@ -295,6 +296,8 @@ public class CheckoutService(
             TotalAmount = total,
             PromoCode = string.Empty,
             PrescriptionFilesJson = "[]",
+            PerformedByName = request.Customer.Name.Trim(),
+            PerformedByRole = AppRoles.Customer,
             CreatedAtUtc = DateTime.UtcNow,
             Items = request.LineItems.Select((item, index) => new PharmacyOrderItem
             {
@@ -384,6 +387,8 @@ public class CheckoutService(
             TotalAmount = request.TotalAmount,
             PromoCode = request.PromoCode.Trim().ToUpperInvariant(),
             PrescriptionFilesJson = JsonSerializer.Serialize(request.PrescriptionFiles),
+            PerformedByName = request.FullName.Trim(),
+            PerformedByRole = AppRoles.Customer,
             CreatedAtUtc = DateTime.UtcNow,
             Items = request.Items.Select(item => new PharmacyOrderItem
             {

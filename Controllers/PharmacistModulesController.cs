@@ -352,6 +352,8 @@ public sealed class PharmacistModulesController(
             TotalAmount = total,
             PromoCode = string.Empty,
             PrescriptionFilesJson = "[]",
+            PerformedByName = CurrentUsername,
+            PerformedByRole = AppRoles.Pharmacist,
             CreatedAtUtc = DateTime.UtcNow,
             Items =
             [
@@ -458,6 +460,8 @@ public sealed class PharmacistModulesController(
                 PaymentMethod = order.PaymentMethod,
                 Status = order.Payment != null ? order.Payment.Status : "AwaitingPayment",
                 OrderStatus = order.OrderStatus,
+                PerformedByName = order.PerformedByName != "" ? order.PerformedByName : order.CustomerFullName,
+                PerformedByRole = order.PerformedByRole != "" ? order.PerformedByRole : AppRoles.Customer,
                 Amount = order.Payment != null && order.Payment.Amount > 0 ? order.Payment.Amount : order.TotalAmount,
                 ReferenceNumber = order.Payment != null && !string.IsNullOrWhiteSpace(order.Payment.ReferenceNumber)
                     ? order.Payment.ReferenceNumber
@@ -636,6 +640,8 @@ public sealed class PharmacistModulesController(
                 OrderNumber = order.OrderNumber,
                 CustomerName = order.CustomerFullName,
                 TotalAmount = order.TotalAmount,
+                PerformedByName = order.PerformedByName != "" ? order.PerformedByName : order.CustomerFullName,
+                PerformedByRole = order.PerformedByRole != "" ? order.PerformedByRole : AppRoles.Customer,
                 RequiresPrescription = order.RequiresPrescription,
                 PrescriptionStatus = order.PrescriptionStatus,
                 CanRelease = !order.RequiresPrescription || IsPrescriptionValidated(order.PrescriptionStatus),

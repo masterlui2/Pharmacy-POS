@@ -230,6 +230,19 @@ body.admin-shell-body {
   font-size: 0.76rem;
 }
 
+.pos-user-footer .admin-role-label {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.pos-user-footer .admin-role-label--admin {
+  color: #b42318;
+}
+
+.pos-user-footer .admin-role-label--pharmacist {
+  color: #0f766e;
+}
+
 .pos-sidebar-backdrop,
 .pos-mobile-bar {
   display: none;

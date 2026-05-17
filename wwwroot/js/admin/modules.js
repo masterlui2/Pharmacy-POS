@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   initializePosSaleModal();
+  initializePaymentStatusModal();
   initializePreviewModal(
     "receiptPreviewModal",
     "[data-receipt-preview-content]",
@@ -59,6 +60,38 @@ function initializePosSaleModal() {
     rxHidden.value = requiresPrescription ? "false" : "true";
     rxAlert.classList.toggle("d-none", !requiresPrescription);
     rxField.classList.toggle("d-none", !requiresPrescription);
+  });
+}
+
+function initializePaymentStatusModal() {
+  const statusModal = document.getElementById("paymentStatusModal");
+  if (!statusModal) {
+    return;
+  }
+
+  statusModal.addEventListener("show.bs.modal", (event) => {
+    const trigger = event.relatedTarget;
+    if (!(trigger instanceof HTMLElement)) {
+      return;
+    }
+
+    const paymentIdInput = statusModal.querySelector("[data-payment-status-id]");
+    const statusSelect = statusModal.querySelector("[data-payment-status-select]");
+    const caption = statusModal.querySelector("[data-payment-status-caption]");
+
+    if (paymentIdInput instanceof HTMLInputElement) {
+      paymentIdInput.value = trigger.getAttribute("data-payment-id") || "";
+    }
+
+    if (statusSelect instanceof HTMLSelectElement) {
+      statusSelect.value = trigger.getAttribute("data-payment-status") || "Paid";
+    }
+
+    if (caption) {
+      const orderNumber = trigger.getAttribute("data-payment-order") || "selected order";
+      const customerName = trigger.getAttribute("data-payment-customer") || "customer";
+      caption.textContent = `${orderNumber} · ${customerName}`;
+    }
   });
 }
 

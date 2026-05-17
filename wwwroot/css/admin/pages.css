@@ -3,10 +3,10 @@
   align-items: center;
   justify-content: center;
   min-height: 40px;
-  padding: 0 0.95rem;
-  border: 1px solid rgba(207, 22, 54, 0.18);
-  border-radius: 999px;
-  background: rgba(207, 22, 54, 0.08);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--primary);
   font-size: 0.82rem;
   font-weight: 700;
@@ -251,31 +251,77 @@
 }
 
 .admin-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 30px;
-  padding: 0 0.75rem;
-  border-radius: 999px;
-  background: rgba(207, 22, 54, 0.08);
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--primary);
   font-size: 0.78rem;
   font-weight: 800;
+  line-height: 1.35;
 }
 
 .admin-badge--success {
-  background: rgba(45, 201, 115, 0.12);
   color: #157347;
 }
 
 .admin-badge--warning {
-  background: rgba(245, 176, 66, 0.16);
   color: #9a5b00;
 }
 
 .admin-badge--danger {
-  background: rgba(207, 22, 54, 0.12);
   color: var(--primary);
+}
+
+.admin-role-label {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.admin-role-label--admin {
+  color: #b42318;
+}
+
+.admin-role-label--pharmacist {
+  color: #0f766e;
+}
+
+.admin-text-label {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.admin-text-label--success {
+  color: #087443;
+}
+
+.admin-text-label--warning {
+  color: #9a5b00;
+}
+
+.admin-text-label--danger {
+  color: var(--primary);
+}
+
+.admin-table__subtext {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.25;
 }
 
 .admin-empty-state {
@@ -680,6 +726,45 @@
   gap: 12px;
 }
 
+.admin-report-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.admin-report-summary > div {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.admin-report-summary span,
+.admin-report-summary small {
+  display: block;
+  color: var(--muted);
+}
+
+.admin-report-summary span {
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-report-summary strong {
+  display: block;
+  color: var(--text);
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.admin-report-summary small {
+  margin-top: 6px;
+  font-size: 0.8rem;
+}
+
 .admin-actions-button {
   min-width: 102px;
 }
@@ -718,6 +803,12 @@
 
 .admin-modal .modal-body {
   padding: 20px 22px;
+}
+
+.admin-modal__caption {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
 }
 
 .admin-modal-summary {
@@ -1103,7 +1194,8 @@
 
 @media (max-width: 768px) {
   .admin-stat-grid,
-  .admin-kpi-grid {
+  .admin-kpi-grid,
+  .admin-report-summary {
     grid-template-columns: 1fr;
   }
 
@@ -1533,10 +1625,11 @@
   justify-content: center;
   min-width: 24px;
   height: 24px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--primary);
-  color: #ffffff;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--primary);
   font-size: 0.75rem;
   font-weight: 800;
 }

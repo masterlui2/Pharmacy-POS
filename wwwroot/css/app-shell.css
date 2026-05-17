@@ -143,7 +143,9 @@ body {
 
 .badge-status {
   font-weight: 600;
-  padding: 0.35rem 0.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .storefront-footer {

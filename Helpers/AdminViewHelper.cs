@@ -2,13 +2,40 @@ namespace PharmacyPOS.Helpers;
 
 public static class AdminViewHelper
 {
+    public static string RoleClass(string value)
+    {
+        var normalized = value.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "admin" or "administrator" => "admin-role-label admin-role-label--admin",
+            "pharmacist" => "admin-role-label admin-role-label--pharmacist",
+            _ => "admin-role-label"
+        };
+    }
+
+    public static string PrescriptionRequirementClass(bool requiresPrescription) =>
+        requiresPrescription
+            ? "admin-text-label admin-text-label--warning"
+            : "admin-text-label admin-text-label--success";
+
+    public static string PrescriptionStatusClass(string value)
+    {
+        var normalized = value.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "approved" or "valid" or "notrequired" or "not required" => "admin-text-label admin-text-label--success",
+            "rejected" or "invalid" => "admin-text-label admin-text-label--danger",
+            _ => "admin-text-label admin-text-label--warning"
+        };
+    }
+
     public static string StatusClass(string value)
     {
         var normalized = value.Trim().ToLowerInvariant();
         return normalized switch
         {
-            "paid" or "completed" or "success" or "admin" or "in stock" or "available" or "approved" or "valid" or "notrequired" => "admin-badge admin-badge--success",
-            "low stock" or "warning" or "processing" or "expiring soon" or "pending" or "pendingreview" or "pendingcollection" or "awaitingapproval" or "awaitingpayment" or "redirectedtogateway" or "pharmacist" => "admin-badge admin-badge--warning",
+            "paid" or "completed" or "success" or "in stock" or "available" or "approved" or "valid" or "notrequired" => "admin-badge admin-badge--success",
+            "low stock" or "warning" or "processing" or "expiring soon" or "pending" or "pendingreview" or "pendingcollection" or "awaitingapproval" or "awaitingpayment" or "redirectedtogateway" => "admin-badge admin-badge--warning",
             "out of stock" or "danger" or "failed" or "paymentfailed" or "refunded" or "unavailable" or "unpaid" or "rejected" or "invalid" => "admin-badge admin-badge--danger",
             _ => "admin-badge"
         };

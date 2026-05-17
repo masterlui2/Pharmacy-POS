@@ -53,6 +53,8 @@ public class PharmacyPosDbContext(DbContextOptions<PharmacyPosDbContext> options
             entity.Property(order => order.OrderStatus).HasMaxLength(32);
             entity.Property(order => order.PromoCode).HasMaxLength(32);
             entity.Property(order => order.PrescriptionFilesJson).HasMaxLength(4000);
+            entity.Property(order => order.PerformedByName).HasMaxLength(150);
+            entity.Property(order => order.PerformedByRole).HasMaxLength(32);
             entity.Property(order => order.SubtotalAmount).HasPrecision(18, 2);
             entity.Property(order => order.TaxAmount).HasPrecision(18, 2);
             entity.Property(order => order.ShippingAmount).HasPrecision(18, 2);

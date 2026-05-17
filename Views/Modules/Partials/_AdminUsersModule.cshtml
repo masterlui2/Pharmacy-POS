@@ -54,7 +54,7 @@
                                 <strong>@user.Name</strong>
                                 <span>@user.Email</span>
                             </td>
-                            <td data-label="Role"><span class="@AdminViewHelper.StatusClass(user.Role)">@user.Role</span></td>
+                            <td data-label="Role"><span class="@AdminViewHelper.RoleClass(user.Role)">@user.Role</span></td>
                             <td data-label="Phone">@user.PhoneNumber</td>
                             <td data-label="Orders" class="admin-table__numeric">@user.OrdersCount</td>
                             <td data-label="Lifetime Spend" class="admin-table__numeric">PHP @user.LifetimeSpend.ToString("N2")</td>
